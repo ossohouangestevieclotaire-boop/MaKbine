@@ -193,15 +193,17 @@
                 body: JSON.stringify({ phone, total, service, payment })
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                alert("Transaction envoyée avec succès au serveur !");
+                alert("Succès ! ID de transaction : " + data.id);
                 const history = document.getElementById('historyContainer');
                 history.innerHTML = `<div class='history-item'><strong>${phone}</strong> - ${service} (${total})<br><small style="color: #f59e0b;">Statut : En attente</small></div>` + history.innerHTML;
             } else {
-                alert("Erreur du serveur lors de l'envoi.");
+                alert("Erreur API : " + (data.message || "Inconnue"));
             }
         } catch (e) {
-            alert("Erreur de connexion réseau.");
+            alert("Erreur technique : " + e.message);
         }
     }
 
