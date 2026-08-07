@@ -34,37 +34,32 @@
         .btn { width: 100%; padding: 13px; background: #2563eb; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: background 0.2s; }
         .btn:hover { background: #1d4ed8; }
 
-        /* Historique */
         .history-list { max-height: 350px; overflow-y: auto; }
         .history-item { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; border-left: 4px solid #38bdf8; }
-        
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- En-tête / Navigation -->
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('home')">🚀 Transaction</button>
         <button class="tab-btn" onclick="switchTab('history')">📜 Historique</button>
     </div>
 
-    <!-- ONGLET ACCUEIL / TRANSACTION -->
     <div id="tab-home">
-        <!-- Tableau de bord : Solde -->
         <div class="dashboard-card">
             <div>
                 <h3>Mon Solde Actuel</h3>
                 <div class="balance" id="userBalance">45,500 FCFA</div>
             </div>
-            <button style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer;" onclick="alert('Redirection vers rechargement de solde')">Recharger</button>
+            <button style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Recharger</button>
         </div>
 
         <div class="form-group">
             <label>Option du numéro</label>
             <label class="checkbox-group">
-                <input type="checkbox" id="useMyNumber" onchange="toggleMyNumber(this)"> Utiliser mon propre numéro (0799313774)
+                <input type="checkbox" id="useMyNumber" onchange="toggleMyNumber(this)"> Utiliser mon propre numéro
             </label>
         </div>
 
@@ -84,12 +79,9 @@
             </select>
         </div>
 
-        <!-- Choix dynamique du forfait (caché si transfert simple) -->
         <div class="form-group hidden" id="packageGroup">
             <label>Sélectionner le Forfait</label>
-            <select id="packageList">
-                <!-- Rempli dynamiquement -->
-            </select>
+            <select id="packageList"></select>
         </div>
 
         <div class="form-group" id="amountGroup">
@@ -100,8 +92,8 @@
         <div class="form-group">
             <label>Moyen de paiement</label>
             <select id="paymentMethod">
-                <option value="solde">Payer depuis mon solde (45,500 F)</option>
-                <option value="momo">Mobile Money (Orange/MTN/Moov)</option>
+                <option value="solde">Payer depuis mon solde</option>
+                <option value="momo">Mobile Money</option>
                 <option value="wave">Wave</option>
             </select>
         </div>
@@ -115,27 +107,16 @@
         <button class="btn" onclick="validateTransaction()">Valider la transaction</button>
     </div>
 
-    <!-- ONGLET HISTORIQUE -->
     <div id="tab-history" class="hidden">
-        <h3 style="margin-bottom: 15px; font-size: 16px; color: #38bdf8;">Historique des transactions</h3>
-        <div class="history-list" id="historyContainer">
-            <div class="history-item">
-                <strong>0799313774</strong> - Pass Internet 500F<br>
-                <small style="color: #94a3b8;">Statut : <span style="color: #4ade80;">Succès</span> • Il y a 10 min</small>
-            </div>
-            <div class="history-item">
-                <strong>0500483015</strong> - Transfert 1000F<br>
-                <small style="color: #94a3b8;">Statut : <span style="color: #4ade80;">Succès</span> • Il y a 2 heures</small>
-            </div>
-        </div>
+        <h3 style="margin-bottom: 15px; font-size: 16px; color: #38bdf8;">Historique</h3>
+        <div class="history-list" id="historyContainer"></div>
     </div>
 </div>
 
 <script>
-    const MY_PHONE = "0799313774"; // Ton numéro par défaut
+    const MY_PHONE = "0799313774";
     let currentOperator = "ORANGE CI";
 
-    // Gestion des onglets
     function switchTab(tab) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         if(tab === 'home') {
@@ -149,7 +130,6 @@
         }
     }
 
-    // Gestion du numéro propre
     function toggleMyNumber(checkbox) {
         const phoneGroup = document.getElementById('phoneGroup');
         const phoneInput = document.getElementById('phone');
@@ -164,126 +144,61 @@
         }
     }
 
-    // Détection opérateur
     function detectOperator(phone) {
         const opDiv = document.getElementById('operator');
-        if (phone.length < 2) {
-            opDiv.innerText = "En attente du numéro...";
-            opDiv.style.color = "#64748b";
-            return;
-        }
+        if (phone.length < 2) { opDiv.innerText = "En attente..."; return; }
         const prefix = phone.substring(0, 2);
-        if (["07", "08", "09"].includes(prefix)) {
-            currentOperator = "ORANGE CI";
-            opDiv.innerText = "🟢 Opérateur : ORANGE CI";
-            opDiv.style.color = "#c084fc";
-        } else if (["05", "06"].includes(prefix)) {
-            currentOperator = "MTN CI";
-            opDiv.innerText = "🟡 Opérateur : MTN CI";
-            opDiv.style.color = "#facc15";
-        } else if (["01", "02", "03"].includes(prefix)) {
-            currentOperator = "MOOV CI";
-            opDiv.innerText = "🔵 Opérateur : MOOV CI";
-            opDiv.style.color = "#4ade80";
-        } else {
-            currentOperator = "INCONNU";
-            opDiv.innerText = "❌ Préfixe non reconnu";
-            opDiv.style.color = "#f87171";
-        }
+        if (["07", "08", "09"].includes(prefix)) { currentOperator = "ORANGE CI"; opDiv.innerText = "🟢 ORANGE CI"; opDiv.style.color = "#c084fc"; }
+        else if (["05", "06"].includes(prefix)) { currentOperator = "MTN CI"; opDiv.innerText = "🟡 MTN CI"; opDiv.style.color = "#facc15"; }
+        else if (["01", "02", "03"].includes(prefix)) { currentOperator = "MOOV CI"; opDiv.innerText = "🔵 MOOV CI"; opDiv.style.color = "#4ade80"; }
         updateServiceOptions();
     }
 
-    // Mise à jour des forfaits selon le service et l'opérateur
     function updateServiceOptions() {
         const serviceType = document.getElementById('serviceType').value;
         const packageGroup = document.getElementById('packageGroup');
         const amountGroup = document.getElementById('amountGroup');
         const packageList = document.getElementById('packageList');
 
-        if (serviceType === 'transfert') {
-            packageGroup.classList.add('hidden');
-            amountGroup.classList.remove('hidden');
-        } else {
-            packageGroup.classList.remove('hidden');
-            amountGroup.classList.add('hidden');
-            
-            // Charger les forfaits dynamiques selon l'opérateur
+        if (serviceType === 'transfert') { packageGroup.classList.add('hidden'); amountGroup.classList.remove('hidden'); }
+        else {
+            packageGroup.classList.remove('hidden'); amountGroup.classList.add('hidden');
             packageList.innerHTML = "";
-            let passes = [];
-            
-            if (serviceType === 'internet') {
-                passes = [
-                    { name: "Pass 100 Mo (24h) - 100F", price: 100 },
-                    { name: "Pass 1 Go (24h) - 300F", price: 300 },
-                    { name: "Pass 5 Go (7 jours) - 2000F", price: 2000 }
-                ];
-            } else if (serviceType === 'appel') {
-                passes = [
-                    { name: "Pass 30 min (24h) - 200F", price: 200 },
-                    { name: "Pass Illimité Nuit - 500F", price: 500 }
-                ];
-            } else if (serviceType === 'mix') {
-                passes = [
-                    { name: "Mix 1 Go + 30 min - 500F", price: 500 },
-                    { name: "Mix Maxi 3 Go + 1h - 1500F", price: 1500 }
-                ];
-            }
-
-            passes.forEach(p => {
-                let opt = document.createElement('option');
-                opt.value = p.price;
-                opt.text = `${currentOperator} - ${p.name}`;
-                packageList.appendChild(opt);
-            });
+            let passes = serviceType === 'internet' ? [{name: "100 Mo - 100F", price: 100}, {name: "1 Go - 300F", price: 300}] : [{name: "30 min - 200F", price: 200}];
+            passes.forEach(p => { let opt = document.createElement('option'); opt.value = p.price; opt.text = p.name; packageList.appendChild(opt); });
         }
         calculateTotal();
     }
 
-    // Calcul des frais (7%)
     function calculateTotal() {
         const serviceType = document.getElementById('serviceType').value;
-        let baseAmount = 0;
-
-        if (serviceType === 'transfert') {
-            baseAmount = parseFloat(document.getElementById('amount').value) || 0;
-        } else {
-            baseAmount = parseFloat(document.getElementById('packageList').value) || 0;
-        }
-
-        const fees = baseAmount * 0.07;
-        const total = baseAmount + fees;
-
+        let baseAmount = serviceType === 'transfert' ? (parseFloat(document.getElementById('amount').value) || 0) : (parseFloat(document.getElementById('packageList').value) || 0);
+        const total = baseAmount + (baseAmount * 0.07);
         document.getElementById('lblBase').innerText = baseAmount + " FCFA";
-        document.getElementById('lblFees').innerText = fees.toFixed(0) + " FCFA";
+        document.getElementById('lblFees').innerText = (baseAmount * 0.07).toFixed(0) + " FCFA";
         document.getElementById('lblTotal').innerText = total.toFixed(0) + " FCFA";
     }
 
-    // Validation et ajout dans l'historique
-    function validateTransaction() {
-        const useMyNum = document.getElementById('useMyNumber').checked;
-        const phone = useMyNum ? MY_PHONE : document.getElementById('phone').value;
+    async function validateTransaction() {
+        const phone = document.getElementById('useMyNumber').checked ? MY_PHONE : document.getElementById('phone').value;
         const total = document.getElementById('lblTotal').innerText;
+        const service = document.getElementById('serviceType').value;
         const payment = document.getElementById('paymentMethod').value;
 
-        if(!phone || phone.length < 10) {
-            alert("Veuillez entrer ou sélectionner un numéro valide.");
-            return;
-        }
+        if(!phone || phone.length < 10) { alert("Numéro invalide."); return; }
 
-        // Simulation d'ajout dans l'historique
-        const historyContainer = document.getElementById('historyContainer');
-        const newItem = document.createElement('div');
-        newItem.className = 'history-item';
-        newItem.innerHTML = `<strong>${phone}</strong> - Paiement via ${payment.toUpperCase()}<br><small style="color: #94a3b8;">Statut : <span style="color: #4ade80;">Succès (En cours)</span> • À l'instant</small>`;
-        historyContainer.prepend(newItem);
+        const response = await fetch('/api/transacter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, total, service, payment })
+        });
 
-        alert(`Succès ! Transaction de ${total} initiée avec succès. Statut : En cours de traitement par la passerelle.`);
+        if (response.ok) {
+            alert("Transaction envoyée au serveur !");
+            const history = document.getElementById('historyContainer');
+            history.innerHTML = `<div class='history-item'><strong>${phone}</strong> - ${service}<br><small>Statut : En attente</small></div>` + history.innerHTML;
+        } else { alert("Erreur d'envoi."); }
     }
-
-    // Initialisation au chargement
-    detectOperator(MY_PHONE);
-    document.getElementById('useMyNumber').checked = true;
-    toggleMyNumber(document.getElementById('useMyNumber'));
 </script>
 
 </body>
