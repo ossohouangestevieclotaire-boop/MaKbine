@@ -9,12 +9,10 @@
         body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
         .container { background: #1e293b; width: 100%; max-width: 450px; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border: 1px solid #334155; }
         
-        /* Navigation / Onglets */
         .nav-tabs { display: flex; justify-content: space-around; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         .tab-btn { background: none; border: none; color: #94a3b8; font-size: 15px; font-weight: bold; cursor: pointer; padding: 5px 10px; }
         .tab-btn.active { color: #38bdf8; border-bottom: 2px solid #38bdf8; }
 
-        /* Dashboard Solde */
         .dashboard-card { background: linear-gradient(135deg, #0284c7, #2563eb); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
         .dashboard-card h3 { font-size: 14px; color: #e0f2fe; }
         .dashboard-card .balance { font-size: 20px; font-weight: bold; }
@@ -180,25 +178,36 @@
     }
 
     async function validateTransaction() {
-        const phone = document.getElementById('useMyNumber').checked ? MY_PHONE : document.getElementById('phone').value;
+        const useMyNum = document.getElementById('useMyNumber').checked;
+        const phoneInput = document.getElementById('phone').value;
+        const phone = useMyNum ? MY_PHONE : (phoneInput ? phoneInput : MY_PHONE);
+        
         const total = document.getElementById('lblTotal').innerText;
         const service = document.getElementById('serviceType').value;
         const payment = document.getElementById('paymentMethod').value;
 
-        if(!phone || phone.length < 10) { alert("Numéro invalide."); return; }
+        try {
+            const response = await fetch('/api/transacter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, total, service, payment })
+            });
 
-        const response = await fetch('/api/transacter', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone, total, service, payment })
-        });
-
-        if (response.ok) {
-            alert("Transaction envoyée au serveur !");
-            const history = document.getElementById('historyContainer');
-            history.innerHTML = `<div class='history-item'><strong>${phone}</strong> - ${service}<br><small>Statut : En attente</small></div>` + history.innerHTML;
-        } else { alert("Erreur d'envoi."); }
+            if (response.ok) {
+                alert("Transaction envoyée avec succès au serveur !");
+                const history = document.getElementById('historyContainer');
+                history.innerHTML = `<div class='history-item'><strong>${phone}</strong> - ${service} (${total})<br><small style="color: #f59e0b;">Statut : En attente</small></div>` + history.innerHTML;
+            } else {
+                alert("Erreur du serveur lors de l'envoi.");
+            }
+        } catch (e) {
+            alert("Erreur de connexion réseau.");
+        }
     }
+
+    // Initialisation
+    document.getElementById('useMyNumber').checked = true;
+    toggleMyNumber(document.getElementById('useMyNumber'));
 </script>
 
 </body>
