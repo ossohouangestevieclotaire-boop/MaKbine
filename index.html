@@ -3,59 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MaKbine - Transfert & Services</title>
+    <title>MaKbine - Dashboard & Transfert</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .container { background: #1e293b; width: 100%; max-width: 420px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155; }
-        h1 { font-size: 24px; text-align: center; margin-bottom: 20px; color: #38bdf8; }
+        body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+        .container { background: #1e293b; width: 100%; max-width: 450px; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border: 1px solid #334155; }
+        
+        /* Navigation / Onglets */
+        .nav-tabs { display: flex; justify-content: space-around; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .tab-btn { background: none; border: none; color: #94a3b8; font-size: 15px; font-weight: bold; cursor: pointer; padding: 5px 10px; }
+        .tab-btn.active { color: #38bdf8; border-bottom: 2px solid #38bdf8; }
+
+        /* Dashboard Solde */
+        .dashboard-card { background: linear-gradient(135deg, #0284c7, #2563eb); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .dashboard-card h3 { font-size: 14px; color: #e0f2fe; }
+        .dashboard-card .balance { font-size: 20px; font-weight: bold; }
+
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-size: 14px; color: #94a3b8; }
-        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 16px; outline: none; }
+        label { display: block; margin-bottom: 5px; font-size: 13px; color: #94a3b8; }
+        input, select { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 15px; outline: none; }
         input:focus, select:focus { border-color: #38bdf8; }
-        .operator-badge { margin-top: 5px; font-size: 13px; font-weight: bold; }
-        .summary { background: #0f172a; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px dashed #475569; }
-        .summary p { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-        .summary p.total { font-size: 18px; font-weight: bold; color: #38bdf8; border-top: 1px solid #334155; padding-top: 8px; margin-top: 8px; }
-        .btn { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
+        
+        .operator-badge { margin-top: 4px; font-size: 12px; font-weight: bold; }
+        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 13px; color: #cbd5e1; cursor: pointer; }
+        
+        .summary { background: #0f172a; padding: 12px; border-radius: 10px; margin-top: 15px; border: 1px dashed #475569; }
+        .summary p { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+        .summary p.total { font-size: 16px; font-weight: bold; color: #38bdf8; border-top: 1px solid #334155; padding-top: 6px; margin-top: 6px; }
+        
+        .btn { width: 100%; padding: 13px; background: #2563eb; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: background 0.2s; }
         .btn:hover { background: #1d4ed8; }
+
+        /* Historique */
+        .history-list { max-height: 350px; overflow-y: auto; }
+        .history-item { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; border-left: 4px solid #38bdf8; }
+        
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>MaKbine Transfert</h1>
-    
-    <div class="form-group">
-        <label>Numéro du destinataire</label>
-        <input type="tel" id="phone" placeholder="Ex: 0799313774" maxlength="10" oninput="detectOperator(this.value)">
-        <div id="operator" class="operator-badge" style="color: #64748b;">En attente du numéro...</div>
+    <!-- En-tête / Navigation -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('home')">🚀 Transaction</button>
+        <button class="tab-btn" onclick="switchTab('history')">📜 Historique</button>
     </div>
 
-    <div class="form-group">
-        <label>Type de Service</label>
-        <select id="service">
-            <option value="transfert">Transfert d'unités / Argent</option>
-            <option value="pass_internet">Pass Internet</option>
-            <option value="pass_appel">Pass Appel</option>
-        </select>
+    <!-- ONGLET ACCUEIL / TRANSACTION -->
+    <div id="tab-home">
+        <!-- Tableau de bord : Solde -->
+        <div class="dashboard-card">
+            <div>
+                <h3>Mon Solde Actuel</h3>
+                <div class="balance" id="userBalance">45,500 FCFA</div>
+            </div>
+            <button style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer;" onclick="alert('Redirection vers rechargement de solde')">Recharger</button>
+        </div>
+
+        <div class="form-group">
+            <label>Option du numéro</label>
+            <label class="checkbox-group">
+                <input type="checkbox" id="useMyNumber" onchange="toggleMyNumber(this)"> Utiliser mon propre numéro (0799313774)
+            </label>
+        </div>
+
+        <div class="form-group" id="phoneGroup">
+            <label>Numéro du destinataire</label>
+            <input type="tel" id="phone" placeholder="Ex: 0799313774" maxlength="10" oninput="detectOperator(this.value)">
+            <div id="operator" class="operator-badge" style="color: #64748b;">En attente du numéro...</div>
+        </div>
+
+        <div class="form-group">
+            <label>Type de service</label>
+            <select id="serviceType" onchange="updateServiceOptions()">
+                <option value="transfert">Transfert d'Unités / Argent</option>
+                <option value="internet">Pass Internet</option>
+                <option value="appel">Pass Appel</option>
+                <option value="mix">Pass Mix (Appel + Internet)</option>
+            </select>
+        </div>
+
+        <!-- Choix dynamique du forfait (caché si transfert simple) -->
+        <div class="form-group hidden" id="packageGroup">
+            <label>Sélectionner le Forfait</label>
+            <select id="packageList">
+                <!-- Rempli dynamiquement -->
+            </select>
+        </div>
+
+        <div class="form-group" id="amountGroup">
+            <label>Montant de base (FCFA)</label>
+            <input type="number" id="amount" placeholder="Ex: 1000" oninput="calculateTotal()">
+        </div>
+
+        <div class="form-group">
+            <label>Moyen de paiement</label>
+            <select id="paymentMethod">
+                <option value="solde">Payer depuis mon solde (45,500 F)</option>
+                <option value="momo">Mobile Money (Orange/MTN/Moov)</option>
+                <option value="wave">Wave</option>
+            </select>
+        </div>
+
+        <div class="summary">
+            <p><span>Montant / Forfait :</span> <span id="lblBase">0 FCFA</span></p>
+            <p><span>Frais de service (7%) :</span> <span id="lblFees">0 FCFA</span></p>
+            <p class="total"><span>Total à payer :</span> <span id="lblTotal">0 FCFA</span></p>
+        </div>
+
+        <button class="btn" onclick="validateTransaction()">Valider la transaction</button>
     </div>
 
-    <div class="form-group">
-        <label>Montant de base (FCFA)</label>
-        <input type="number" id="amount" placeholder="Ex: 1000" oninput="calculateTotal()">
+    <!-- ONGLET HISTORIQUE -->
+    <div id="tab-history" class="hidden">
+        <h3 style="margin-bottom: 15px; font-size: 16px; color: #38bdf8;">Historique des transactions</h3>
+        <div class="history-list" id="historyContainer">
+            <div class="history-item">
+                <strong>0799313774</strong> - Pass Internet 500F<br>
+                <small style="color: #94a3b8;">Statut : <span style="color: #4ade80;">Succès</span> • Il y a 10 min</small>
+            </div>
+            <div class="history-item">
+                <strong>0500483015</strong> - Transfert 1000F<br>
+                <small style="color: #94a3b8;">Statut : <span style="color: #4ade80;">Succès</span> • Il y a 2 heures</small>
+            </div>
+        </div>
     </div>
-
-    <div class="summary">
-        <p><span>Montant initial :</span> <span id="lblBase">0 FCFA</span></p>
-        <p><span>Frais de service (7%) :</span> <span id="lblFees">0 FCFA</span></p>
-        <p class="total"><span>Total à payer :</span> <span id="lblTotal">0 FCFA</span></p>
-    </div>
-
-    <button class="btn" onclick="validateTransaction()">Valider la transaction</button>
 </div>
 
 <script>
+    const MY_PHONE = "0799313774"; // Ton numéro par défaut
+    let currentOperator = "ORANGE CI";
+
+    // Gestion des onglets
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if(tab === 'home') {
+            document.querySelector('.nav-tabs button:nth-child(1)').classList.add('active');
+            document.getElementById('tab-home').classList.remove('hidden');
+            document.getElementById('tab-history').classList.add('hidden');
+        } else {
+            document.querySelector('.nav-tabs button:nth-child(2)').classList.add('active');
+            document.getElementById('tab-history').classList.remove('hidden');
+            document.getElementById('tab-home').classList.add('hidden');
+        }
+    }
+
+    // Gestion du numéro propre
+    function toggleMyNumber(checkbox) {
+        const phoneGroup = document.getElementById('phoneGroup');
+        const phoneInput = document.getElementById('phone');
+        if(checkbox.checked) {
+            phoneGroup.classList.add('hidden');
+            phoneInput.value = MY_PHONE;
+            detectOperator(MY_PHONE);
+        } else {
+            phoneGroup.classList.remove('hidden');
+            phoneInput.value = "";
+            detectOperator("");
+        }
+    }
+
+    // Détection opérateur
     function detectOperator(phone) {
         const opDiv = document.getElementById('operator');
         if (phone.length < 2) {
@@ -65,39 +174,116 @@
         }
         const prefix = phone.substring(0, 2);
         if (["07", "08", "09"].includes(prefix)) {
+            currentOperator = "ORANGE CI";
             opDiv.innerText = "🟢 Opérateur : ORANGE CI";
             opDiv.style.color = "#c084fc";
         } else if (["05", "06"].includes(prefix)) {
+            currentOperator = "MTN CI";
             opDiv.innerText = "🟡 Opérateur : MTN CI";
             opDiv.style.color = "#facc15";
         } else if (["01", "02", "03"].includes(prefix)) {
+            currentOperator = "MOOV CI";
             opDiv.innerText = "🔵 Opérateur : MOOV CI";
             opDiv.style.color = "#4ade80";
         } else {
+            currentOperator = "INCONNU";
             opDiv.innerText = "❌ Préfixe non reconnu";
             opDiv.style.color = "#f87171";
         }
+        updateServiceOptions();
     }
 
-    function calculateTotal() {
-        const amountVal = parseFloat(document.getElementById('amount').value) || 0;
-        const fees = amountVal * 0.07;
-        const total = amountVal + fees;
+    // Mise à jour des forfaits selon le service et l'opérateur
+    function updateServiceOptions() {
+        const serviceType = document.getElementById('serviceType').value;
+        const packageGroup = document.getElementById('packageGroup');
+        const amountGroup = document.getElementById('amountGroup');
+        const packageList = document.getElementById('packageList');
 
-        document.getElementById('lblBase').innerText = amountVal + " FCFA";
+        if (serviceType === 'transfert') {
+            packageGroup.classList.add('hidden');
+            amountGroup.classList.remove('hidden');
+        } else {
+            packageGroup.classList.remove('hidden');
+            amountGroup.classList.add('hidden');
+            
+            // Charger les forfaits dynamiques selon l'opérateur
+            packageList.innerHTML = "";
+            let passes = [];
+            
+            if (serviceType === 'internet') {
+                passes = [
+                    { name: "Pass 100 Mo (24h) - 100F", price: 100 },
+                    { name: "Pass 1 Go (24h) - 300F", price: 300 },
+                    { name: "Pass 5 Go (7 jours) - 2000F", price: 2000 }
+                ];
+            } else if (serviceType === 'appel') {
+                passes = [
+                    { name: "Pass 30 min (24h) - 200F", price: 200 },
+                    { name: "Pass Illimité Nuit - 500F", price: 500 }
+                ];
+            } else if (serviceType === 'mix') {
+                passes = [
+                    { name: "Mix 1 Go + 30 min - 500F", price: 500 },
+                    { name: "Mix Maxi 3 Go + 1h - 1500F", price: 1500 }
+                ];
+            }
+
+            passes.forEach(p => {
+                let opt = document.createElement('option');
+                opt.value = p.price;
+                opt.text = `${currentOperator} - ${p.name}`;
+                packageList.appendChild(opt);
+            });
+        }
+        calculateTotal();
+    }
+
+    // Calcul des frais (7%)
+    function calculateTotal() {
+        const serviceType = document.getElementById('serviceType').value;
+        let baseAmount = 0;
+
+        if (serviceType === 'transfert') {
+            baseAmount = parseFloat(document.getElementById('amount').value) || 0;
+        } else {
+            baseAmount = parseFloat(document.getElementById('packageList').value) || 0;
+        }
+
+        const fees = baseAmount * 0.07;
+        const total = baseAmount + fees;
+
+        document.getElementById('lblBase').innerText = baseAmount + " FCFA";
         document.getElementById('lblFees').innerText = fees.toFixed(0) + " FCFA";
         document.getElementById('lblTotal').innerText = total.toFixed(0) + " FCFA";
     }
 
+    // Validation et ajout dans l'historique
     function validateTransaction() {
-        const phone = document.getElementById('phone').value;
+        const useMyNum = document.getElementById('useMyNumber').checked;
+        const phone = useMyNum ? MY_PHONE : document.getElementById('phone').value;
         const total = document.getElementById('lblTotal').innerText;
+        const payment = document.getElementById('paymentMethod').value;
+
         if(!phone || phone.length < 10) {
-            alert("Veuillez entrer un numéro valide.");
+            alert("Veuillez entrer ou sélectionner un numéro valide.");
             return;
         }
-        alert(`Transaction initiée vers ${phone} pour un montant total de ${total}.`);
+
+        // Simulation d'ajout dans l'historique
+        const historyContainer = document.getElementById('historyContainer');
+        const newItem = document.createElement('div');
+        newItem.className = 'history-item';
+        newItem.innerHTML = `<strong>${phone}</strong> - Paiement via ${payment.toUpperCase()}<br><small style="color: #94a3b8;">Statut : <span style="color: #4ade80;">Succès (En cours)</span> • À l'instant</small>`;
+        historyContainer.prepend(newItem);
+
+        alert(`Succès ! Transaction de ${total} initiée avec succès. Statut : En cours de traitement par la passerelle.`);
     }
+
+    // Initialisation au chargement
+    detectOperator(MY_PHONE);
+    document.getElementById('useMyNumber').checked = true;
+    toggleMyNumber(document.getElementById('useMyNumber'));
 </script>
 
 </body>
