@@ -10,14 +10,14 @@ module.exports = async (req, res) => {
         return res.end(`Erreur 400 : Données manquantes (Reçu -> phone: ${phone}, montant: ${montant})`);
     }
 
-    // Personnalisation de la syntaxe envoyée dans la notification Pushover
-    // Ici, vous pouvez adapter selon le format USSD ou texte que vous voulez lancer
+    // Format propre du message Pushover incluant la syntaxe claire
     const syntaxeAction = `TRANSF | ${phone} | ${montant}F`;
+    const messageContent = `Service: ${service}\nClient: ${phone}\nMontant: ${montant} FCFA\n\nSyntaxe: ${syntaxeAction}`;
 
     const messageData = JSON.stringify({
         token: "a68ythu2stdmjesyisxh43aw28hns3",
         user: "ukj9pvqehim38q2zuswvrnsnvh7d9t",
-        message: `Service: ${service}\nClient: ${phone}\nMontant: ${montant} FCFA\n\nSyntaxe: ${syntaxeAction}`
+        message: messageContent
     });
 
     const options = {
@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
     pvrReq.write(messageData);
     pvrReq.end();
 
-    // Redirection vers Wave
+    // Redirection immédiate vers Wave
     const waveLink = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
     res.writeHead(302, { 'Location': waveLink });
     res.end();
