@@ -1,14 +1,25 @@
 export default async function handler(req, res) {
-  // Autoriser à la fois POST et GET pour éviter l'erreur 405
+  // 1. Autoriser à la fois POST et GET pour éviter l'erreur 405
   if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
   try {
-    // Récupérer les données selon qu'il s'agit d'un POST (body) ou d'un GET (query)
-    const dataPayload = req.method === 'POST' ? req.body : req.query;
+    // 2. Récupérer les données de la transaction (corps POST ou paramètres URL GET)
+    const payload = req.method === 'POST' ? req.body : req.query;
 
-    // Déclencher la notification Pushover en arrière-plan sans bloquer
+    // Extraire les informations pertinentes (adaptez selon vos clés de données)
+    const montant = payload.montant || payload.amount || "Inconnu";
+    const clientInfo = payload.client || payload.numero || "Client";
+    const transactionId = payload.id || payload.reference || Date.now();
+    
+    // Construire le message de la notification
+    const messageTexte = `Nouvelle transaction reçue !\nMontant : ${montant}\nClient/Info : ${clientInfo}`;
+
+    // 3. Solution Intelligente : URL dynamique contenant l'ID de la transaction
+    const targetUrl = `https://ma-kbine.vercel.app/?transaction=${transactionId}`;
+
+    // 4. Déclencher la notification Pushover en arrière-plan sans bloquer
     try {
       fetch("https://api.pushover.net/1/messages.json", {
         method: "POST",
@@ -16,9 +27,10 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           token: "a68ythu2stdmjesyisxh43aw28hns3",
           user: "ukj9pvqehim38q2zuswvrnsnvh7d9t",
-          message: "Nouvelle transaction MaKbine reçue !",
+          message: messageTexte,
           title: "MaKbine Paiement",
-          url: "https://ma-kbine.vercel.app/",
+          url: targetUrl,                      // URL intelligente transmise
+          url_title: "Voir les détails de la transaction",
           sound: "cashregister",
           priority: 1
         })
@@ -27,11 +39,11 @@ export default async function handler(req, res) {
       console.error("Erreur lors du déclenchement de Pushover:", pushErr);
     }
 
-    // Renvoyer immédiatement la réponse de succès
+    // 5. Réponse de succès au client
     return res.status(200).json({ 
       success: true, 
-      message: "Transaction traitée et notification envoyée",
-      receivedData: dataPayload 
+      message: "Transaction traitée et notification intelligente envoyée",
+      receivedData: payload 
     });
 
   } catch (error) {
