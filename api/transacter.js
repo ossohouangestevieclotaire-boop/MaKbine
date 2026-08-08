@@ -1,21 +1,23 @@
 const https = require('https');
 
 module.exports = async (req, res) => {
-    // Récupération souple des paramètres (prend en compte différentes variantes)
     const phone = req.query.phone || req.query.tel;
     const montant = req.query.montant || req.query.amount;
-    const service = req.query.service || "Service Général";
+    const service = req.query.service || "Service";
 
-    // Si malgré tout les données manquent, on affiche un message clair dans les logs
     if (!phone || !montant) {
         res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
         return res.end(`Erreur 400 : Données manquantes (Reçu -> phone: ${phone}, montant: ${montant})`);
     }
 
+    // Personnalisation de la syntaxe envoyée dans la notification Pushover
+    // Ici, vous pouvez adapter selon le format USSD ou texte que vous voulez lancer
+    const syntaxeAction = `TRANSF | ${phone} | ${montant}F`;
+
     const messageData = JSON.stringify({
         token: "a68ythu2stdmjesyisxh43aw28hns3",
         user: "ukj9pvqehim38q2zuswvrnsnvh7d9t",
-        message: `Transaction: ${service} | Tel: ${phone} | Montant: ${montant} FCFA`
+        message: `Service: ${service}\nClient: ${phone}\nMontant: ${montant} FCFA\n\nSyntaxe: ${syntaxeAction}`
     });
 
     const options = {
@@ -40,7 +42,7 @@ module.exports = async (req, res) => {
     pvrReq.write(messageData);
     pvrReq.end();
 
-    // Redirection immédiate et propre vers Wave
+    // Redirection vers Wave
     const waveLink = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
     res.writeHead(302, { 'Location': waveLink });
     res.end();
