@@ -3,161 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MaKbine - Plateforme de Transfert</title>
+    <title>Cabine Express</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: #1e293b; padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        h2 { text-align: center; color: #38bdf8; }
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #f97316;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 420px; background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); position: relative; min-height: 90vh; box-sizing: border-box; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h2 { color: var(--accent); margin: 0; font-size: 22px; }
+        .user-badge { background: #334155; padding: 8px 12px; border-radius: 50px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+
+        .active-account { background: #0f172a; border: 1px solid var(--border); padding: 12px 15px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .active-account span { color: var(--accent); font-weight: bold; }
+
+        .grid-services { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .service-card { background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 14px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .service-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .service-card div:first-child { font-size: 24px; margin-bottom: 8px; }
+        .service-card span { font-size: 13px; font-weight: 600; color: var(--text-main); }
+
+        .form-section { background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 14px; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-size: 14px; }
-        input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #0284c7; border: none; border-radius: 6px; color: #fff; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #0369a1; }
-        .switch { text-align: center; margin-top: 15px; font-size: 13px; color: #94a3b8; cursor: pointer; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+        .input-row { display: flex; gap: 8px; align-items: center; }
+        input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 14px; box-sizing: border-box; }
+        
+        .btn-self { background: #334155; border: none; color: var(--accent); padding: 10px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-self:hover { background: #475569; }
+
+        .btn-main { width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; }
+        .btn-main:hover { opacity: 0.9; }
+
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .history-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .status-success { color: #4ade80; font-weight: bold; }
+        .status-pending { color: #fbbf24; font-weight: bold; }
+        .status-failed { color: #ef4444; font-weight: bold; }
+
+        .support-bubble { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-decoration: none; z-index: 100; }
+
         .hidden { display: none; }
+        .back-link { color: var(--text-muted); font-size: 13px; cursor: pointer; margin-bottom: 10px; display: inline-block; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- SECTION AUTHENTIFICATION -->
-    <div id="auth-section">
-        <h2 id="auth-title">Connexion</h2>
-        <form id="auth-form">
-            <div class="form-group" id="group-email">
-                <label>Adresse e-mail</label>
-                <input type="email" id="email" placeholder="votre@email.com" required>
-            </div>
-            <div class="form-group">
-                <label>Numéro de téléphone</label>
-                <input type="text" id="phone" placeholder="07XXXXXXXX" required>
-            </div>
-            <div class="form-group" id="group-password">
-                <label>Mot de passe</label>
-                <input type="password" id="password" placeholder="••••••••" required>
-            </div>
-            <button type="submit" id="auth-btn">Se connecter</button>
-        </form>
-        <div class="switch" id="switch-to-register" onclick="toggleMode('register')">Créer un compte</div>
-        <div class="switch" id="switch-to-forgot" onclick="toggleMode('forgot')" style="margin-top: 5px; color: #38bdf8;">Mot de passe oublié ?</div>
+<div class="app-container">
+    <!-- HEADER -->
+    <div class="header">
+        <h2>Cabine Express</h2>
+        <div class="user-badge" onclick="toggleView('history')">📜 Historique</div>
     </div>
 
-    <!-- SECTION TABLEAU DE BORD / TRANSACTION -->
-    <div id="dashboard-section" class="hidden">
-        <h2>MaKbine - Transaction</h2>
-        <p>Solde actuel : <span id="solde-actuel" style="color: #4ade80; font-weight: bold;">45,500 FCFA</span></p>
+    <!-- COMPTE ACTIF -->
+    <div class="active-account">
+        Compte actif : <span id="my-phone">0556724316</span>
+    </div>
+
+    <!-- ACCUEIL : CHOIX DU SERVICE -->
+    <div id="home-view">
+        <div class="grid-services">
+            <div class="service-card" onclick="selectService('Transfert d\'unités')">
+                <div>📱</div>
+                <span>Transfert d'unités</span>
+            </div>
+            <div class="service-card" onclick="selectService('Souscription Internet')">
+                <div>🌐</div>
+                <span>Souscription Internet</span>
+            </div>
+            <div class="service-card" onclick="selectService('Souscription Appel')">
+                <div>📞</div>
+                <span>Souscription Appel</span>
+            </div>
+            <div class="service-card" onclick="selectService('Souscription Mix')">
+                <div>⚡</div>
+                <span>Souscription Mix</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORMULAIRE DE TRANSACTION -->
+    <div id="form-view" class="hidden">
+        <span class="back-link" onclick="toggleView('home')">← Retour aux services</span>
+        <h3 id="form-title" style="color: var(--accent); margin-top: 0;">Service</h3>
         
-        <div class="form-group">
-            <label>Moyen de paiement</label>
-            <select id="payment-method">
-                <option value="Orange Money">Orange Money</option>
-                <option value="Wave">Wave</option>
-            </select>
-        </div>
+        <div class="form-section">
+            <div class="form-group">
+                <label>Numéro du bénéficiaire</label>
+                <div class="input-row">
+                    <input type="text" id="dest-phone" placeholder="Ex: 0700000000">
+                    <button class="btn-self" onclick="setMyNumber()">Pour moi-même</button>
+                </div>
+            </div>
 
-        <div class="form-group">
-            <label>Type de service</label>
-            <input type="text" value="Transfert d'unité" disabled style="background: #334155; color: #cbd5e1;">
-        </div>
+            <div class="form-group">
+                <label>Montant (FCFA)</label>
+                <input type="number" id="amount" placeholder="Ex: 500">
+            </div>
 
-        <div class="form-group">
-            <label>Numéro du destinataire</label>
-            <input type="text" id="dest-phone" placeholder="Numéro du client">
-        </div>
+            <div class="form-group">
+                <label>Moyen de paiement</label>
+                <select id="payment-method">
+                    <option value="Wave">Wave</option>
+                    <option value="Orange Money">Orange Money</option>
+                </select>
+            </div>
 
-        <div class="form-group">
-            <label>Montant (FCFA)</label>
-            <input type="number" id="amount" placeholder="Ex: 1000">
+            <button class="btn-main" onclick="openSummary()">Continuer</button>
         </div>
+    </div>
 
-        <button onclick="validerTransaction()">Valider la transaction</button>
-        <button onclick="logout()" style="background: #ef4444; margin-top: 10px;">Se déconnecter</button>
+    <!-- RÉCAPITULATIF -->
+    <div id="summary-view" class="hidden">
+        <span class="back-link" onclick="toggleView('form')">← Modifier</span>
+        <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif</h3>
+        <div class="form-section" style="line-height: 1.8; font-size: 14px;">
+            <p><strong>Service :</strong> <span id="sum-service"></span></p>
+            <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
+            <p><strong>Montant :</strong> <span id="sum-amount"></span> FCFA</p>
+            <p><strong>Paiement via :</strong> <span id="sum-method"></span></p>
+        </div>
+        <button class="btn-main" onclick="validerTransactionFinale()">Confirmer et Payer</button>
+    </div>
+
+    <!-- HISTORIQUE -->
+    <div id="history-view" class="hidden">
+        <span class="back-link" onclick="toggleView('home')">← Retour</span>
+        <h3 style="color: var(--accent); margin-top: 0;">Historique des transactions</h3>
+        <div class="history-list" id="history-container">
+            <!-- Dynamique -->
+            <div class="history-item">
+                <div>
+                    <strong>0556724316</strong><br>
+                    <small style="color: var(--text-muted)">24/07/2026 10:25</small>
+                </div>
+                <div style="text-align: right;">
+                    <span>1850 FCFA</span><br>
+                    <span class="status-success">SUCCÈS</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
+<!-- BULLE SERVICE CLIENT (WHATSAPP) -->
+<a href="https://wa.me/225000000000?text=Bonjour,%20j'ai%20un%20souci%20sur%20Cabine%20Express" class="support-bubble" target="_blank" title="Contactez le support">
+    💬
+</a>
+
 <script>
-    let mode = 'login'; // login, register, forgot
+    let currentService = "";
+    const myAccountPhone = "0556724316";
 
-    function toggleMode(targetMode) {
-        mode = targetMode;
-        const title = document.getElementById('auth-title');
-        const btn = document.getElementById('auth-btn');
-        const groupEmail = document.getElementById('group-email');
-        const groupPassword = document.getElementById('group-password');
-        const switchText = document.getElementById('switch-to-register');
-        const forgotText = document.getElementById('switch-to-forgot');
+    function toggleView(view) {
+        document.getElementById('home-view').classList.add('hidden');
+        document.getElementById('form-view').classList.add('hidden');
+        document.getElementById('summary-view').classList.add('hidden');
+        document.getElementById('history-view').classList.add('hidden');
 
-        if (mode === 'register') {
-            title.innerText = "Inscription";
-            btn.innerText = "S'inscrire";
-            groupEmail.classList.remove('hidden');
-            groupPassword.classList.remove('hidden');
-            switchText.innerText = "Déjà un compte ? Se connecter";
-            forgotText.classList.add('hidden');
-        } else if (mode === 'login') {
-            title.innerText = "Connexion";
-            btn.innerText = "Se connecter";
-            groupEmail.classList.remove('hidden');
-            groupPassword.classList.remove('hidden');
-            switchText.innerText = "Créer un compte";
-            forgotText.classList.remove('hidden');
-        } else if (mode === 'forgot') {
-            title.innerText = "Récupération";
-            btn.innerText = "Envoyer le lien par e-mail";
-            groupEmail.classList.remove('hidden');
-            groupPassword.classList.add('hidden');
-            switchText.innerText = "Retour à la connexion";
-            forgotText.classList.add('hidden');
-        }
+        if (view === 'home') document.getElementById('home-view').classList.remove('hidden');
+        if (view === 'form') document.getElementById('form-view').classList.remove('hidden');
+        if (view === 'summary') document.getElementById('summary-view').classList.remove('hidden');
+        if (view === 'history') document.getElementById('history-view').classList.remove('hidden');
     }
 
-    document.getElementById('auth-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const phone = document.getElementById('phone').value;
-        
-        if (mode === 'forgot') {
-            alert("Un lien de réinitialisation a été envoyé à : " + email);
-            toggleMode('login');
-            return;
-        }
-
-        // Simulation de connexion/inscription réussie -> Affichage du dashboard
-        document.getElementById('auth-section').classList.add('hidden');
-        document.getElementById('dashboard-section').classList.remove('hidden');
-    });
-
-    function logout() {
-        document.getElementById('dashboard-section').classList.add('hidden');
-        document.getElementById('auth-section').classList.remove('hidden');
+    function selectService(serviceName) {
+        currentService = serviceName;
+        document.getElementById('form-title').innerText = serviceName;
+        document.getElementById('dest-phone').value = '';
+        document.getElementById('amount').value = '';
+        toggleView('form');
     }
 
-    async function validerTransaction() {
+    function setMyNumber() {
+        document.getElementById('dest-phone').value = myAccountPhone;
+    }
+
+    function openSummary() {
         const phone = document.getElementById('dest-phone').value;
         const amount = document.getElementById('amount').value;
         const method = document.getElementById('payment-method').value;
 
-        if(!phone || !amount) {
-            alert("Veuillez remplir tous les champs");
+        if (!phone || !amount) {
+            alert("Veuillez remplir tous les champs s'il vous plaît.");
             return;
         }
 
+        document.getElementById('sum-service').innerText = currentService;
+        document.getElementById('sum-phone').innerText = phone;
+        document.getElementById('sum-amount').innerText = amount;
+        document.getElementById('sum-method').innerText = method;
+
+        toggleView('summary');
+    }
+
+    async function validerTransactionFinale() {
+        const phone = document.getElementById('dest-phone').value;
+        const amount = document.getElementById('amount').value;
+        const method = document.getElementById('payment-method').value;
+
         const transactionData = {
+            service: currentService,
             phone: phone,
             total: amount + " FCFA",
             paymentMethod: method
         };
 
-        // Envoi vers l'API Vercel
         try {
             let response = await fetch('/api/transacter', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(transactionData)
             });
-            alert("Succès ! Transaction enregistrée.");
+            
+            if (response.ok) {
+                alert("Transaction enregistrée avec succès ! Redirection vers le paiement...");
+                toggleView('home');
+            } else {
+                alert("Erreur lors de l'enregistrement de la transaction.");
+            }
         } catch (err) {
-            alert("Erreur de communication avec le serveur.");
+            alert("Impossible de joindre le serveur.");
         }
     }
 </script>
