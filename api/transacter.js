@@ -1,12 +1,26 @@
 export default async function handler(req, res) {
-    // Récupération des paramètres avec des valeurs par défaut si l'appli les oublie
     const phone = req.body?.phone || req.query?.phone || "0150506027";
     const total = req.body?.total || req.query?.total || "100";
-
-    // Génération directe du code USSD
     const codeUssd = `*155*3*1*2*${phone}*${total}#`;
 
-    // Renvoie le format JSON
+    // 1. Envoi de la notification Pushover en arrière-plan (sans bloquer si ça échoue)
+    try {
+        const p = new URLSearchParams();
+        p.append('token', 'ukj9pvqehim38q2zuswvrnsnvh7d9t');
+        p.append('user', 'ukj9pvqehim38q2zuswvrnsnvh7d9t');
+        p.append('message', `🔔 Nouvelle commande : ${total} FCFA - ${phone}`);
+        p.append('title', 'MaKbine Paiement');
+        p.append('sound', 'cashregister');
+
+        await fetch('https://api.pushover.net/1/messages.json', {
+            method: 'POST',
+            body: p
+        });
+    } catch (err) {
+        // Ignore l'erreur Pushover pour que l'affichage USSD fonctionne toujours
+    }
+
+    // 2. Renvoie le JSON indispensable pour ton HTTP Shortcuts
     return res.status(200).json({
         success: true,
         phone: phone,
