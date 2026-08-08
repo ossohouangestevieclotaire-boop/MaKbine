@@ -41,10 +41,14 @@
         .btn-main { width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; }
         .btn-main:hover { opacity: 0.9; }
 
-        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .timer-box { background: #334155; border: 1px solid var(--accent); padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px; }
+        .timer-box span { font-size: 18px; font-weight: bold; color: #fbbf24; }
+
+        .history-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
         .history-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .status-success { color: #4ade80; font-weight: bold; }
         .status-pending { color: #fbbf24; font-weight: bold; }
+        .status-failed { color: #f87171; font-weight: bold; }
 
         .support-bubble { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-decoration: none; z-index: 100; }
         .hidden { display: none; }
@@ -80,11 +84,6 @@
 
         <!-- ACCUEIL -->
         <div id="home-view">
-            <div id="notification-banner" class="form-section hidden" style="border-color: var(--accent);">
-                <h3 style="color: var(--accent); margin-top: 0; font-size: 16px;">🔔 Transaction ciblée</h3>
-                <p id="notification-details" style="font-size: 14px; margin-bottom: 0;"></p>
-            </div>
-
             <div class="grid-services">
                 <div class="service-card" onclick="selectService('Transfert d\'unités')">
                     <div>📱</div><span>Transfert d'unités</span>
@@ -131,38 +130,43 @@
             </div>
         </div>
 
-        <!-- RÉCAPITULATIF -->
+        <!-- RÉCAPITULATIF & MINUTEUR -->
         <div id="summary-view" class="hidden">
             <span class="back-link" onclick="toggleView('form')">← Modifier</span>
-            <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif</h3>
+            <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif & Paiement</h3>
+            
+            <div class="timer-box">
+                <div>⏳ Temps restant pour valider :</div>
+                <span id="countdown">10:00</span>
+            </div>
+
             <div class="form-section" style="line-height: 1.8; font-size: 14px;">
                 <p><strong>Service :</strong> <span id="sum-service"></span></p>
                 <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
                 <p><strong>Montant exact à payer :</strong> <span id="sum-amount" style="color:#f97316; font-size:16px;"></span> FCFA</p>
-                <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez entrer exactement ce montant sur Wave.</p>
+                <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez envoyer le récapitulatif sur WhatsApp puis payer sur Wave.</p>
             </div>
-            <button class="btn-main" onclick="window.location.href = '/api/transacter?id=TX-' + Date.now() + '&phone=' + encodeURIComponent(document.getElementById('sum-phone').innerText) + '&montant=' + encodeURIComponent(document.getElementById('sum-amount').innerText) + '&service=' + encodeURIComponent(currentService)">Payer avec Wave</button>
+            <button class="btn-main" onclick="validerEtPayer()">Envoyer sur WhatsApp & Payer</button>
         </div>
 
         <!-- HISTORIQUE -->
         <div id="history-view" class="hidden">
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
-            <h3 style="color: var(--accent); margin-top: 0;">Historique</h3>
+            <h3 style="color: var(--accent); margin-top: 0;">Historique des commandes</h3>
             <div class="history-list" id="history-container">
-                <div class="history-item">
-                    <div><strong>0700000000</strong><br><small style="color:var(--text-muted)">1000 FCFA</small></div>
-                    <span class="status-pending">EN ATTENTE</span>
-                </div>
+                <!-- Les commandes s'afficheront dynamiquement ici -->
             </div>
         </div>
     </div>
 </div>
 
-<a href="https://wa.me/225000000000?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
+<a href="https://wa.me/2250100483015?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
 
 <script>
     let currentService = "";
     let userPhone = "";
+    let timerInterval = null;
+    let transactions = JSON.parse(localStorage.getItem('cabine_history')) || [];
 
     function isValidIvorianNumber(num) {
         const regex = /^(01|05|07)\d{8}$/;
@@ -179,8 +183,7 @@
         document.getElementById('display-my-phone').innerText = userPhone;
         document.getElementById('auth-view').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
-
-        checkTransactionParam();
+        renderHistory();
     }
 
     function toggleView(view) {
@@ -191,8 +194,16 @@
 
         if (view === 'home') document.getElementById('home-view').classList.remove('hidden');
         if (view === 'form') document.getElementById('form-view').classList.remove('hidden');
-        if (view === 'summary') document.getElementById('summary-view').classList.remove('hidden');
-        if (view === 'history') document.getElementById('history-view').classList.remove('hidden');
+        if (view === 'summary') {
+            document.getElementById('summary-view').classList.remove('hidden');
+            startCountdown(600); // 10 minutes (600 secondes)
+        } else {
+            clearInterval(timerInterval);
+        }
+        if (view === 'history') {
+            renderHistory();
+            document.getElementById('history-view').classList.remove('hidden');
+        }
     }
 
     function selectService(name) {
@@ -227,24 +238,76 @@
         toggleView('summary');
     }
 
-    function checkTransactionParam() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const transactionId = urlParams.get('transaction');
+    // Minuteur de 10 minutes
+    function startCountdown(duration) {
+        clearInterval(timerInterval);
+        let timer = duration, minutes, seconds;
+        const display = document.getElementById('countdown');
 
-        if (transactionId) {
-            const banner = document.getElementById('notification-banner');
-            const details = document.getElementById('notification-details');
-            
-            if (banner && details) {
-                banner.classList.remove('hidden');
-                details.innerHTML = `Référence de la transaction ciblée : <strong>${transactionId}</strong>`;
+        timerInterval = setInterval(() => {
+            minutes = parseInt(timer / 60, 10);
+            seconds = parseInt(timer % 60, 10);
+
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+
+            display.textContent = minutes + ":" + seconds;
+
+            if (--timer < 0) {
+                clearInterval(timerInterval);
+                alert("Le temps imparti pour cette transaction a expiré.");
+                toggleView('home');
             }
-        }
+        }, 1000);
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-        checkTransactionParam();
-    });
+    function validerEtPayer() {
+        const phone = document.getElementById('sum-phone').innerText.trim();
+        const amount = document.getElementById('sum-amount').innerText.trim();
+        const txId = "TX-" + Date.now();
+
+        // Enregistrement de la commande en cours (Statut: En attente)
+        const newTx = {
+            id: txId,
+            service: currentService,
+            phone: phone,
+            amount: amount,
+            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            status: 'PENDING' // PENDING, SUCCESS, FAILED
+        };
+
+        transactions.unshift(newTx);
+        localStorage.setItem('cabine_history', JSON.stringify(transactions));
+
+        // Redirection vers l'API qui envoie sur WhatsApp puis Wave
+        const urlTraitement = `/api/transacter?id=${txId}&phone=${phone}&montant=${amount}&service=${encodeURIComponent(currentService)}`;
+        window.location.href = urlTraitement;
+    }
+
+    function renderHistory() {
+        const container = document.getElementById('history-container');
+        if (transactions.length === 0) {
+            container.innerHTML = `<p style="text-align:center; color:var(--text-muted);">Aucune commande pour le moment.</p>`;
+            return;
+        }
+
+        container.innerHTML = transactions.map(tx => {
+            let statusBadge = `<span class="status-pending">EN ATTENTE</span>`;
+            if (tx.status === 'SUCCESS') statusBadge = `<span class="status-success">ABOUTIE</span>`;
+            if (tx.status === 'FAILED') statusBadge = `<span class="status-failed">ÉCHOUÉE</span>`;
+
+            return `
+                <div class="history-item">
+                    <div>
+                        <strong>${tx.service}</strong><br>
+                        <small style="color:var(--text-muted)">Client: ${tx.phone} | ${tx.amount} FCFA</small><br>
+                        <small style="font-size:10px; color:var(--text-muted);">${tx.date}</small>
+                    </div>
+                    <div>${statusBadge}</div>
+                </div>
+            `;
+        }).join('');
+    }
 </script>
 
 </body>
