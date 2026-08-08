@@ -1,16 +1,14 @@
 export default async function handler(req, res) {
-  // 1. Vérifier que c'est bien une requête POST (par exemple pour une commande/transaction)
-  if (req.method !== 'POST') {
+  // Autoriser à la fois POST et GET pour éviter l'erreur 405
+  if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
   try {
-    // Récupérer les données de la transaction envoyées par l'application
-    const transactionData = req.body;
+    // Récupérer les données selon qu'il s'agit d'un POST (body) ou d'un GET (query)
+    const dataPayload = req.method === 'POST' ? req.body : req.query;
 
-    // --- (Ici, vous mettez votre logique habituelle de traitement de paiement / base de données) ---
-
-    // 2. Déclencher la notification Pushover en arrière-plan sans bloquer la réponse
+    // Déclencher la notification Pushover en arrière-plan sans bloquer
     try {
       fetch("https://api.pushover.net/1/messages.json", {
         method: "POST",
@@ -18,7 +16,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           token: "a68ythu2stdmjesyisxh43aw28hns3",
           user: "ukj9pvqehim38q2zuswvrnsnvh7d9t",
-          message: "Nouvelle transaction MaKbine reçue avec succès !",
+          message: "Nouvelle transaction MaKbine reçue !",
           title: "MaKbine Paiement",
           url: "https://ma-kbine.vercel.app/",
           sound: "cashregister",
@@ -29,10 +27,11 @@ export default async function handler(req, res) {
       console.error("Erreur lors du déclenchement de Pushover:", pushErr);
     }
 
-    // 3. Renvoyer immédiatement la réponse de succès au client pour éviter le timeout
+    // Renvoyer immédiatement la réponse de succès
     return res.status(200).json({ 
       success: true, 
-      message: "Transaction traitée avec succès" 
+      message: "Transaction traitée et notification envoyée",
+      receivedData: dataPayload 
     });
 
   } catch (error) {
