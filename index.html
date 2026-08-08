@@ -80,6 +80,12 @@
 
         <!-- ACCUEIL -->
         <div id="home-view">
+            <!-- Zone pour afficher dynamiquement l'alerte de transaction ouverte via Pushover -->
+            <div id="notification-banner" class="form-section hidden" style="border-color: var(--accent);">
+                <h3 style="color: var(--accent); margin-top: 0; font-size: 16px;">🔔 Transaction ciblée</h3>
+                <p id="notification-details" style="font-size: 14px; margin-bottom: 0;"></p>
+            </div>
+
             <div class="grid-services">
                 <div class="service-card" onclick="selectService('Transfert d\'unités')">
                     <div>📱</div><span>Transfert d'unités</span>
@@ -176,6 +182,9 @@
         document.getElementById('display-my-phone').innerText = userPhone;
         document.getElementById('auth-view').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
+
+        // Vérifier si une transaction est passée en paramètre URL au chargement ou connexion
+        checkTransactionParam();
     }
 
     function toggleView(view) {
@@ -247,6 +256,28 @@
         alert("Transaction enregistrée ! Redirection vers Wave...");
         window.location.href = waveLink;
     }
+
+    // --- Script Intelligent : Interception de l'URL Pushover ---
+    function checkTransactionParam() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const transactionId = urlParams.get('transaction');
+
+        if (transactionId) {
+            console.log("Affichage des détails pour la transaction :", transactionId);
+            const banner = document.getElementById('notification-banner');
+            const details = document.getElementById('notification-details');
+            
+            if (banner && details) {
+                banner.classList.remove('hidden');
+                details.innerHTML = `Référence de la transaction ciblée : <strong>${transactionId}</strong>`;
+            }
+        }
+    }
+
+    // Exécuter la vérification au cas où l'utilisateur est déjà connecté ou arrive directement via le lien
+    window.addEventListener('DOMContentLoaded', () => {
+        checkTransactionParam();
+    });
 </script>
 
 </body>
