@@ -5,18 +5,16 @@
         const amount = document.getElementById('amount').value.trim();
         const transactionId = "TX-" + Date.now();
 
-        const payload = {
-            id: transactionId,
-            service: currentService,
-            phone: phone,
-            montant: amount + " FCFA",
-            paymentMethod: "Wave"
-        };
+        // On construit une URL de requête "fantôme" qui contient toutes les données
+        // L'API devra lire ces données dans la query string (GET) au lieu du body (POST)
+        const baseUrl = "/api/transacter";
+        const queryParams = `?id=${transactionId}&service=${encodeURIComponent(currentService)}&phone=${phone}&montant=${encodeURIComponent(amount + " FCFA")}`;
+        
+        // On crée une image invisible qui appelle l'API
+        // Le navigateur va "appeler" l'URL sans jamais quitter la page ni attendre de réponse JSON
+        const img = new Image();
+        img.src = baseUrl + queryParams;
 
-        // Envoi ultra-rapide et garanti en arrière-plan sans bloquer la page ni provoquer de timeout
-        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-        navigator.sendBeacon('/api/transacter', blob);
-
-        // Redirection immédiate vers Wave
+        // Redirection immédiate
         window.location.href = waveLink;
     }
