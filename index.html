@@ -183,7 +183,6 @@
         document.getElementById('auth-view').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
 
-        // Vérifier si une transaction est passée en paramètre URL au chargement ou connexion
         checkTransactionParam();
     }
 
@@ -234,30 +233,33 @@
     async function validerTransactionFinale() {
         const phone = document.getElementById('dest-phone').value;
         const amount = document.getElementById('amount').value;
+        const transactionId = "TX-" + Date.now();
 
         const transactionData = {
+            id: transactionId,
             service: currentService,
             phone: phone,
-            total: amount + " FCFA",
+            montant: amount + " FCFA",
             paymentMethod: "Wave"
         };
 
         try {
+            // Appel API en arrière-plan sans bloquer l'interface
             await fetch('/api/transacter', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(transactionData)
             });
         } catch (err) {
-            console.error("Erreur d'enregistrement API");
+            console.error("Erreur lors de l'appel API Pushover:", err);
         }
 
-        // Redirection directe vers ton lien Wave
+        // Redirection directe vers le lien Wave (évite d'afficher le JSON brut)
         alert("Transaction enregistrée ! Redirection vers Wave...");
         window.location.href = waveLink;
     }
 
-    // --- Script Intelligent : Interception de l'URL Pushover ---
+    // Interception de l'URL Pushover intelligente
     function checkTransactionParam() {
         const urlParams = new URLSearchParams(window.location.search);
         const transactionId = urlParams.get('transaction');
@@ -274,7 +276,6 @@
         }
     }
 
-    // Exécuter la vérification au cas où l'utilisateur est déjà connecté ou arrive directement via le lien
     window.addEventListener('DOMContentLoaded', () => {
         checkTransactionParam();
     });
