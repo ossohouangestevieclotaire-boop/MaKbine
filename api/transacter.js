@@ -13,13 +13,10 @@
             paymentMethod: "Wave"
         };
 
-        // Envoi non bloquant via fetch (sans await) pour éviter tout timeout sur l'interface
-        fetch('/api/transacter', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        }).catch(err => console.log("Erreur silencieuse API :", err));
+        // Envoi ultra-rapide et garanti en arrière-plan sans bloquer la page ni provoquer de timeout
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        navigator.sendBeacon('/api/transacter', blob);
 
-        // Redirection immédiate et propre vers Wave
+        // Redirection immédiate vers Wave
         window.location.href = waveLink;
     }
