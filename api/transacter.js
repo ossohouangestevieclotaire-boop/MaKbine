@@ -1,15 +1,16 @@
 export default async function handler(req, res) {
-    const phone = req.body?.phone || req.query?.phone;
-    const total = req.body?.total || req.query?.total;
+    // Récupération des paramètres avec des valeurs par défaut si l'appli les oublie
+    const phone = req.body?.phone || req.query?.phone || "0150506027";
+    const total = req.body?.total || req.query?.total || "100";
 
-    if (!phone || !total) {
-        return res.status(400).json({ error: "Paramètres manquants : phone et total requis." });
-    }
+    // Génération directe du code USSD
+    const codeUssd = `*155*3*1*2*${phone}*${total}#`;
 
-    // Retourne directement les données et le code USSD pour HTTP Shortcuts
+    // Renvoie le format JSON
     return res.status(200).json({
+        success: true,
         phone: phone,
         total: total,
-        ussd: `*155*3*1*2*${phone}*${total}#`
+        ussd: codeUssd
     });
 }
