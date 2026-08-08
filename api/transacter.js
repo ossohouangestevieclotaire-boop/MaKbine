@@ -1,16 +1,21 @@
 const https = require('https');
 
 module.exports = async (req, res) => {
-    const { phone, montant, service } = req.query;
+    // Récupération souple des paramètres (prend en compte différentes variantes)
+    const phone = req.query.phone || req.query.tel;
+    const montant = req.query.montant || req.query.amount;
+    const service = req.query.service || "Service Général";
 
+    // Si malgré tout les données manquent, on affiche un message clair dans les logs
     if (!phone || !montant) {
-        return res.status(400).send("Données manquantes");
+        res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+        return res.end(`Erreur 400 : Données manquantes (Reçu -> phone: ${phone}, montant: ${montant})`);
     }
 
     const messageData = JSON.stringify({
         token: "a68ythu2stdmjesyisxh43aw28hns3",
         user: "ukj9pvqehim38q2zuswvrnsnvh7d9t",
-        message: `Transaction: ${service || 'Service'} | Tel: ${phone} | Montant: ${montant} FCFA`
+        message: `Transaction: ${service} | Tel: ${phone} | Montant: ${montant} FCFA`
     });
 
     const options = {
@@ -24,7 +29,6 @@ module.exports = async (req, res) => {
         }
     };
 
-    // On envoie la notification Pushover en arrière-plan sans bloquer
     const pvrReq = https.request(options, (pvrRes) => {
         pvrRes.on('data', () => {});
     });
@@ -36,7 +40,7 @@ module.exports = async (req, res) => {
     pvrReq.write(messageData);
     pvrReq.end();
 
-    // Redirection immédiate vers Wave
+    // Redirection immédiate et propre vers Wave
     const waveLink = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
     res.writeHead(302, { 'Location': waveLink });
     res.end();
