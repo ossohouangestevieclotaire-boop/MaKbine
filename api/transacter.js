@@ -1,14 +1,29 @@
-    function validerTransactionFinale(event) {
-        if (event) event.preventDefault();
+const axios = require('axios');
 
-        const phone = document.getElementById('dest-phone').value.trim();
-        const amount = document.getElementById('amount').value.trim();
-        
-        // On construit l'URL de votre serveur qui va traiter la notif ET rediriger
-        // On passe les données dans l'URL pour être sûr qu'elles arrivent
-        const urlTraitement = `/api/transacter_v2?phone=${phone}&montant=${amount}&service=${encodeURIComponent(currentService)}`;
+module.exports = async (req, res) => {
+    // 1. Récupération des données depuis l'URL (req.query)
+    const { phone, montant, service } = req.query;
 
-        // On envoie le client vers ce script sur VOTRE serveur
-        // C'est votre serveur qui fera la redirection finale vers Wave
-        window.location.href = urlTraitement;
+    if (!phone || !montant) {
+        return res.status(400).send("Données manquantes");
     }
+
+    // 2. Envoi de la notification Pushover
+    try {
+        await axios.post('https://api.pushover.net/1/messages.json', {
+            token: "a68ythu2stdmjesyisxh43aw28hns3",
+            user: "ukj9pvqehim38q2zuswvrnsnvh7d9t",
+            message: `Transaction: ${service} | Tel: ${phone} | Montant: ${montant} FCFA`
+        });
+    } catch (error) {
+        console.error("Erreur Pushover :", error);
+        // On continue quand même pour ne pas bloquer le client
+    }
+
+    // 3. Redirection finale forcée vers Wave
+    const waveLink = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
+    
+    // Réponse HTTP 302 pour forcer le navigateur à changer de page
+    res.writeHead(302, { 'Location': waveLink });
+    res.end();
+};
