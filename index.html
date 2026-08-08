@@ -142,7 +142,8 @@
                 <p><strong>Montant exact à payer :</strong> <span id="sum-amount" style="color:#f97316; font-size:16px;"></span> FCFA</p>
                 <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez entrer exactement ce montant sur Wave.</p>
             </div>
-            <button class="btn-main" onclick="validerTransactionFinale()">Payer avec Wave</button>
+            <!-- Ajout de l'événement pour sécuriser le clic et empêcher tout comportement par défaut -->
+            <button class="btn-main" onclick="validerTransactionFinale(event)">Payer avec Wave</button>
         </div>
 
         <!-- HISTORIQUE -->
@@ -230,7 +231,9 @@
         toggleView('summary');
     }
 
-    async function validerTransactionFinale() {
+    function validerTransactionFinale(event) {
+        if (event) event.preventDefault();
+
         const phone = document.getElementById('dest-phone').value.trim();
         const amount = document.getElementById('amount').value.trim();
         const transactionId = "TX-" + Date.now();
@@ -243,22 +246,13 @@
             paymentMethod: "Wave"
         };
 
-        try {
-            // Envoi des données en POST et attente de la réponse de l'API
-            await fetch('/api/transacter', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-        } catch (err) {
-            console.error("Erreur lors de l'appel API :", err);
-        }
+        // Envoi discret et garanti des données en arrière-plan vers l'API sans bloquer la page
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        navigator.sendBeacon('/api/transacter', blob);
 
-        // Redirection vers le lien Wave (empêche l'affichage du JSON sur l'écran)
+        // Redirection immédiate vers Wave pour ne jamais afficher de JSON brut
         window.location.replace(waveLink);
+        return false;
     }
 
     // Interception de l'URL Pushover intelligente
