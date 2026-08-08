@@ -4,44 +4,260 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cabine Express</title>
-    <!-- Styles inchangés -->
     <style>
-        body { font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
-        .app-container { max-width: 400px; margin: auto; background: #1e293b; padding: 20px; border-radius: 15px; }
-        input, select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; box-sizing: border-box; }
-        .btn-main { width: 100%; background: #f97316; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #f97316;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 420px; background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); position: relative; min-height: 90vh; box-sizing: border-box; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h2 { color: var(--accent); margin: 0; font-size: 22px; }
+        .user-badge { background: #334155; padding: 8px 12px; border-radius: 50px; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+        .active-account { background: #0f172a; border: 1px solid var(--border); padding: 12px 15px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .active-account span { color: var(--accent); font-weight: bold; }
+
+        .grid-services { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .service-card { background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 14px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .service-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .service-card div:first-child { font-size: 24px; margin-bottom: 8px; }
+        .service-card span { font-size: 13px; font-weight: 600; color: var(--text-main); }
+
+        .form-section { background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 14px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+        .input-row { display: flex; gap: 8px; align-items: center; }
+        input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 14px; box-sizing: border-box; }
+        
+        .btn-self { background: #334155; border: none; color: var(--accent); padding: 10px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-self:hover { background: #475569; }
+
+        .btn-main { width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; }
+        .btn-main:hover { opacity: 0.9; }
+
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .history-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .status-success { color: #4ade80; font-weight: bold; }
+        .status-pending { color: #fbbf24; font-weight: bold; }
+
+        .support-bubble { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-decoration: none; z-index: 100; }
+        .hidden { display: none; }
+        .back-link { color: var(--text-muted); font-size: 13px; cursor: pointer; margin-bottom: 10px; display: inline-block; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <h3>Cabine Express</h3>
-    <div id="form-view">
-        <label>Service</label>
-        <select id="service-select">
-            <option>Transfert d'unités</option>
-            <option>Souscription Internet</option>
-        </select>
-        <label>Numéro bénéficiaire</label>
-        <input type="text" id="dest-phone" placeholder="0700000000">
-        <label>Montant (FCFA)</label>
-        <input type="number" id="amount" placeholder="500">
-        <button class="btn-main" onclick="validerTransactionFinale()">Payer avec Wave</button>
+    <!-- PAGE AUTHENTIFICATION -->
+    <div id="auth-view">
+        <h2 style="text-align:center; color:var(--accent);">Cabine Express</h2>
+        <p style="text-align:center; font-size:13px; color:var(--text-muted);">Connexion / Inscription</p>
+        <div class="form-section">
+            <div class="form-group">
+                <label>Votre Numéro (01, 05 ou 07)</label>
+                <input type="text" id="auth-phone" placeholder="Ex: 0700000000" maxlength="10">
+            </div>
+            <button class="btn-main" onclick="handleAuth()">Accéder à mon compte</button>
+        </div>
+    </div>
+
+    <!-- APPLICATION PRINCIPALE -->
+    <div id="main-app" class="hidden">
+        <div class="header">
+            <h2>Cabine Express</h2>
+            <div class="user-badge" onclick="toggleView('history')">📜 Historique</div>
+        </div>
+
+        <div class="active-account">
+            Compte : <span id="display-my-phone"></span>
+        </div>
+
+        <!-- ACCUEIL -->
+        <div id="home-view">
+            <div id="notification-banner" class="form-section hidden" style="border-color: var(--accent);">
+                <h3 style="color: var(--accent); margin-top: 0; font-size: 16px;">🔔 Transaction ciblée</h3>
+                <p id="notification-details" style="font-size: 14px; margin-bottom: 0;"></p>
+            </div>
+
+            <div class="grid-services">
+                <div class="service-card" onclick="selectService('Transfert d\'unités')">
+                    <div>📱</div><span>Transfert d'unités</span>
+                </div>
+                <div class="service-card" onclick="selectService('Souscription Internet')">
+                    <div>🌐</div><span>Souscription Internet</span>
+                </div>
+                <div class="service-card" onclick="selectService('Souscription Appel')">
+                    <div>📞</div><span>Souscription Appel</span>
+                </div>
+                <div class="service-card" onclick="selectService('Souscription Mix')">
+                    <div>⚡</div><span>Souscription Mix</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORMULAIRE -->
+        <div id="form-view" class="hidden">
+            <span class="back-link" onclick="toggleView('home')">← Retour</span>
+            <h3 id="form-title" style="color: var(--accent); margin-top: 0;"></h3>
+            
+            <div class="form-section">
+                <div class="form-group">
+                    <label>Numéro du bénéficiaire</label>
+                    <div class="input-row">
+                        <input type="text" id="dest-phone" placeholder="Ex: 0700000000" maxlength="10">
+                        <button class="btn-self" onclick="setMyNumber()">Pour moi</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Montant (FCFA)</label>
+                    <input type="number" id="amount" placeholder="Ex: 500">
+                </div>
+
+                <div class="form-group">
+                    <label>Moyen de paiement</label>
+                    <select id="payment-method">
+                        <option value="Wave">Wave (Paiement direct)</option>
+                    </select>
+                </div>
+
+                <button class="btn-main" onclick="openSummary()">Continuer</button>
+            </div>
+        </div>
+
+        <!-- RÉCAPITULATIF -->
+        <div id="summary-view" class="hidden">
+            <span class="back-link" onclick="toggleView('form')">← Modifier</span>
+            <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif</h3>
+            <div class="form-section" style="line-height: 1.8; font-size: 14px;">
+                <p><strong>Service :</strong> <span id="sum-service"></span></p>
+                <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
+                <p><strong>Montant exact à payer :</strong> <span id="sum-amount" style="color:#f97316; font-size:16px;"></span> FCFA</p>
+                <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez entrer exactement ce montant sur Wave.</p>
+            </div>
+            <button class="btn-main" onclick="validerTransactionFinale(event)">Payer avec Wave</button>
+        </div>
+
+        <!-- HISTORIQUE -->
+        <div id="history-view" class="hidden">
+            <span class="back-link" onclick="toggleView('home')">← Retour</span>
+            <h3 style="color: var(--accent); margin-top: 0;">Historique</h3>
+            <div class="history-list" id="history-container">
+                <div class="history-item">
+                    <div><strong>0700000000</strong><br><small style="color:var(--text-muted)">1000 FCFA</small></div>
+                    <span class="status-pending">EN ATTENTE</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
+<a href="https://wa.me/225000000000?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
+
 <script>
-    function validerTransactionFinale() {
+    let currentService = "";
+    let userPhone = "";
+
+    function isValidIvorianNumber(num) {
+        const regex = /^(01|05|07)\d{8}$/;
+        return regex.test(num);
+    }
+
+    function handleAuth() {
+        const phoneInput = document.getElementById('auth-phone').value.trim();
+        if (!isValidIvorianNumber(phoneInput)) {
+            alert("Numéro invalide ! Il doit comporter 10 chiffres et commencer obligatoirement par 01, 05 ou 07.");
+            return;
+        }
+        userPhone = phoneInput;
+        document.getElementById('display-my-phone').innerText = userPhone;
+        document.getElementById('auth-view').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+
+        checkTransactionParam();
+    }
+
+    function toggleView(view) {
+        document.getElementById('home-view').classList.add('hidden');
+        document.getElementById('form-view').classList.add('hidden');
+        document.getElementById('summary-view').classList.add('hidden');
+        document.getElementById('history-view').classList.add('hidden');
+
+        if (view === 'home') document.getElementById('home-view').classList.remove('hidden');
+        if (view === 'form') document.getElementById('form-view').classList.remove('hidden');
+        if (view === 'summary') document.getElementById('summary-view').classList.remove('hidden');
+        if (view === 'history') document.getElementById('history-view').classList.remove('hidden');
+    }
+
+    function selectService(name) {
+        currentService = name;
+        document.getElementById('form-title').innerText = name;
+        document.getElementById('dest-phone').value = '';
+        document.getElementById('amount').value = '';
+        toggleView('form');
+    }
+
+    function setMyNumber() {
+        document.getElementById('dest-phone').value = userPhone;
+    }
+
+    function openSummary() {
         const phone = document.getElementById('dest-phone').value.trim();
         const amount = document.getElementById('amount').value.trim();
-        const service = document.getElementById('service-select').value;
 
-        if(!phone || !amount) { alert("Remplissez tous les champs"); return; }
+        if (!isValidIvorianNumber(phone)) {
+            alert("Le numéro du bénéficiaire doit comporter 10 chiffres et commencer par 01, 05 ou 07.");
+            return;
+        }
+        if (!amount || amount <= 0) {
+            alert("Veuillez entrer un montant valide.");
+            return;
+        }
 
-        // Redirection vers le serveur avec les données dans l'URL
-        const url = `/api/transacter?phone=${phone}&montant=${amount}&service=${encodeURIComponent(service)}`;
-        window.location.href = url;
+        document.getElementById('sum-service').innerText = currentService;
+        document.getElementById('sum-phone').innerText = phone;
+        document.getElementById('sum-amount').innerText = amount;
+
+        toggleView('summary');
     }
+
+    // Fonction finale corrigée pour envoyer vers le serveur qui gère Pushover + Redirection Wave
+    function validerTransactionFinale(event) {
+        if (event) event.preventDefault();
+
+        const phone = document.getElementById('dest-phone').value.trim();
+        const amount = document.getElementById('amount').value.trim();
+        const transactionId = "TX-" + Date.now();
+
+        // On redirige vers l'API serveur en passant les données en paramètres URL
+        const urlTraitement = `/api/transacter?id=${transactionId}&phone=${phone}&montant=${amount}&service=${encodeURIComponent(currentService)}`;
+        window.location.href = urlTraitement;
+    }
+
+    function checkTransactionParam() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const transactionId = urlParams.get('transaction');
+
+        if (transactionId) {
+            const banner = document.getElementById('notification-banner');
+            const details = document.getElementById('notification-details');
+            
+            if (banner && details) {
+                banner.classList.remove('hidden');
+                details.innerHTML = `Référence de la transaction ciblée : <strong>${transactionId}</strong>`;
+            }
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        checkTransactionParam();
+    });
 </script>
 
 </body>
