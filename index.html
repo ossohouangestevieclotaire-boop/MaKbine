@@ -231,11 +231,11 @@
     }
 
     async function validerTransactionFinale() {
-        const phone = document.getElementById('dest-phone').value;
-        const amount = document.getElementById('amount').value;
+        const phone = document.getElementById('dest-phone').value.trim();
+        const amount = document.getElementById('amount').value.trim();
         const transactionId = "TX-" + Date.now();
 
-        const transactionData = {
+        const payload = {
             id: transactionId,
             service: currentService,
             phone: phone,
@@ -244,19 +244,21 @@
         };
 
         try {
-            // Appel API en arrière-plan sans bloquer l'interface
+            // Envoi des données en POST et attente de la réponse de l'API
             await fetch('/api/transacter', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(transactionData)
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
             });
         } catch (err) {
-            console.error("Erreur lors de l'appel API Pushover:", err);
+            console.error("Erreur lors de l'appel API :", err);
         }
 
-        // Redirection directe vers le lien Wave (évite d'afficher le JSON brut)
-        alert("Transaction enregistrée ! Redirection vers Wave...");
-        window.location.href = waveLink;
+        // Redirection vers le lien Wave (empêche l'affichage du JSON sur l'écran)
+        window.location.replace(waveLink);
     }
 
     // Interception de l'URL Pushover intelligente
