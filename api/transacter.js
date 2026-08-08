@@ -3,18 +3,12 @@
 
         const phone = document.getElementById('dest-phone').value.trim();
         const amount = document.getElementById('amount').value.trim();
-        const transactionId = "TX-" + Date.now();
-
-        // On construit une URL de requête "fantôme" qui contient toutes les données
-        // L'API devra lire ces données dans la query string (GET) au lieu du body (POST)
-        const baseUrl = "/api/transacter";
-        const queryParams = `?id=${transactionId}&service=${encodeURIComponent(currentService)}&phone=${phone}&montant=${encodeURIComponent(amount + " FCFA")}`;
         
-        // On crée une image invisible qui appelle l'API
-        // Le navigateur va "appeler" l'URL sans jamais quitter la page ni attendre de réponse JSON
-        const img = new Image();
-        img.src = baseUrl + queryParams;
+        // On construit l'URL de votre serveur qui va traiter la notif ET rediriger
+        // On passe les données dans l'URL pour être sûr qu'elles arrivent
+        const urlTraitement = `/api/transacter_v2?phone=${phone}&montant=${amount}&service=${encodeURIComponent(currentService)}`;
 
-        // Redirection immédiate
-        window.location.href = waveLink;
+        // On envoie le client vers ce script sur VOTRE serveur
+        // C'est votre serveur qui fera la redirection finale vers Wave
+        window.location.href = urlTraitement;
     }
