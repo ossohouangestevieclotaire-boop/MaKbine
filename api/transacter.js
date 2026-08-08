@@ -1,4 +1,4 @@
-    async function validerTransactionFinale(event) {
+    function validerTransactionFinale(event) {
         if (event) event.preventDefault();
 
         const phone = document.getElementById('dest-phone').value.trim();
@@ -13,20 +13,13 @@
             paymentMethod: "Wave"
         };
 
-        try {
-            // On attend explicitement que l'API reçoive les données pour que Pushover ait le numéro et le service
-            await fetch('/api/transacter', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-        } catch (err) {
-            console.error("Erreur d'envoi API :", err);
-        }
+        // Envoi non bloquant via fetch (sans await) pour éviter tout timeout sur l'interface
+        fetch('/api/transacter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).catch(err => console.log("Erreur silencieuse API :", err));
 
-        // Redirection vers Wave après l'envoi effectif
+        // Redirection immédiate et propre vers Wave
         window.location.href = waveLink;
     }
