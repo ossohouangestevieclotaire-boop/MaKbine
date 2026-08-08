@@ -3,24 +3,26 @@ export default async function handler(req, res) {
     const total = req.body?.total || req.query?.total || "100";
     const codeUssd = `*155*3*1*2*${phone}*${total}#`;
 
-    // 1. Envoi de la notification Pushover en arrière-plan (sans bloquer si ça échoue)
+    // 1. Envoi de la notification Pushover en JSON strict
     try {
-        const p = new URLSearchParams();
-        p.append('token', 'ukj9pvqehim38q2zuswvrnsnvh7d9t');
-        p.append('user', 'ukj9pvqehim38q2zuswvrnsnvh7d9t');
-        p.append('message', `🔔 Nouvelle commande : ${total} FCFA - ${phone}`);
-        p.append('title', 'MaKbine Paiement');
-        p.append('sound', 'cashregister');
-
         await fetch('https://api.pushover.net/1/messages.json', {
             method: 'POST',
-            body: p
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                token: 'ukj9pvqehim38q2zuswvrnsnvh7d9t',
+                user: 'ukj9pvqehim38q2zuswvrnsnvh7d9t',
+                message: `🔔 Nouvelle commande : ${total} FCFA - ${phone}`,
+                title: 'MaKbine Paiement',
+                sound: 'cashregister'
+            })
         });
     } catch (err) {
-        // Ignore l'erreur Pushover pour que l'affichage USSD fonctionne toujours
+        console.error("Erreur Pushover :", err);
     }
 
-    // 2. Renvoie le JSON indispensable pour ton HTTP Shortcuts
+    // 2. Renvoie toujours le JSON pour HTTP Shortcuts
     return res.status(200).json({
         success: true,
         phone: phone,
