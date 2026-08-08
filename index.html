@@ -41,7 +41,7 @@
         .btn-main { width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; }
         .btn-main:hover { opacity: 0.9; }
 
-        .timer-box { background: #334155; border: 1px solid var(--accent); padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px; }
+        .timer-box { background: #334155; border: 1px solid var(--accent); padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px; display: none; }
         .timer-box span { font-size: 18px; font-weight: bold; color: #fbbf24; }
 
         .history-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
@@ -130,13 +130,14 @@
             </div>
         </div>
 
-        <!-- RÉCAPITULATIF & MINUTEUR -->
+        <!-- RÉCAPITULATIF -->
         <div id="summary-view" class="hidden">
             <span class="back-link" onclick="toggleView('form')">← Modifier</span>
-            <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif & Paiement</h3>
+            <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif</h3>
             
-            <div class="timer-box">
-                <div>⏳ Temps restant pour valider :</div>
+            <!-- Minuteur visible au clic sur payer -->
+            <div id="active-timer-box" class="timer-box">
+                <div>⏳ Paiement en cours - Temps restant :</div>
                 <span id="countdown">10:00</span>
             </div>
 
@@ -144,9 +145,9 @@
                 <p><strong>Service :</strong> <span id="sum-service"></span></p>
                 <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
                 <p><strong>Montant exact à payer :</strong> <span id="sum-amount" style="color:#f97316; font-size:16px;"></span> FCFA</p>
-                <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez envoyer le récapitulatif sur WhatsApp puis payer sur Wave.</p>
+                <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez entrer exactement ce montant sur Wave.</p>
             </div>
-            <button class="btn-main" onclick="validerEtPayer()">Envoyer sur WhatsApp & Payer</button>
+            <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtMinuteur()">Payer avec Wave</button>
         </div>
 
         <!-- HISTORIQUE -->
@@ -154,7 +155,7 @@
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
             <h3 style="color: var(--accent); margin-top: 0;">Historique des commandes</h3>
             <div class="history-list" id="history-container">
-                <!-- Les commandes s'afficheront dynamiquement ici -->
+                <!-- Historique dynamique -->
             </div>
         </div>
     </div>
@@ -187,6 +188,10 @@
     }
 
     function toggleView(view) {
+        clearInterval(timerInterval);
+        document.getElementById('active-timer-box').style.display = 'none';
+        document.getElementById('pay-btn').style.display = 'block';
+
         document.getElementById('home-view').classList.add('hidden');
         document.getElementById('form-view').classList.add('hidden');
         document.getElementById('summary-view').classList.add('hidden');
@@ -194,12 +199,7 @@
 
         if (view === 'home') document.getElementById('home-view').classList.remove('hidden');
         if (view === 'form') document.getElementById('form-view').classList.remove('hidden');
-        if (view === 'summary') {
-            document.getElementById('summary-view').classList.remove('hidden');
-            startCountdown(600); // 10 minutes (600 secondes)
-        } else {
-            clearInterval(timerInterval);
-        }
+        if (view === 'summary') document.getElementById('summary-view').classList.remove('hidden');
         if (view === 'history') {
             renderHistory();
             document.getElementById('history-view').classList.remove('hidden');
@@ -238,7 +238,36 @@
         toggleView('summary');
     }
 
-    // Minuteur de 10 minutes
+    // Déclenchement au clic sur "Payer avec Wave"
+    function lancerPaiementEtMinuteur() {
+        const phone = document.getElementById('sum-phone').innerText.trim();
+        const amount = document.getElementById('sum-amount').innerText.trim();
+        const txId = "TX-" + Date.now();
+
+        // 1. Enregistrement dans l'historique local (Statut: En attente)
+        const newTx = {
+            id: txId,
+            service: currentService,
+            phone: phone,
+            amount: amount,
+            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            status: 'PENDING'
+        };
+        transactions.unshift(newTx);
+        localStorage.setItem('cabine_history', JSON.stringify(transactions));
+
+        // 2. Affichage et démarrage du décompte de 10 minutes sur l'écran
+        document.getElementById('active-timer-box').style.display = 'block';
+        document.getElementById('pay-btn').style.display = 'none'; // Cache le bouton pour éviter les double clics
+        startCountdown(600); // 600 secondes = 10 minutes
+
+        // 3. Appel de l'API backend pour envoyer la notification/récapitulatif et ouvrir Wave
+        setTimeout(() => {
+            const urlTraitement = `/api/transacter?id=${txId}&phone=${phone}&montant=${amount}&service=${encodeURIComponent(currentService)}`;
+            window.location.href = urlTraitement;
+        }, 1000); // Petite pause d'une seconde pour bien voir le minuteur s'enclencher
+    }
+
     function startCountdown(duration) {
         clearInterval(timerInterval);
         let timer = duration, minutes, seconds;
@@ -259,29 +288,6 @@
                 toggleView('home');
             }
         }, 1000);
-    }
-
-    function validerEtPayer() {
-        const phone = document.getElementById('sum-phone').innerText.trim();
-        const amount = document.getElementById('sum-amount').innerText.trim();
-        const txId = "TX-" + Date.now();
-
-        // Enregistrement de la commande en cours (Statut: En attente)
-        const newTx = {
-            id: txId,
-            service: currentService,
-            phone: phone,
-            amount: amount,
-            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            status: 'PENDING' // PENDING, SUCCESS, FAILED
-        };
-
-        transactions.unshift(newTx);
-        localStorage.setItem('cabine_history', JSON.stringify(transactions));
-
-        // Redirection vers l'API qui envoie sur WhatsApp puis Wave
-        const urlTraitement = `/api/transacter?id=${txId}&phone=${phone}&montant=${amount}&service=${encodeURIComponent(currentService)}`;
-        window.location.href = urlTraitement;
     }
 
     function renderHistory() {
