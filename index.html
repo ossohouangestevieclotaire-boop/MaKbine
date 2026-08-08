@@ -227,22 +227,31 @@
         toggleView('summary');
     }
 
-    // Fonction de validation finale sécurisée (capture dynamique pour éviter les 'undefined')
+    // Fonction de récupération blindée pour éviter les 'undefined'
     function validerTransactionFinale(event) {
         if (event) event.preventDefault();
 
-        const phoneInput = document.getElementById('dest-phone') || document.getElementById('phone');
-        const amountInput = document.getElementById('amount');
+        // Récupération prioritaire depuis l'écran de récapitulatif
+        let phone = document.getElementById('sum-phone') ? document.getElementById('sum-phone').innerText.trim() : "";
+        let amount = document.getElementById('sum-amount') ? document.getElementById('sum-amount').innerText.trim() : "";
 
-        const phone = phoneInput ? phoneInput.value.trim() : "";
-        const amount = amountInput ? amountInput.value.trim() : "";
-        const transactionId = "TX-" + Date.now();
+        // Si vide, on va chercher dans les champs de saisie
+        if (!phone) {
+            const destInput = document.getElementById('dest-phone') || document.getElementById('phone');
+            if (destInput) phone = destInput.value.trim();
+        }
+        if (!amount) {
+            const amountInput = document.getElementById('amount');
+            if (amountInput) amount = amountInput.value.trim();
+        }
 
         if (!phone || !amount) {
-            alert("Veuillez remplir le numéro et le montant.");
+            alert("Erreur : Veuillez remplir le numéro et le montant.");
+            toggleView('form');
             return;
         }
 
+        const transactionId = "TX-" + Date.now();
         const urlTraitement = `/api/transacter?id=${transactionId}&phone=${phone}&montant=${amount}&service=${encodeURIComponent(currentService || 'Service')}`;
         window.location.href = urlTraitement;
     }
