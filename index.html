@@ -3,213 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MaKbine - Dashboard & Transfert</title>
+    <title>MaKbine - Plateforme de Transfert</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
-        .container { background: #1e293b; width: 100%; max-width: 450px; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border: 1px solid #334155; }
-        
-        .nav-tabs { display: flex; justify-content: space-around; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        .tab-btn { background: none; border: none; color: #94a3b8; font-size: 15px; font-weight: bold; cursor: pointer; padding: 5px 10px; }
-        .tab-btn.active { color: #38bdf8; border-bottom: 2px solid #38bdf8; }
-
-        .dashboard-card { background: linear-gradient(135deg, #0284c7, #2563eb); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .dashboard-card h3 { font-size: 14px; color: #e0f2fe; }
-        .dashboard-card .balance { font-size: 20px; font-weight: bold; }
-
+        body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: #1e293b; padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        h2 { text-align: center; color: #38bdf8; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-size: 13px; color: #94a3b8; }
-        input, select { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 15px; outline: none; }
-        input:focus, select:focus { border-color: #38bdf8; }
-        
-        .operator-badge { margin-top: 4px; font-size: 12px; font-weight: bold; }
-        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 13px; color: #cbd5e1; cursor: pointer; }
-        
-        .summary { background: #0f172a; padding: 12px; border-radius: 10px; margin-top: 15px; border: 1px dashed #475569; }
-        .summary p { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
-        .summary p.total { font-size: 16px; font-weight: bold; color: #38bdf8; border-top: 1px solid #334155; padding-top: 6px; margin-top: 6px; }
-        
-        .btn { width: 100%; padding: 13px; background: #2563eb; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: background 0.2s; }
-        .btn:hover { background: #1d4ed8; }
-
-        .history-list { max-height: 350px; overflow-y: auto; }
-        .history-item { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; border-left: 4px solid #38bdf8; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #0284c7; border: none; border-radius: 6px; color: #fff; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #0369a1; }
+        .switch { text-align: center; margin-top: 15px; font-size: 13px; color: #94a3b8; cursor: pointer; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('home')">🚀 Transaction</button>
-        <button class="tab-btn" onclick="switchTab('history')">📜 Historique</button>
+    <!-- SECTION AUTHENTIFICATION -->
+    <div id="auth-section">
+        <h2 id="auth-title">Connexion</h2>
+        <form id="auth-form">
+            <div class="form-group" id="group-email">
+                <label>Adresse e-mail</label>
+                <input type="email" id="email" placeholder="votre@email.com" required>
+            </div>
+            <div class="form-group">
+                <label>Numéro de téléphone</label>
+                <input type="text" id="phone" placeholder="07XXXXXXXX" required>
+            </div>
+            <div class="form-group" id="group-password">
+                <label>Mot de passe</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" id="auth-btn">Se connecter</button>
+        </form>
+        <div class="switch" id="switch-to-register" onclick="toggleMode('register')">Créer un compte</div>
+        <div class="switch" id="switch-to-forgot" onclick="toggleMode('forgot')" style="margin-top: 5px; color: #38bdf8;">Mot de passe oublié ?</div>
     </div>
 
-    <div id="tab-home">
-        <div class="dashboard-card">
-            <div>
-                <h3>Mon Solde Actuel</h3>
-                <div class="balance" id="userBalance">45,500 FCFA</div>
-            </div>
-            <button style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Recharger</button>
-        </div>
-
+    <!-- SECTION TABLEAU DE BORD / TRANSACTION -->
+    <div id="dashboard-section" class="hidden">
+        <h2>MaKbine - Transaction</h2>
+        <p>Solde actuel : <span id="solde-actuel" style="color: #4ade80; font-weight: bold;">45,500 FCFA</span></p>
+        
         <div class="form-group">
-            <label>Option du numéro</label>
-            <label class="checkbox-group">
-                <input type="checkbox" id="useMyNumber" onchange="toggleMyNumber(this)"> Utiliser mon propre numéro
-            </label>
-        </div>
-
-        <div class="form-group" id="phoneGroup">
-            <label>Numéro du destinataire</label>
-            <input type="tel" id="phone" placeholder="Ex: 0799313774" maxlength="10" oninput="detectOperator(this.value)">
-            <div id="operator" class="operator-badge" style="color: #64748b;">En attente du numéro...</div>
+            <label>Moyen de paiement</label>
+            <select id="payment-method">
+                <option value="Orange Money">Orange Money</option>
+                <option value="Wave">Wave</option>
+            </select>
         </div>
 
         <div class="form-group">
             <label>Type de service</label>
-            <select id="serviceType" onchange="updateServiceOptions()">
-                <option value="transfert">Transfert d'Unités / Argent</option>
-                <option value="internet">Pass Internet</option>
-                <option value="appel">Pass Appel</option>
-                <option value="mix">Pass Mix (Appel + Internet)</option>
-            </select>
-        </div>
-
-        <div class="form-group hidden" id="packageGroup">
-            <label>Sélectionner le Forfait</label>
-            <select id="packageList"></select>
-        </div>
-
-        <div class="form-group" id="amountGroup">
-            <label>Montant de base (FCFA)</label>
-            <input type="number" id="amount" placeholder="Ex: 1000" oninput="calculateTotal()">
+            <input type="text" value="Transfert d'unité" disabled style="background: #334155; color: #cbd5e1;">
         </div>
 
         <div class="form-group">
-            <label>Moyen de paiement</label>
-            <select id="paymentMethod">
-                <option value="solde">Payer depuis mon solde</option>
-                <option value="momo">Mobile Money</option>
-                <option value="wave">Wave</option>
-            </select>
+            <label>Numéro du destinataire</label>
+            <input type="text" id="dest-phone" placeholder="Numéro du client">
         </div>
 
-        <div class="summary">
-            <p><span>Montant / Forfait :</span> <span id="lblBase">0 FCFA</span></p>
-            <p><span>Frais de service (7%) :</span> <span id="lblFees">0 FCFA</span></p>
-            <p class="total"><span>Total à payer :</span> <span id="lblTotal">0 FCFA</span></p>
+        <div class="form-group">
+            <label>Montant (FCFA)</label>
+            <input type="number" id="amount" placeholder="Ex: 1000">
         </div>
 
-        <button class="btn" onclick="validateTransaction()">Valider la transaction</button>
-    </div>
-
-    <div id="tab-history" class="hidden">
-        <h3 style="margin-bottom: 15px; font-size: 16px; color: #38bdf8;">Historique</h3>
-        <div class="history-list" id="historyContainer"></div>
+        <button onclick="validerTransaction()">Valider la transaction</button>
+        <button onclick="logout()" style="background: #ef4444; margin-top: 10px;">Se déconnecter</button>
     </div>
 </div>
 
 <script>
-    const MY_PHONE = "0799313774";
-    let currentOperator = "ORANGE CI";
+    let mode = 'login'; // login, register, forgot
 
-    function switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        if(tab === 'home') {
-            document.querySelector('.nav-tabs button:nth-child(1)').classList.add('active');
-            document.getElementById('tab-home').classList.remove('hidden');
-            document.getElementById('tab-history').classList.add('hidden');
-        } else {
-            document.querySelector('.nav-tabs button:nth-child(2)').classList.add('active');
-            document.getElementById('tab-history').classList.remove('hidden');
-            document.getElementById('tab-home').classList.add('hidden');
+    function toggleMode(targetMode) {
+        mode = targetMode;
+        const title = document.getElementById('auth-title');
+        const btn = document.getElementById('auth-btn');
+        const groupEmail = document.getElementById('group-email');
+        const groupPassword = document.getElementById('group-password');
+        const switchText = document.getElementById('switch-to-register');
+        const forgotText = document.getElementById('switch-to-forgot');
+
+        if (mode === 'register') {
+            title.innerText = "Inscription";
+            btn.innerText = "S'inscrire";
+            groupEmail.classList.remove('hidden');
+            groupPassword.classList.remove('hidden');
+            switchText.innerText = "Déjà un compte ? Se connecter";
+            forgotText.classList.add('hidden');
+        } else if (mode === 'login') {
+            title.innerText = "Connexion";
+            btn.innerText = "Se connecter";
+            groupEmail.classList.remove('hidden');
+            groupPassword.classList.remove('hidden');
+            switchText.innerText = "Créer un compte";
+            forgotText.classList.remove('hidden');
+        } else if (mode === 'forgot') {
+            title.innerText = "Récupération";
+            btn.innerText = "Envoyer le lien par e-mail";
+            groupEmail.classList.remove('hidden');
+            groupPassword.classList.add('hidden');
+            switchText.innerText = "Retour à la connexion";
+            forgotText.classList.add('hidden');
         }
     }
 
-    function toggleMyNumber(checkbox) {
-        const phoneGroup = document.getElementById('phoneGroup');
-        const phoneInput = document.getElementById('phone');
-        if(checkbox.checked) {
-            phoneGroup.classList.add('hidden');
-            phoneInput.value = MY_PHONE;
-            detectOperator(MY_PHONE);
-        } else {
-            phoneGroup.classList.remove('hidden');
-            phoneInput.value = "";
-            detectOperator("");
-        }
-    }
-
-    function detectOperator(phone) {
-        const opDiv = document.getElementById('operator');
-        if (phone.length < 2) { opDiv.innerText = "En attente..."; return; }
-        const prefix = phone.substring(0, 2);
-        if (["07", "08", "09"].includes(prefix)) { currentOperator = "ORANGE CI"; opDiv.innerText = "🟢 ORANGE CI"; opDiv.style.color = "#c084fc"; }
-        else if (["05", "06"].includes(prefix)) { currentOperator = "MTN CI"; opDiv.innerText = "🟡 MTN CI"; opDiv.style.color = "#facc15"; }
-        else if (["01", "02", "03"].includes(prefix)) { currentOperator = "MOOV CI"; opDiv.innerText = "🔵 MOOV CI"; opDiv.style.color = "#4ade80"; }
-        updateServiceOptions();
-    }
-
-    function updateServiceOptions() {
-        const serviceType = document.getElementById('serviceType').value;
-        const packageGroup = document.getElementById('packageGroup');
-        const amountGroup = document.getElementById('amountGroup');
-        const packageList = document.getElementById('packageList');
-
-        if (serviceType === 'transfert') { packageGroup.classList.add('hidden'); amountGroup.classList.remove('hidden'); }
-        else {
-            packageGroup.classList.remove('hidden'); amountGroup.classList.add('hidden');
-            packageList.innerHTML = "";
-            let passes = serviceType === 'internet' ? [{name: "100 Mo - 100F", price: 100}, {name: "1 Go - 300F", price: 300}] : [{name: "30 min - 200F", price: 200}];
-            passes.forEach(p => { let opt = document.createElement('option'); opt.value = p.price; opt.text = p.name; packageList.appendChild(opt); });
-        }
-        calculateTotal();
-    }
-
-    function calculateTotal() {
-        const serviceType = document.getElementById('serviceType').value;
-        let baseAmount = serviceType === 'transfert' ? (parseFloat(document.getElementById('amount').value) || 0) : (parseFloat(document.getElementById('packageList').value) || 0);
-        const total = baseAmount + (baseAmount * 0.07);
-        document.getElementById('lblBase').innerText = baseAmount + " FCFA";
-        document.getElementById('lblFees').innerText = (baseAmount * 0.07).toFixed(0) + " FCFA";
-        document.getElementById('lblTotal').innerText = total.toFixed(0) + " FCFA";
-    }
-
-    async function validateTransaction() {
-        const useMyNum = document.getElementById('useMyNumber').checked;
-        const phoneInput = document.getElementById('phone').value;
-        const phone = useMyNum ? MY_PHONE : (phoneInput ? phoneInput : MY_PHONE);
+    document.getElementById('auth-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
         
-        const total = document.getElementById('lblTotal').innerText;
-        const service = document.getElementById('serviceType').value;
-        const payment = document.getElementById('paymentMethod').value;
+        if (mode === 'forgot') {
+            alert("Un lien de réinitialisation a été envoyé à : " + email);
+            toggleMode('login');
+            return;
+        }
 
+        // Simulation de connexion/inscription réussie -> Affichage du dashboard
+        document.getElementById('auth-section').classList.add('hidden');
+        document.getElementById('dashboard-section').classList.remove('hidden');
+    });
+
+    function logout() {
+        document.getElementById('dashboard-section').classList.add('hidden');
+        document.getElementById('auth-section').classList.remove('hidden');
+    }
+
+    async function validerTransaction() {
+        const phone = document.getElementById('dest-phone').value;
+        const amount = document.getElementById('amount').value;
+        const method = document.getElementById('payment-method').value;
+
+        if(!phone || !amount) {
+            alert("Veuillez remplir tous les champs");
+            return;
+        }
+
+        const transactionData = {
+            phone: phone,
+            total: amount + " FCFA",
+            paymentMethod: method
+        };
+
+        // Envoi vers l'API Vercel
         try {
-            const response = await fetch('/api/transacter', {
+            let response = await fetch('/api/transacter', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone, total, service, payment })
+                body: JSON.stringify(transactionData)
             });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                alert("Succès ! ID de transaction : " + data.id);
-                const history = document.getElementById('historyContainer');
-                history.innerHTML = `<div class='history-item'><strong>${phone}</strong> - ${service} (${total})<br><small style="color: #f59e0b;">Statut : En attente</small></div>` + history.innerHTML;
-            } else {
-                alert("Erreur API : " + (data.message || "Inconnue"));
-            }
-        } catch (e) {
-            alert("Erreur technique : " + e.message);
+            alert("Succès ! Transaction enregistrée.");
+        } catch (err) {
+            alert("Erreur de communication avec le serveur.");
         }
     }
-
-    // Initialisation
-    document.getElementById('useMyNumber').checked = true;
-    toggleMyNumber(document.getElementById('useMyNumber'));
 </script>
 
 </body>
