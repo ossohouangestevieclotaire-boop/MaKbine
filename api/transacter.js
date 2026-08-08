@@ -7,20 +7,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Envoi de la notification Pushover sur ton téléphone
-        const p = new URLSearchParams();
-        p.append('token', 'ukj9pvqehim38q2zuswvrnsnvh7d9t');
-        p.append('user', 'ukj9pvqehim38q2zuswvrnsnvh7d9t');
-        p.append('message', `🔔 Nouvelle commande : ${total} FCFA - ${phone}`);
-        p.append('title', 'MaKbine Paiement');
-        p.append('sound', 'cashregister');
-
-        await fetch('https://api.pushover.net/1/messages.json', {
-            method: 'POST',
-            body: p
-        });
-
-        // Retourne le format JSON avec le code USSD pour HTTP Shortcuts
+        // Retourne le format JSON propre pour HTTP Shortcuts
         return res.status(200).json({
             phone: phone,
             total: total,
