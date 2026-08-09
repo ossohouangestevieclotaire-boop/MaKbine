@@ -9,7 +9,6 @@ function App() {
   const handleAmountChange = (e) => {
     const val = e.target.value;
     setAmount(val);
-    // Calcul des 7%
     const base = parseFloat(val) || 0;
     setTotal(base + (base * 0.07));
   };
