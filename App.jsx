@@ -4,6 +4,7 @@ function App() {
   const [phone, setPhone] = useState('');
   const [amount, setAmount] = useState('');
   const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const handleAmountChange = (e) => {
     const val = e.target.value;
@@ -11,6 +12,39 @@ function App() {
     // Calcul des 7%
     const base = parseFloat(val) || 0;
     setTotal(base + (base * 0.07));
+  };
+
+  const handleTransaction = async () => {
+    if (!phone || !total) {
+      alert("Veuillez remplir tous les champs");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/transacter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone, total })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert("Transaction validée et notification envoyée sur Telegram !");
+        setPhone('');
+        setAmount('');
+        setTotal(0);
+      } else {
+        alert("Erreur lors de la transaction : " + (data.error || "Inconnue"));
+      }
+    } catch (error) {
+      console.error("Erreur réseau:", error);
+      alert("Erreur de connexion avec le serveur.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,14 +74,14 @@ function App() {
       </div>
 
       <button 
-        style={{ marginTop: '20px', width: '100%', padding: '15px', background: '#1E3A8A', color: 'white', border: 'none' }}
-        onClick={() => alert(`Envoi de ${total} FCFA vers ${phone}`)}
+        onClick={handleTransaction}
+        disabled={loading}
+        style={{ marginTop: '20px', width: '100%', padding: '15px', background: '#1E3A8A', color: 'white', border: 'none', cursor: 'pointer' }}
       >
-        Valider la transaction
+        {loading ? "Envoi en cours..." : "Valider la transaction"}
       </button>
     </div>
   );
 }
 
 export default App;
-
