@@ -46,9 +46,9 @@
 
         .history-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
         .history-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-        .status-success { color: #4ade80; font-weight: bold; }
-        .status-pending { color: #fbbf24; font-weight: bold; }
-        .status-failed { color: #f87171; font-weight: bold; }
+        .status-success { color: #4ade80; font-weight: bold; cursor: pointer; }
+        .status-pending { color: #fbbf24; font-weight: bold; cursor: pointer; }
+        .status-failed { color: #f87171; font-weight: bold; cursor: pointer; }
 
         .support-bubble { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-decoration: none; z-index: 100; }
         .hidden { display: none; }
@@ -115,8 +115,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Montant (FCFA)</label>
-                    <input type="number" id="amount" placeholder="Ex: 500">
+                    <label>Choisir le forfait / Montant</label>
+                    <select id="amount-select">
+                        <!-- Rempli dynamiquement -->
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -135,7 +137,6 @@
             <span class="back-link" onclick="toggleView('form')">← Modifier</span>
             <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif</h3>
             
-            <!-- Minuteur visible au clic sur payer -->
             <div id="active-timer-box" class="timer-box">
                 <div>⏳ Paiement en cours - Temps restant :</div>
                 <span id="countdown">10:00</span>
@@ -145,7 +146,7 @@
                 <p><strong>Service :</strong> <span id="sum-service"></span></p>
                 <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
                 <p><strong>Montant exact à payer :</strong> <span id="sum-amount" style="color:#f97316; font-size:16px;"></span> FCFA</p>
-                <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez entrer exactement ce montant.</p>
+                <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez entrer exactement ce montant sur Wave.</p>
             </div>
             <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtMinuteur()">Payer avec Wave</button>
         </div>
@@ -154,6 +155,7 @@
         <div id="history-view" class="hidden">
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
             <h3 style="color: var(--accent); margin-top: 0;">Historique des commandes</h3>
+            <p style="font-size: 11px; color: var(--text-muted);">Cliquez sur le statut d'une commande pour le modifier (En attente ➔ Aboutie ➔ Échouée).</p>
             <div class="history-list" id="history-container">
                 <!-- Historique dynamique -->
             </div>
@@ -169,6 +171,29 @@
     let timerInterval = null;
     let transactions = JSON.parse(localStorage.getItem('cabine_history')) || [];
 
+    const catalogForfaits = {
+        'Transfert d\'unités': [
+            { label: '100 FCFA', value: 100 },
+            { label: '200 FCFA', value: 200 },
+            { label: '500 FCFA', value: 500 },
+            { label: '1000 FCFA', value: 1000 },
+            { label: '2000 FCFA', value: 2000 }
+        ],
+        'Souscription Internet': [
+            { label: 'Pass Jour 500 Mo - 300 FCFA', value: 300 },
+            { label: 'Pass Semaine 2 Go - 1000 FCFA', value: 1000 },
+            { label: 'Pass Mois 6 Go - 5000 FCFA', value: 5000 }
+        ],
+        'Souscription Appel': [
+            { label: 'Pass Appel 1 Heure - 200 FCFA', value: 200 },
+            { label: 'Pass Appel Illimité Jour - 500 FCFA', value: 500 }
+        ],
+        'Souscription Mix': [
+            { label: 'Pass Mix Eco (Internet + Appel) - 500 FCFA', value: 500 },
+            { label: 'Pass Mix Maxi - 2000 FCFA', value: 2000 }
+        ]
+    };
+
     function isValidIvorianNumber(num) {
         const regex = /^(01|05|07)\d{8}$/;
         return regex.test(num);
@@ -177,7 +202,7 @@
     function handleAuth() {
         const phoneInput = document.getElementById('auth-phone').value.trim();
         if (!isValidIvorianNumber(phoneInput)) {
-            alert("Numéro invalide ! Il doit comporter 10 chiffres et commencer obligatoirement par 01, 05 ou 07.");
+            alert("Numéro invalide ! Il doit comporter 10 chiffres et commencer par 01, 05 ou 07.");
             return;
         }
         userPhone = phoneInput;
@@ -210,7 +235,19 @@
         currentService = name;
         document.getElementById('form-title').innerText = name;
         document.getElementById('dest-phone').value = '';
-        document.getElementById('amount').value = '';
+        
+        // Remplir la liste déroulante des forfaits
+        const selectElement = document.getElementById('amount-select');
+        selectElement.innerHTML = '';
+        
+        if (catalogForfaits[name]) {
+            catalogForfaits[name].forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.value;
+                opt.textContent = item.label;
+                selectElement.appendChild(opt);
+            });
+        }
         toggleView('form');
     }
 
@@ -220,14 +257,10 @@
 
     function openSummary() {
         const phone = document.getElementById('dest-phone').value.trim();
-        const amount = document.getElementById('amount').value.trim();
+        const amount = document.getElementById('amount-select').value;
 
         if (!isValidIvorianNumber(phone)) {
             alert("Le numéro du bénéficiaire doit comporter 10 chiffres et commencer par 01, 05 ou 07.");
-            return;
-        }
-        if (!amount || amount <= 0) {
-            alert("Veuillez entrer un montant valide.");
             return;
         }
 
@@ -238,13 +271,11 @@
         toggleView('summary');
     }
 
-    // Déclenchement au clic sur "Payer avec Wave" avec notification et redirection vers Wave
     async function lancerPaiementEtMinuteur() {
         const phone = document.getElementById('sum-phone').innerText.trim();
         const amount = document.getElementById('sum-amount').innerText.trim();
         const txId = "TX-" + Date.now();
 
-        // 1. Enregistrement dans l'historique local (Statut: En attente)
         const newTx = {
             id: txId,
             service: currentService,
@@ -256,12 +287,10 @@
         transactions.unshift(newTx);
         localStorage.setItem('cabine_history', JSON.stringify(transactions));
 
-        // 2. Affichage et démarrage du décompte de 10 minutes sur l'écran
         document.getElementById('active-timer-box').style.display = 'block';
-        document.getElementById('pay-btn').style.display = 'none'; // Cache le bouton pour éviter les double clics
-        startCountdown(600); // 600 secondes = 10 minutes
+        document.getElementById('pay-btn').style.display = 'none';
+        startCountdown(600);
 
-        // 3. Appel de l'API backend pour envoyer la notification Telegram en arrière-plan
         try {
             await fetch('/api/transacter', {
                 method: 'POST',
@@ -269,12 +298,11 @@
                 body: JSON.stringify({ phone: phone, total: amount, service: currentService, id: txId })
             });
         } catch (error) {
-            console.error("Erreur lors de l'appel API de notification :", error);
+            console.error("Erreur notification :", error);
         }
 
-        // 4. Redirection vers Wave après une courte pause pour lancer l'application
         setTimeout(() => {
-            window.location.href = "https://pay.wave.com/";
+            window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
         }, 1500);
     }
 
@@ -300,6 +328,22 @@
         }, 1000);
     }
 
+    function changeStatus(id) {
+        const tx = transactions.find(t => t.id === id);
+        if (!tx) return;
+
+        if (tx.status === 'PENDING') {
+            tx.status = 'SUCCESS';
+        } else if (tx.status === 'SUCCESS') {
+            tx.status = 'FAILED';
+        } else {
+            tx.status = 'PENDING';
+        }
+
+        localStorage.setItem('cabine_history', JSON.stringify(transactions));
+        renderHistory();
+    }
+
     function renderHistory() {
         const container = document.getElementById('history-container');
         if (transactions.length === 0) {
@@ -308,9 +352,9 @@
         }
 
         container.innerHTML = transactions.map(tx => {
-            let statusBadge = `<span class="status-pending">EN ATTENTE</span>`;
-            if (tx.status === 'SUCCESS') statusBadge = `<span class="status-success">ABOUTIE</span>`;
-            if (tx.status === 'FAILED') statusBadge = `<span class="status-failed">ÉCHOUÉE</span>`;
+            let statusBadge = `<span class="status-pending" onclick="changeStatus('${tx.id}')">EN ATTENTE 🔄</span>`;
+            if (tx.status === 'SUCCESS') statusBadge = `<span class="status-success" onclick="changeStatus('${tx.id}')">ABOUTIE ✅</span>`;
+            if (tx.status === 'FAILED') statusBadge = `<span class="status-failed" onclick="changeStatus('${tx.id}')">ÉCHOUÉE ❌</span>`;
 
             return `
                 <div class="history-item">
