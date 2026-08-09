@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cabine Express</title>
+    <!-- Intégration du script Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -82,18 +84,18 @@
                 <input type="text" id="auth-phone" placeholder="Ex: 0700000000" maxlength="10">
             </div>
             <div class="form-group">
-                <label>Mot de passe (4 chiffres)</label>
-                <input type="password" id="auth-password" placeholder="Ex: 1234" maxlength="4">
+                <label>Mot de passe (4 chiffres ou Code Admin)</label>
+                <input type="password" id="auth-password" placeholder="Ex: 1234" maxlength="15">
             </div>
             <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
             <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ?</span></p>
         </div>
     </div>
 
-    <!-- APPLICATION PRINCIPALE -->
+    <!-- APPLICATION CLIENT -->
     <div id="main-app" class="hidden">
         <div class="header">
-            <h2>Cabine Express</h2>
+            <h2 id="app-header-title">Cabine Express</h2>
             <div class="user-badge" onclick="toggleView('history')">📜 Historique</div>
         </div>
         <div class="active-account">
@@ -160,10 +162,10 @@
             <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtRedirection()">Payer avec Wave</button>
         </div>
 
-        <!-- HISTORIQUE -->
+        <!-- HISTORIQUE / ESPACE ADMIN -->
         <div id="history-view" class="hidden">
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
-            <h3 style="color: var(--accent); margin-top: 0;">Historique des commandes</h3>
+            <h3 id="history-title" style="color: var(--accent); margin-top: 0;">Historique des commandes</h3>
             <div class="history-list" id="history-container"></div>
         </div>
     </div>
@@ -172,9 +174,16 @@
 <a href="https://wa.me/2250100483015?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
 
 <script>
+    // CONFIGURATION SUPABASE AVEC VOS VRAIS IDENTIFIANTS
+    const SUPABASE_URL = 'https://vxaqlbaqfpxitbdimeqj.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_otC4yztme4tqkL9BA8FM5Q_APYQrtGg';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const ADMIN_PASSWORD = "ADMIN_SECRET_PASSWORD"; 
+
     const MAKBINE_CONFIG = {
       token: "a68ythu2stdmjesyisxh43aw28hns3",
-      version: "2.5"
+      version: "3.0"
     };
 
     async function sendTelegramNotification(phone, total, packageName) {
@@ -197,8 +206,8 @@
     let currentMode = 'login';
     let currentService = "";
     let userPhone = "";
+    let isAdmin = false;
     let registeredUsers = JSON.parse(localStorage.getItem('cabine_users')) || {};
-    let transactions = JSON.parse(localStorage.getItem('cabine_history')) || [];
 
     const catalogForfaits = {
       MOOV: {
@@ -336,13 +345,6 @@
                 opt.textContent = item.label;
                 select.appendChild(opt);
             });
-
-            if (list.length === 0) {
-                const opt = document.createElement('option');
-                opt.value = "";
-                opt.textContent = "Aucun forfait disponible pour cet opérateur";
-                select.appendChild(opt);
-            }
         }
     }
 
@@ -355,18 +357,18 @@
         const emailGroup = document.getElementById('group-email');
         const tabLogin = document.getElementById('tab-login');
         const tabRegister = document.getElementById('tab-register');
-        const authBtn = document.getElementById('auth-btn');
+        const btn = document.getElementById('auth-btn');
 
         if (mode === 'login') {
             emailGroup.style.display = 'none';
             tabLogin.classList.add('active');
             tabRegister.classList.remove('active');
-            authBtn.innerText = 'Se connecter';
+            btn.textContent = 'Se connecter';
         } else {
             emailGroup.style.display = 'block';
             tabRegister.classList.add('active');
             tabLogin.classList.remove('active');
-            authBtn.innerText = "S'inscrire";
+            btn.textContent = "S'inscrire";
         }
     }
 
@@ -376,51 +378,50 @@
         const email = document.getElementById('auth-email').value.trim();
 
         if (!isValidIvorianNumber(phone)) {
-            alert('Veuillez entrer un numéro ivoirien valide commençant par 01, 05 ou 07 (10 chiffres).');
+            alert("Veuillez entrer un numéro ivoirien valide (01, 05 ou 07 suivi de 8 chiffres).");
             return;
         }
-        if (password.length !== 4) {
-            alert('Le mot de passe doit comporter exactement 4 chiffres.');
+
+        if (password === ADMIN_PASSWORD) {
+            isAdmin = true;
+            userPhone = phone;
+            document.getElementById('display-my-phone').textContent = phone + " (ADMIN)";
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            loadHistory();
             return;
         }
 
         if (currentMode === 'register') {
             if (!email) {
-                alert('Veuillez entrer une adresse e-mail.');
+                alert("Veuillez entrer un e-mail valide.");
                 return;
             }
-            registeredUsers[phone] = { password, email };
+            registeredUsers[phone] = { email, password };
             localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
-            alert('Inscription réussie ! Vous pouvez vous connecter.');
+            alert("Inscription réussie ! Vous pouvez vous connecter.");
             switchAuthMode('login');
         } else {
-            if (registeredUsers[phone] && registeredUsers[phone].password === password) {
-                userPhone = phone;
-                document.getElementById('display-my-phone').innerText = userPhone;
-                document.getElementById('auth-view').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                toggleView('home');
-            } else {
-                alert('Numéro ou mot de passe incorrect (ou compte inexistant).');
+            const user = registeredUsers[phone];
+            if (!user || user.password !== password) {
+                alert("Numéro ou mot de passe incorrect.");
+                return;
             }
+            isAdmin = false;
+            userPhone = phone;
+            document.getElementById('display-my-phone').textContent = phone;
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            loadHistory();
         }
     }
 
     function logout() {
+        isAdmin = false;
         userPhone = "";
-        document.getElementById('auth-phone').value = '';
-        document.getElementById('auth-password').value = '';
         document.getElementById('main-app').classList.add('hidden');
         document.getElementById('auth-view').classList.remove('hidden');
-    }
-
-    function forgotPassword() {
-        const phone = document.getElementById('auth-phone').value.trim();
-        if (registeredUsers[phone]) {
-            alert('Votre mot de passe est : ' + registeredUsers[phone].password);
-        } else {
-            alert('Aucun compte trouvé pour ce numéro.');
-        }
+        document.getElementById('auth-password').value = '';
     }
 
     function toggleView(viewName) {
@@ -433,138 +434,167 @@
         if (viewName === 'form') document.getElementById('form-view').classList.remove('hidden');
         if (viewName === 'summary') document.getElementById('summary-view').classList.remove('hidden');
         if (viewName === 'history') {
-            renderHistory();
             document.getElementById('history-view').classList.remove('hidden');
+            loadHistory();
         }
     }
 
-    function selectService(name) {
-        currentService = name;
-        document.getElementById('form-title').innerText = name;
+    function selectService(serviceName) {
+        currentService = serviceName;
+        document.getElementById('form-title').textContent = serviceName;
         document.getElementById('dest-phone').value = '';
-        document.getElementById('amount-input').value = '';
+        document.getElementById('operator-container').innerHTML = '';
         updateForfaitsDynamically();
         toggleView('form');
     }
 
     function setMyNumber() {
+        if (!userPhone) return;
         document.getElementById('dest-phone').value = userPhone;
         updateForfaitsDynamically();
     }
 
+    let pendingTransaction = null;
+
     function openSummary() {
         const destPhone = document.getElementById('dest-phone').value.trim();
-        let baseAmount = 0;
-        let packageName = "";
-
         if (!isValidIvorianNumber(destPhone)) {
-            alert('Veuillez entrer un numéro de bénéficiaire valide.');
+            alert("Veuillez entrer un numéro de téléphone valide.");
             return;
         }
 
+        let baseAmount = 0;
+        let packageName = "";
+
         if (currentService === 'Transfert d\'unités') {
             baseAmount = parseInt(document.getElementById('amount-input').value);
-            packageName = `Transfert d'unités (${baseAmount} FCFA)`;
             if (isNaN(baseAmount) || baseAmount < 200) {
-                alert('Le montant pour un transfert d\'unités doit être supérieur ou égal à 200 FCFA.');
+                alert("Le montant minimum est de 200 FCFA.");
                 return;
             }
+            packageName = "Transfert d'unités (" + baseAmount + "F)";
         } else {
-            const amountSelect = document.getElementById('amount-select');
-            baseAmount = parseInt(amountSelect.value);
-            const selectedOption = amountSelect.options[amountSelect.selectedIndex];
-            packageName = selectedOption ? selectedOption.getAttribute('data-label') : "";
+            const select = document.getElementById('amount-select');
+            baseAmount = parseInt(select.value);
             if (!baseAmount) {
-                alert('Veuillez sélectionner un forfait valide.');
+                alert("Veuillez sélectionner un forfait.");
                 return;
             }
+            const selectedOpt = select.options[select.selectedIndex];
+            packageName = selectedOpt.getAttribute('data-label');
         }
 
         const fees = Math.round(baseAmount * 0.07);
         const total = baseAmount + fees;
 
-        document.getElementById('sum-service').innerText = currentService;
-        document.getElementById('sum-phone').innerText = destPhone;
-        document.getElementById('sum-package').innerText = packageName;
-        document.getElementById('sum-amount').innerText = baseAmount;
-        document.getElementById('sum-fees').innerText = fees;
-        document.getElementById('sum-total').innerText = total;
+        pendingTransaction = {
+            service: currentService,
+            phone: destPhone,
+            package_name: packageName,
+            amount: baseAmount,
+            fees: fees,
+            total: total,
+            status: 'En attente',
+            date: new Date().toISOString()
+        };
+
+        document.getElementById('sum-service').textContent = currentService;
+        document.getElementById('sum-phone').textContent = destPhone;
+        document.getElementById('sum-package').textContent = packageName;
+        document.getElementById('sum-amount').textContent = baseAmount;
+        document.getElementById('sum-fees').textContent = fees;
+        document.getElementById('sum-total').textContent = total;
 
         toggleView('summary');
     }
 
     async function lancerPaiementEtRedirection() {
-        const destPhone = document.getElementById('dest-phone').value.trim();
-        const baseAmount = parseInt(document.getElementById('sum-amount').innerText);
-        const packageName = document.getElementById('sum-package').innerText;
+        if (!pendingTransaction) return;
 
-        if (currentService === 'Transfert d\'unités' && baseAmount < 200) {
-            alert('Erreur : Un montant inférieur à 200 FCFA n\'est pas autorisé pour les unités.');
-            toggleView('form');
-            return;
+        const payBtn = document.getElementById('pay-btn');
+        payBtn.textContent = "Enregistrement en cours...";
+        payBtn.disabled = true;
+
+        try {
+            const { data, error } = await _supabase
+                .from('transactions')
+                .insert([
+                    {
+                        service: pendingTransaction.service,
+                        phone: pendingTransaction.phone,
+                        package_name: pendingTransaction.package_name,
+                        total: pendingTransaction.total,
+                        status: 'Validé',
+                        date: pendingTransaction.date
+                    }
+                ]);
+
+            if (error) {
+                console.error("Erreur Supabase:", error);
+                alert("Erreur lors de l'enregistrement de la transaction.");
+            } else {
+                await sendTelegramNotification(pendingTransaction.phone, pendingTransaction.total, pendingTransaction.package_name);
+                alert("Transaction enregistrée avec succès ! Redirection vers Wave...");
+                window.location.href = "https://pay.wave.com/";
+            }
+        } catch (err) {
+            console.error("Erreur inattendue:", err);
+            alert("Une erreur est survenue.");
+        } finally {
+            payBtn.textContent = "Payer avec Wave";
+            payBtn.disabled = false;
         }
-
-        const total = parseInt(document.getElementById('sum-total').innerText);
-        const now = new Date();
-        const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const txId = 'TX-' + Date.now();
-
-        const newTx = {
-            id: txId,
-            service: currentService,
-            packageName: packageName,
-            phone: destPhone,
-            total: total,
-            date: dateStr,
-            status: 'En attente'
-        };
-
-        transactions.unshift(newTx);
-        localStorage.setItem('cabine_history', JSON.stringify(transactions));
-
-        await sendTelegramNotification(destPhone, total, packageName);
-
-        window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
     }
 
-    function renderHistory() {
+    async function loadHistory() {
         const container = document.getElementById('history-container');
-        container.innerHTML = '';
-        if (transactions.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">Aucune commande enregistrée.</p>';
-            return;
+        container.innerHTML = "Chargement...";
+
+        try {
+            let query = _supabase.from('transactions').select('*').order('date', { ascending: false });
+            
+            if (!isAdmin) {
+                query = query.eq('phone', userPhone);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                container.innerHTML = "Erreur de chargement de l'historique.";
+                console.error(error);
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune transaction trouvée.</p>";
+                return;
+            }
+
+            container.innerHTML = '';
+            data.forEach(tx => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <div>
+                        <strong>${tx.service}</strong><br>
+                        <small style="color:var(--text-muted);">${tx.package_name || ''}</small><br>
+                        <small style="color:var(--text-muted);">Tél: ${tx.phone} - ${new Date(tx.date).toLocaleDateString()}</small>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="color:var(--accent); font-weight:bold;">${tx.total}F</span><br>
+                        <span class="status-success">${tx.status || 'Validé'}</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        } catch (err) {
+            container.innerHTML = "Impossible de récupérer l'historique.";
+            console.error(err);
         }
-
-        transactions.forEach((tx, index) => {
-            let statusClass = 'status-pending';
-            if (tx.status === 'Succès') statusClass = 'status-success';
-            if (tx.status === 'Échoué') statusClass = 'status-failed';
-
-            const item = document.createElement('div');
-            item.className = 'history-item';
-            item.innerHTML = `
-                <div style="flex: 1;">
-                    <strong>${tx.service}</strong><br>
-                    <span style="color:var(--accent); font-size:12px;">${tx.packageName || ''}</span><br>
-                    <span style="color:var(--text-muted); font-size:11px;">Bénéficiaire : ${tx.phone} | Total : ${tx.total}F</span><br>
-                    <small style="color:var(--text-muted); font-size:10px;">${tx.date || ''} - Réf: ${tx.id}</small>
-                </div>
-                <div style="text-align: right;">
-                    <div class="${statusClass}" style="margin-bottom: 5px;">${tx.status}</div>
-                    ${tx.status === 'En attente' ? `
-                        <button onclick="changerStatut(${index}, 'Succès')" style="background:#4ade80; border:none; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; color:#000;">Valider</button>
-                        <button onclick="changerStatut(${index}, 'Échoué')" style="background:#f87171; border:none; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; color:#fff;">Rejeter</button>
-                    ` : ''}
-                </div>
-            `;
-            container.appendChild(item);
-        });
     }
 
-    function changerStatut(index, nouveauStatut) {
-        transactions[index].status = nouveauStatut;
-        localStorage.setItem('cabine_history', JSON.stringify(transactions));
-        renderHistory();
+    function forgotPassword() {
+        alert("Veuillez contacter le support WhatsApp pour réinitialiser votre mot de passe.");
     }
 </script>
 </body>
