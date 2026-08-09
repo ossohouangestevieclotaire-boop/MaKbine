@@ -363,7 +363,7 @@
         localStorage.setItem('cabine_history', JSON.stringify(transactions));
 
         document.getElementById('active-timer-box').style.display = 'block';
-        startCountdown(600); // 10 minutes
+        startCountdown(600);
 
         setTimeout(() => {
             newTx.status = 'Succès';
