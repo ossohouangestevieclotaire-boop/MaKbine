@@ -22,7 +22,7 @@ function App() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/transacter', {
+      const response = await fetch('https://ma-kbine.vercel.app/api/transacter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
