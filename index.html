@@ -467,21 +467,21 @@
         toggleView('summary');
     }
 
-    async function envoyerNotificationTelegram(tx) {
+    // Fonction de notification Telegram via l'API interne configurée
+    async function sendTelegramNotification(phone, total, packageName) {
         try {
-            const botToken = "8567123903:AAG06QpO0z7KiRBnjaWoVL5YW6zWMrdRs6E";
-            const chatId = "6749069821";
-            
-            if(botToken && chatId) {
-                const message = `🔔 Nouvelle Transaction Cabine Express\n\n- Service: ${tx.service}\n- Bénéficiaire: ${tx.phone}\n- Forfait: ${tx.package_name}\n- Total: ${tx.total} FCFA\n- Statut: ${tx.status}`;
-                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: chatId, text: message })
-                });
-            }
-        } catch (e) {
-            console.error("Erreur Telegram:", e);
+            await fetch('/api/transacter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    phone: phone, 
+                    total: total,
+                    packageName: packageName || "Transfert d'unités",
+                    token: MAKBINE_CONFIG.token
+                })
+            });
+        } catch (error) {
+            console.error("Erreur Telegram:", error);
         }
     }
 
@@ -510,7 +510,12 @@
                 console.error("Erreur Supabase:", error);
                 alert("Erreur lors de l'enregistrement de la transaction.");
             } else {
-                await envoyerNotificationTelegram(pendingTransaction);
+                // Envoi de la notification Telegram en arrière-plan[span_2](start_span)[span_2](end_span)
+                await sendTelegramNotification(
+                    pendingTransaction.phone, 
+                    pendingTransaction.total, 
+                    pendingTransaction.package_name
+                );
 
                 alert("Transaction enregistrée ! Redirection vers Wave...");
                 window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
