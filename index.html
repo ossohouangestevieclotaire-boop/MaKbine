@@ -41,9 +41,6 @@
         .btn-main { width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; }
         .btn-main:hover { opacity: 0.9; }
 
-        .timer-box { background: #334155; border: 1px solid var(--accent); padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px; display: none; }
-        .timer-box span { font-size: 18px; font-weight: bold; color: #fbbf24; }
-
         .history-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
         .history-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .status-success { color: #4ade80; font-weight: bold; }
@@ -134,16 +131,15 @@
         <div id="summary-view" class="hidden">
             <span class="back-link" onclick="toggleView('form')">← Modifier</span>
             <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif</h3>
-            <div id="active-timer-box" class="timer-box"><div>⏳ Paiement en cours - Temps restant :</div><span id="countdown">10:00</span></div>
             <div class="form-section" style="line-height: 1.8; font-size: 14px;">
                 <p><strong>Service :</strong> <span id="sum-service"></span></p>
                 <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
                 <p><strong>Montant de base :</strong> <span id="sum-amount"></span> FCFA</p>
                 <p><strong>Frais (7%) :</strong> <span id="sum-fees"></span> FCFA</p>
                 <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA</p>
-                <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez entrer exactement ce montant sur Wave.</p>
+                <p style="font-size: 11px; color: #fbbf24;">⚠️ Cliquez sur Payer pour lancer votre transaction officielle Wave.</p>
             </div>
-            <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtMinuteur()">Payer avec Wave</button>
+            <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtRedirection()">Payer avec Wave</button>
         </div>
 
         <!-- HISTORIQUE -->
@@ -161,7 +157,6 @@
     let currentMode = 'login';
     let currentService = "";
     let userPhone = "";
-    let timerInterval = null;
     let registeredUsers = JSON.parse(localStorage.getItem('cabine_users')) || {};
     let transactions = JSON.parse(localStorage.getItem('cabine_history')) || [];
 
@@ -346,52 +341,27 @@
         toggleView('summary');
     }
 
-    function lancerPaiementEtMinuteur() {
+    function lancerPaiementEtRedirection() {
         const destPhone = document.getElementById('dest-phone').value.trim();
-        const baseAmount = parseInt(document.getElementById('sum-amount').value || document.getElementById('sum-amount').innerText);
         const total = parseInt(document.getElementById('sum-total').innerText);
+        const now = new Date();
+        const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         const newTx = {
-            id: Date.now(),
+            id: 'TX-' + Date.now(),
             service: currentService,
             phone: destPhone,
             total: total,
+            date: dateStr,
             status: 'En attente'
         };
 
+        // Enregistrement réel dans l'historique local associé à l'utilisateur connecté
         transactions.unshift(newTx);
         localStorage.setItem('cabine_history', JSON.stringify(transactions));
 
-        document.getElementById('active-timer-box').style.display = 'block';
-        startCountdown(600);
-
-        setTimeout(() => {
-            newTx.status = 'Succès';
-            localStorage.setItem('cabine_history', JSON.stringify(transactions));
-            alert('Paiement validé avec succès ! Votre commande a été traitée.');
-            toggleView('history');
-        }, 5000);
-    }
-
-    function startCountdown(duration) {
-        let timer = duration, minutes, seconds;
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(function () {
-            minutes = parseInt(timer / 60, 10);
-            seconds = parseInt(timer % 60, 10);
-
-            minutes = minutes < 10 ? "0" + minutes : minutes;
-            seconds = seconds < 10 ? "0" + seconds : seconds;
-
-            const countdownEl = document.getElementById('countdown');
-            if(countdownEl) countdownEl.textContent = minutes + ":" + seconds;
-
-            if (--timer < 0) {
-                clearInterval(timerInterval);
-                const activeTimerBox = document.getElementById('active-timer-box');
-                if(activeTimerBox) activeTimerBox.style.display = 'none';
-            }
-        }, 1000);
+        // Redirection effective vers le lien Wave spécifié
+        window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
     }
 
     function renderHistory() {
@@ -412,7 +382,8 @@
             item.innerHTML = `
                 <div>
                     <strong>${tx.service}</strong><br>
-                    <span style="color:var(--text-muted); font-size:11px;">Réf: ${tx.phone} - ${tx.total}F</span>
+                    <span style="color:var(--text-muted); font-size:11px;">Bénéficiaire : ${tx.phone} | Total : ${tx.total}F</span><br>
+                    <small style="color:var(--text-muted); font-size:10px;">${tx.date || ''} - Réf: ${tx.id}</small>
                 </div>
                 <div class="${statusClass}">${tx.status}</div>
             `;
