@@ -26,7 +26,11 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ phone, total })
+        body: JSON.stringify({ 
+          phone, 
+          total, 
+          token: "a68ythu2stdmjesyisxh43aw28hns3" 
+        })
       });
 
       const data = await response.json();
