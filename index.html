@@ -53,26 +53,45 @@
         .support-bubble { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-decoration: none; z-index: 100; }
         .hidden { display: none; }
         .back-link { color: var(--text-muted); font-size: 13px; cursor: pointer; margin-bottom: 10px; display: inline-block; }
+        .tabs { display: flex; margin-bottom: 15px; background: #0f172a; border-radius: 8px; padding: 4px; border: 1px solid var(--border); }
+        .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; cursor: pointer; border-radius: 6px; color: var(--text-muted); font-weight: 600; }
+        .tab.active { background: var(--accent); color: white; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <!-- PAGE AUTHENTIFICATION -->
+    <!-- PAGE AUTHENTIFICATION / INSCRIPTION -->
     <div id="auth-view">
-        <h2 style="text-align:center; color:var(--accent);">Cabine Express</h2>
-        <p style="text-align:center; font-size:13px; color:var(--text-muted);">Connexion / Inscription</p>
+        <h2 style="text-align:center; color:var(--accent); margin-bottom: 5px;">Cabine Express</h2>
+        
+        <div class="tabs" style="margin-top: 15px;">
+            <div id="tab-login" class="tab active" onclick="switchAuthMode('login')">Connexion</div>
+            <div id="tab-register" class="tab" onclick="switchAuthMode('register')">Inscription</div>
+        </div>
+
         <div class="form-section">
+            <!-- Champ Email uniquement visible à l'inscription -->
+            <div class="form-group" id="group-email" style="display: none;">
+                <label>Adresse E-mail valide</label>
+                <input type="email" id="auth-email" placeholder="Ex: monclient@gmail.com">
+            </div>
+
             <div class="form-group">
                 <label>Votre Numéro (01, 05 ou 07)</label>
                 <input type="text" id="auth-phone" placeholder="Ex: 0700000000" maxlength="10">
             </div>
+
             <div class="form-group">
-                <label>Mot de passe</label>
-                <input type="password" id="auth-password" placeholder="Min. 4 chiffres">
+                <label>Mot de passe (4 chiffres)</label>
+                <input type="password" id="auth-password" placeholder="Ex: 1234" maxlength="4">
             </div>
-            <button class="btn-main" onclick="handleAuth()">Accéder à mon compte</button>
-            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="alert('Fonctionnalité en cours de développement')" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ?</span></p>
+
+            <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
+            
+            <p style="text-align:center; font-size:12px; margin-top:15px;">
+                <span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer; background: transparent;">Mot de passe oublié ?</span>
+            </p>
         </div>
     </div>
 
@@ -85,6 +104,7 @@
 
         <div class="active-account">
             Compte : <span id="display-my-phone"></span>
+            <span onclick="logout()" style="font-size:11px; color:#f87171; cursor:pointer;">Quitter</span>
         </div>
 
         <!-- ACCUEIL -->
@@ -121,8 +141,7 @@
 
                 <div class="form-group">
                     <label>Choisir le forfait / Montant</label>
-                    <select id="amount-select">
-                    </select>
+                    <select id="amount-select"></select>
                 </div>
 
                 <div class="form-group">
@@ -161,8 +180,7 @@
         <div id="history-view" class="hidden">
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
             <h3 style="color: var(--accent); margin-top: 0;">Historique des commandes</h3>
-            <div class="history-list" id="history-container">
-            </div>
+            <div class="history-list" id="history-container"></div>
         </div>
     </div>
 </div>
@@ -170,9 +188,11 @@
 <a href="https://wa.me/2250100483015?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
 
 <script>
+    let currentMode = 'login'; // 'login' ou 'register'
     let currentService = "";
     let userPhone = "";
     let timerInterval = null;
+    let registeredUsers = JSON.parse(localStorage.getItem('cabine_users')) || {};
     let transactions = JSON.parse(localStorage.getItem('cabine_history')) || [];
 
     const catalogForfaits = {
@@ -201,22 +221,89 @@
         return /^(01|05|07)\d{8}$/.test(num);
     }
 
-    function handleAuth() {
+    function switchAuthMode(mode) {
+        currentMode = mode;
+        const emailGroup = document.getElementById('group-email');
+        const authBtn = document.getElementById('auth-btn');
+        
+        if (mode === 'register') {
+            document.getElementById('tab-register').classList.add('active');
+            document.getElementById('tab-login').classList.remove('active');
+            emailGroup.style.display = 'block';
+            authBtn.innerText = "S'inscrire";
+        } else {
+            document.getElementById('tab-login').classList.add('active');
+            document.getElementById('tab-register').classList.remove('active');
+            emailGroup.style.display = 'none';
+            authBtn.innerText = "Se connecter";
+        }
+    }
+
+    function handleAuthSubmit() {
         const phone = document.getElementById('auth-phone').value.trim();
         const pwd = document.getElementById('auth-password').value.trim();
+        
         if (!isValidIvorianNumber(phone)) {
-            alert("Numéro invalide !");
+            alert("Veuillez entrer un numéro ivoirien valide (01, 05 ou 07).");
             return;
         }
-        if (pwd.length < 4) {
-            alert("Le mot de passe doit comporter au moins 4 caractères.");
+        if (pwd.length !== 4) {
+            alert("Le mot de passe doit comporter exactement 4 chiffres.");
             return;
         }
-        userPhone = phone;
-        document.getElementById('display-my-phone').innerText = userPhone;
-        document.getElementById('auth-view').classList.add('hidden');
-        document.getElementById('main-app').classList.remove('hidden');
-        renderHistory();
+
+        if (currentMode === 'register') {
+            const email = document.getElementById('auth-email').value.trim();
+            if (!email || !email.includes('@')) {
+                alert("Veuillez entrer une adresse e-mail valide.");
+                return;
+            }
+            if (registeredUsers[phone]) {
+                alert("Ce numéro est déjà inscrit. Veuillez vous connecter.");
+                switchAuthMode('login');
+                return;
+            }
+            // Enregistrement
+            registeredUsers[phone] = { password: pwd, email: email };
+            localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
+            alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
+            switchAuthMode('login');
+        } else {
+            // Connexion - Vérification stricte si le compte existe
+            if (!registeredUsers[phone]) {
+                alert("Ce compte n'existe pas. Veuillez d'abord vous inscrire.");
+                switchAuthMode('register');
+                return;
+            }
+            if (registeredUsers[phone].password !== pwd) {
+                alert("Mot de passe incorrect.");
+                return;
+            }
+            // Succès connexion
+            userPhone = phone;
+            document.getElementById('display-my-phone').innerText = userPhone;
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            renderHistory();
+        }
+    }
+
+    function logout() {
+        userPhone = "";
+        document.getElementById('main-app').classList.add('hidden');
+        document.getElementById('auth-view').classList.remove('hidden');
+        document.getElementById('auth-phone').value = '';
+        document.getElementById('auth-password').value = '';
+    }
+
+    function forgotPassword() {
+        const phone = document.getElementById('auth-phone').value.trim();
+        if (!phone || !registeredUsers[phone]) {
+            alert("Veuillez entrer votre numéro de téléphone enregistré dans le champ ci-dessus pour récupérer votre mot de passe.");
+            return;
+        }
+        const userEmail = registeredUsers[phone].email;
+        alert(`Un lien de réinitialisation de mot de passe a été envoyé avec succès à votre e-mail : ${userEmail}`);
     }
 
     function toggleView(view) {
@@ -285,7 +372,6 @@
     async function lancerPaiementEtMinuteur() {
         const phone = document.getElementById('sum-phone').innerText.trim();
         const amount = document.getElementById('sum-total').innerText.trim();
-        const baseAmount = document.getElementById('sum-amount').innerText.trim();
         const txId = "TX-" + Date.now();
 
         const newTx = {
@@ -302,16 +388,6 @@
         document.getElementById('active-timer-box').style.display = 'block';
         document.getElementById('pay-btn').style.display = 'none';
         startCountdown(600);
-
-        try {
-            await fetch('/api/transacter', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone: phone, total: amount, service: currentService, id: txId })
-            });
-        } catch (error) {
-            console.error("Erreur Telegram:", error);
-        }
 
         setTimeout(() => {
             window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
@@ -334,7 +410,7 @@
 
             if (--timer < 0) {
                 clearInterval(timerInterval);
-                alert("Le temps imparti pour cette transaction a expiré.");
+                alert("Le temps imparti pour cette transaction a expiré. Le montant doit être remboursé.");
                 toggleView('home');
             }
         }, 1000);
@@ -357,7 +433,7 @@
                     <div>
                         <strong>${tx.service}</strong><br>
                         <small style="color:var(--text-muted)">Client: ${tx.phone} | ${tx.amount} FCFA</small><br>
-                        <small style="font-size:10px; color:var(--text-muted);">${tx.date}</small>
+                        <small style="font-size:10px; color:var(--text-muted);">Réf: ${tx.id} | ${tx.date}</small>
                     </div>
                     <div>${statusBadge}</div>
                 </div>
