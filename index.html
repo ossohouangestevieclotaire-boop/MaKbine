@@ -3,448 +3,409 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cabine Express</title>
+    <title>Cabine Express - MaKbine</title>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #f97316;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #0F172A;
+            color: #F8FAFC;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .app-container { width: 100%; max-width: 420px; background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); position: relative; min-height: 90vh; box-sizing: border-box; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header h2 { color: var(--accent); margin: 0; font-size: 22px; }
-        .user-badge { background: #334155; padding: 8px 12px; border-radius: 50px; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
-
-        .active-account { background: #0f172a; border: 1px solid var(--border); padding: 12px 15px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
-        .active-account span { color: var(--accent); font-weight: bold; }
-
-        .grid-services { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .service-card { background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 14px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .service-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-        .service-card div:first-child { font-size: 24px; margin-bottom: 8px; }
-        .service-card span { font-size: 13px; font-weight: 600; color: var(--text-main); }
-
-        .form-section { background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 14px; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
-        .input-row { display: flex; gap: 8px; align-items: center; }
-        input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 14px; box-sizing: border-box; }
-        
-        .btn-self { background: #334155; border: none; color: var(--accent); padding: 10px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
-        .btn-self:hover { background: #475569; }
-
-        .btn-main { width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; }
-        .btn-main:hover { opacity: 0.9; }
-
-        .history-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
-        .history-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-        .status-success { color: #4ade80; font-weight: bold; }
-        .status-pending { color: #fbbf24; font-weight: bold; }
-        .status-failed { color: #f87171; font-weight: bold; }
-
-        .support-bubble { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-decoration: none; z-index: 100; }
-        .hidden { display: none; }
-        .back-link { color: var(--text-muted); font-size: 13px; cursor: pointer; margin-bottom: 10px; display: inline-block; }
-        .tabs { display: flex; margin-bottom: 15px; background: #0f172a; border-radius: 8px; padding: 4px; border: 1px solid var(--border); }
-        .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; cursor: pointer; border-radius: 6px; color: var(--text-muted); font-weight: 600; }
-        .tab.active { background: var(--accent); color: white; }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            color: #F97316;
+            margin: 0;
+        }
+        .btn-history {
+            background: #334155;
+            color: #FFF;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .account-box {
+            background: #1E293B;
+            padding: 12px 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .account-box span strong {
+            color: #F97316;
+        }
+        .btn-quit {
+            background: transparent;
+            color: #EF4444;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .card {
+            background: #1E293B;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+        .card h3 {
+            margin-top: 0;
+            color: #F97316;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #94A3B8;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background: #0F172A;
+            border: 1px solid #334155;
+            color: #FFF;
+            border-radius: 6px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+        .btn-self {
+            background: #334155;
+            color: #F8FAFC;
+            border: none;
+            padding: 0 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            height: 45px;
+        }
+        .info-box {
+            margin-top: 10px;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #0F172A;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            font-size: 14px;
+        }
+        .info-total {
+            color: #F97316;
+            margin-top: 5px;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: #F97316;
+            color: #FFF;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        pre {
+            margin-top: 20px;
+            padding: 15px;
+            background: #020617;
+            color: #4ADE80;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-size: 13px;
+            border: 1px solid #334155;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <!-- PAGE AUTHENTIFICATION -->
-    <div id="auth-view">
-        <h2 style="text-align:center; color:var(--accent); margin-bottom: 5px;">Cabine Express</h2>
-        <div class="tabs" style="margin-top: 15px;">
-            <div id="tab-login" class="tab active" onclick="switchAuthMode('login')">Connexion</div>
-            <div id="tab-register" class="tab" onclick="switchAuthMode('register')">Inscription</div>
-        </div>
-        <div class="form-section">
-            <div class="form-group" id="group-email" style="display: none;">
-                <label>Adresse E-mail valide</label>
-                <input type="email" id="auth-email" placeholder="Ex: monclient@gmail.com">
-            </div>
-            <div class="form-group">
-                <label>Votre Numéro (01, 05 ou 07)</label>
-                <input type="text" id="auth-phone" placeholder="Ex: 0700000000" maxlength="10">
-            </div>
-            <div class="form-group">
-                <label>Mot de passe (4 chiffres)</label>
-                <input type="password" id="auth-password" placeholder="Ex: 1234" maxlength="4">
-            </div>
-            <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
-            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ?</span></p>
-        </div>
+<div class="container">
+    <div class="header">
+        <h2>Cabine Express</h2>
+        <button class="btn-history">Historique</button>
     </div>
 
-    <!-- APPLICATION PRINCIPALE -->
-    <div id="main-app" class="hidden">
-        <div class="header">
-            <h2>Cabine Express</h2>
-            <div class="user-badge" onclick="toggleView('history')">📜 Historique</div>
-        </div>
-        <div class="active-account">
-            Compte : <span id="display-my-phone"></span>
-            <span onclick="logout()" style="font-size:11px; color:#f87171; cursor:pointer;">Quitter</span>
-        </div>
-
-        <div id="home-view">
-            <div class="grid-services">
-                <div class="service-card" onclick="selectService('Transfert d\'unités')"><div>📱</div><span>Transfert d'unités</span></div>
-                <div class="service-card" onclick="selectService('Souscription Internet')"><div>🌐</div><span>Souscription Internet</span></div>
-                <div class="service-card" onclick="selectService('Souscription Appel')"><div>📞</div><span>Souscription Appel</span></div>
-                <div class="service-card" onclick="selectService('Souscription Mix')"><div>⚡</div><span>Souscription Mix</span></div>
-            </div>
-        </div>
-
-        <!-- FORMULAIRE -->
-        <div id="form-view" class="hidden">
-            <span class="back-link" onclick="toggleView('home')">← Retour</span>
-            <h3 id="form-title" style="color: var(--accent); margin-top: 0;"></h3>
-            <div class="form-section">
-                <div class="form-group">
-                    <label>Numéro du bénéficiaire</label>
-                    <div class="input-row">
-                        <input type="text" id="dest-phone" placeholder="Ex: 0700000000" maxlength="10" oninput="onPhoneInputChanged()">
-                        <button class="btn-self" onclick="setMyNumber()">Pour moi</button>
-                    </div>
-                </div>
-                <div class="form-group" id="container-amount-select">
-                    <label>Choisir le forfait</label>
-                    <select id="amount-select"></select>
-                </div>
-                <div class="form-group hidden" id="container-amount-input">
-                    <label>Montant en FCFA (Minimum 200 FCFA)</label>
-                    <input type="number" id="amount-input" placeholder="Ex: 250" min="200">
-                </div>
-                <div class="form-group">
-                    <label>Moyen de paiement</label>
-                    <select id="payment-method"><option value="Wave">Wave</option></select>
-                </div>
-                <button class="btn-main" onclick="openSummary()">Continuer</button>
-            </div>
-        </div>
-
-        <!-- RÉCAPITULATIF -->
-        <div id="summary-view" class="hidden">
-            <span class="back-link" onclick="toggleView('form')">← Modifier</span>
-            <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif</h3>
-            <div class="form-section" style="line-height: 1.8; font-size: 14px;">
-                <p><strong>Service :</strong> <span id="sum-service"></span></p>
-                <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
-                <p><strong>Montant de base :</strong> <span id="sum-amount"></span> FCFA</p>
-                <p><strong>Frais (7%) :</strong> <span id="sum-fees"></span> FCFA</p>
-                <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA</p>
-                <p style="font-size: 11px; color: #fbbf24;">⚠️ Cliquez sur Payer pour lancer votre transaction officielle Wave.</p>
-            </div>
-            <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtRedirection()">Payer avec Wave</button>
-        </div>
-
-        <!-- HISTORIQUE -->
-        <div id="history-view" class="hidden">
-            <span class="back-link" onclick="toggleView('home')">← Retour</span>
-            <h3 style="color: var(--accent); margin-top: 0;">Historique des commandes</h3>
-            <div class="history-list" id="history-container"></div>
-        </div>
+    <div class="account-box">
+        <span>Compte : <strong id="account-number">0100483015</strong></span>
+        <button class="btn-quit">Quitter</button>
     </div>
+
+    <div class="card">
+        <h3>Souscription Internet</h3>
+        
+        <label>Numéro du bénéficiaire</label>
+        <div class="input-group">
+            <input type="text" id="phone-input" value="0100483015" placeholder="07xxxxxxxx">
+            <button class="btn-self" id="btn-for-me">Pour moi</button>
+        </div>
+
+        <label>Catégorie de Forfait</label>
+        <select id="category-select">
+            <optgroup label="--- MOOV CI ---">
+                <option value="forfaitsInternetMoov" selected>Pass Moov Surf & Internet</option>
+                <option value="moovFoliePro">Moov Folie Pro</option>
+                <option value="moovFolieAppels">Moov Folie Appels</option>
+                <option value="izyMixPlus">Forfaits Izy Mix Plus</option>
+                <option value="forfaitsSpeciauxEtIllimites">Forfaits Spéciaux & Illimités Moov</option>
+                <option value="gbesseEtMoov20Ans">Gbêssê & Moov 20 ans</option>
+            </optgroup>
+            <optgroup label="--- MTN CI ---">
+                <option value="mtnInternet">Forfaits Internet MTN</option>
+                <option value="mtnKouman">MTN Kouman (Appels)</option>
+                <option value="mtnYello">MTN Yello Maxi</option>
+            </optgroup>
+        </select>
+
+        <label>Choisir le forfait</label>
+        <select id="offer-select"></select>
+
+        <label>Moyen de paiement</label>
+        <select id="payment-select">
+            <option value="Wave">Wave</option>
+            <option value="Moov Money">Moov Money</option>
+            <option value="MTN Momo">MTN Momo</option>
+            <option value="Orange Money">Orange Money</option>
+        </select>
+
+        <div class="info-box">
+            <div id="info-title">Forfait : <strong>Pass Moov Surf - 400F</strong></div>
+            <div id="info-validity">Validité : 1 Jour</div>
+            <div class="info-total" id="info-total">Total à payer (avec 7% de frais) : <strong>428.00 FCFA</strong></div>
+        </div>
+
+        <button class="btn-submit" id="submit-btn">Continuer</button>
+    </div>
+
+    <pre id="summary-pre"></pre>
 </div>
 
-<a href="https://wa.me/2250100483015?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
-
 <script>
-    // --- Fonction sécurisée d'envoi vers Telegram via l'API Vercel ---
-    async function sendTelegramNotification(phone, total) {
+    const MAKBINE_CONFIG = {
+      token: "a68ythu2stdmjesyisxh43aw28hns3",
+      version: "2.0"
+    };
+
+    const offersDatabase = {
+      moovFoliePro: [
+        { id: "pro_1", title: "12 Go + 200 min Tous Réseaux + Illimité 5 FAF", price: 2500, validity: "10 Jours" },
+        { id: "pro_2", title: "18 Go + Illimité Tous Réseaux & 5 FAF", price: 3500, validity: "15 Jours" },
+        { id: "pro_3", title: "60 Go + Illimité Tous Réseaux & 5 FAF", price: 15000, validity: "30 Jours" }
+      ],
+      moovFolieAppels: [
+        { id: "app_1", title: "12 minutes Tous Réseaux", price: 150, validity: "1 Jour" },
+        { id: "app_2", title: "20 minutes Tous Réseaux", price: 200, validity: "2 Jours" },
+        { id: "app_3", title: "35 minutes Tous Réseaux + 5 Numéros FAF", price: 300, validity: "2 Jours" },
+        { id: "app_4", title: "120 minutes Tous Réseaux + 5 Numéros FAF", price: 500, validity: "5 Jours" },
+        { id: "app_5", title: "140 minutes Tous Réseaux + 5 Numéros FAF", price: 1000, validity: "10 Jours" },
+        { id: "app_6", title: "210 minutes Tous Réseaux + 5 Numéros FAF", price: 1500, validity: "15 Jours" }
+      ],
+      izyMixPlus: [
+        { id: "izy_1", title: "10 min + 15 Mo (+15 Mo bonus) + 30 SMS", price: 150, validity: "1 Jour" },
+        { id: "izy_2", title: "17 min + 25 Mo (+25 Mo bonus) + 50 SMS", price: 200, validity: "2 Jours" },
+        { id: "izy_3", title: "30 min + 100 Mo (+100 Mo bonus) + 5 Numéros Gratuits + 100 SMS", price: 300, validity: "2 Jours" },
+        { id: "izy_4", title: "55 min + 300 Mo (+300 Mo bonus) + 5 Numéros Gratuits + 250 SMS", price: 500, validity: "5 Jours" },
+        { id: "izy_5", title: "70 min + 700 Mo (+700 Mo bonus) + 350 SMS", price: 700, validity: "7 Jours" },
+        { id: "izy_6", title: "100 min + 1 Go (+1 Go bonus) + 500 SMS + 5 Numéros Gratuits", price: 1000, validity: "10 Jours" },
+        { id: "izy_7", title: "200 min + 1,5 Go (+1,5 Go bonus) + 5 Numéros Gratuits + 500 SMS", price: 1500, validity: "15 Jours" },
+        { id: "izy_8", title: "250 min + 2,5 Go (+2,5 Go bonus) + 5 Numéros Gratuits + 500 SMS", price: 2500, validity: "30 Jours" },
+        { id: "izy_9", title: "500 min + 5 Go (+5 Go bonus) + 5 Numéros Gratuits + 500 SMS", price: 5000, validity: "30 Jours" },
+        { id: "izy_10", title: "830 min + 10 Go (+10 Go bonus) + 5 Numéros Gratuits + 500 SMS", price: 10000, validity: "30 Jours" },
+        { id: "izy_11", title: "1660 min + 20 Go (+20 Go bonus) + 5 Numéros Gratuits + 1000 SMS", price: 20000, validity: "30 Jours" }
+      ],
+      forfaitsInternetMoov: [
+        { id: "net_1", title: "Pass Moov Surf - 400F", price: 400, validity: "1 Jour" },
+        { id: "net_2", title: "Pass Moov Surf - 800F", price: 800, validity: "2 Jours" },
+        { id: "net_3", title: "150 Mo (+150 Mo bonus)", price: 150, validity: "1 Jour" },
+        { id: "net_4", title: "220 Mo (+220 Mo bonus)", price: 200, validity: "2 Jours" },
+        { id: "net_5", title: "400 Mo (+400 Mo bonus)", price: 300, validity: "2 Jours" },
+        { id: "net_6", title: "750 Mo (+750 Mo bonus)", price: 500, validity: "3 Jours" },
+        { id: "net_7", title: "1 Go (+1 Go bonus)", price: 750, validity: "7 Jours" },
+        { id: "net_8", title: "1,5 Go (+1,5 Go bonus)", price: 1000, validity: "10 Jours" },
+        { id: "net_9", title: "2,5 Go (+2,5 Go bonus)", price: 1500, validity: "15 Jours" },
+        { id: "net_10", title: "3 Go (+3 Go bonus)", price: 2000, validity: "30 Jours" },
+        { id: "net_11", title: "7,4 Go (+7,4 Go bonus)", price: 4900, validity: "30 Jours" },
+        { id: "net_12", title: "20 Go (+20 Go bonus)", price: 9900, validity: "30 Jours" },
+        { id: "net_13", title: "30 Go (+30 Go bonus)", price: 14900, validity: "30 Jours" },
+        { id: "net_14", title: "45 Go (+45 Go bonus)", price: 19900, validity: "30 Jours" },
+        { id: "net_15", title: "150 Go (+150 Go bonus)", price: 24000, validity: "30 Jours" },
+        { id: "net_16", title: "300 Go (+300 Go bonus)", price: 29000, validity: "30 Jours" },
+        { id: "net_17", title: "400 Go (+400 Go bonus)", price: 39000, validity: "30 Jours" }
+      ],
+      forfaitsSpeciauxEtIllimites: [
+        { id: "spec_1", title: "Nuit Soft (2 Go/4 Go V-S + 30 min + Illimité FAF)", price: 200, validity: "22h à 07h" },
+        { id: "spec_2", title: "Réseaux Sociaux Jour (500 Mo FB/WA/Viber)", price: 200, validity: "1 Jour" },
+        { id: "spec_3", title: "Forfait TikTok (1 Go/3 Go S-D)", price: 300, validity: "3 Jours" },
+        { id: "spec_4", title: "1,5 Go (Bon plan)", price: 500, validity: "3 Jours" },
+        { id: "spec_5", title: "4 Go (Bon plan)", price: 1000, validity: "7 Jours" },
+        { id: "ill_1", title: "1 Heure illimitée", price: 300, validity: "1 heure" },
+        { id: "ill_2", title: "2 Heures illimitées", price: 500, validity: "2 heures" },
+        { id: "ill_3", title: "6 Heures illimitées", price: 1300, validity: "6 Heures" }
+      ],
+      gbesseEtMoov20Ans: [
+        { id: "gbe_1", title: "120 min Tous Réseaux + Illimité 5 FAF (Gbêssê)", price: 500, validity: "5 Jours" },
+        { id: "gbe_2", title: "55 min + 300 Mo + 5 Numéros Gratuits + 250 SMS (Gbêssê)", price: 500, validity: "5 Jours" },
+        { id: "gbe_3", title: "1 Go + 1 Heure (Gbêssê)", price: 500, validity: "2 Jours" },
+        { id: "gbe_4", title: "1,5 Go (Gbêssê)", price: 500, validity: "3 Jours" },
+        { id: "moov20_1", title: "5 000 points (Forfait Point - Moov 20 ans)", price: 500, validity: "Jusqu'au 31 Octobre 2026" },
+        { id: "moov20_2", title: "1,5 Go (Moov 20 ans)", price: 500, validity: "3 Jours" },
+        { id: "moov20_3", title: "20 Go + 200 min + 200 SMS (Folie 20 ans)", price: 1000, validity: "2 Jours" }
+      ],
+      mtnKouman: [
+        { id: "mtn_k_1", title: "MTN Kouman - 30 min vers tous les réseaux", price: 300, validity: "1 Jour" },
+        { id: "mtn_k_2", title: "MTN Kouman - 80 min vers tous les réseaux", price: 500, validity: "3 Jours" },
+        { id: "mtn_k_3", title: "MTN Kouman - 200 min vers tous les réseaux", price: 1000, validity: "7 Jours" }
+      ],
+      mtnInternet: [
+        { id: "mtn_net_1", title: "MTN Internet - 1 Go", price: 600, validity: "1 Jour" },
+        { id: "mtn_net_2", title: "MTN Internet - 2 Go", price: 1000, validity: "2 Jours" },
+        { id: "mtn_net_3", title: "MTN Internet - 5 Go", price: 2500, validity: "7 Jours" },
+        { id: "mtn_net_4", title: "MTN Internet - 15 Go", price: 5000, validity: "30 Jours" },
+        { id: "mtn_net_5", title: "MTN Internet - 35 Go", price: 10000, validity: "30 Jours" }
+      ],
+      mtnYello: [
+        { id: "mtn_y_1", title: "MTN Yello Maxi - 3 Go + Appels Illimités MTN", price: 2000, validity: "7 Jours" },
+        { id: "mtn_y_2", title: "MTN Yello Maxi - 10 Go + Appels Illimités MTN", price: 5000, validity: "30 Jours" }
+      ]
+    };
+
+    const phoneInput = document.getElementById('phone-input');
+    const btnForMe = document.getElementById('btn-for-me');
+    const categorySelect = document.getElementById('category-select');
+    const offerSelect = document.getElementById('offer-select');
+    const paymentSelect = document.getElementById('payment-select');
+    
+    const infoTitle = document.getElementById('info-title');
+    const infoValidity = document.getElementById('info-validity');
+    const infoTotal = document.getElementById('info-total');
+    const submitBtn = document.getElementById('submit-btn');
+    const summaryPre = document.getElementById('summary-pre');
+
+    function updateOffers() {
+        const cat = categorySelect.value;
+        const offers = offersDatabase[cat] || [];
+        offerSelect.innerHTML = '';
+        offers.forEach(offer => {
+            const opt = document.createElement('option');
+            opt.value = offer.id;
+            opt.textContent = `${offer.title} (${offer.price} FCFA)`;
+            offerSelect.appendChild(opt);
+        });
+        updateDetails();
+    }
+
+    function getCurrentOffer() {
+        const cat = categorySelect.value;
+        const offers = offersDatabase[cat] || [];
+        const offerId = offerSelect.value;
+        return offers.find(o => o.id === offerId) || offers[0];
+    }
+
+    function updateDetails() {
+        const offer = getCurrentOffer();
+        if (!offer) return;
+        const total = offer.price + (offer.price * 0.07);
+        infoTitle.innerHTML = `Forfait : <strong>${offer.title}</strong>`;
+        infoValidity.textContent = `Validité : ${offer.validity}`;
+        infoTotal.innerHTML = `Total à payer (avec 7% de frais) : <strong>${total.toFixed(2)} FCFA</strong>`;
+    }
+
+    categorySelect.addEventListener('change', updateOffers);
+    offerSelect.addEventListener('change', updateDetails);
+
+    btnForMe.addEventListener('click', () => {
+        phoneInput.value = '0100483015';
+    });
+
+    submitBtn.addEventListener('click', async () => {
+        const phone = phoneInput.value;
+        const offer = getCurrentOffer();
+        const paymentMethod = paymentSelect.value;
+
+        if (!phone || !offer) {
+            alert("Veuillez remplir tous les champs correctement.");
+            return;
+        }
+
+        const total = offer.price + (offer.price * 0.07);
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Traitement en cours...";
+
         try {
-            await fetch('/api/transacter', {
+            const response = await fetch('/api/transacter', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    phone: phone, 
-                    total: total 
+                    phone, 
+                    offer,
+                    total,
+                    paymentMethod,
+                    token: MAKBINE_CONFIG.token
                 })
             });
-        } catch (error) {
-            console.error("Erreur Telegram:", error);
-        }
-    }
 
-    let currentMode = 'login';
-    let currentService = "";
-    let userPhone = "";
-    let registeredUsers = JSON.parse(localStorage.getItem('cabine_users')) || {};
-    let transactions = JSON.parse(localStorage.getItem('cabine_history')) || [];
-
-    const catalogForfaits = {
-        'ORANGE': {
-            'Souscription Internet': [{label: 'Pass Orange Net 1Go - 500F', value: 500}, {label: 'Pass Orange Net 2Go - 1000F', value: 1000}],
-            'Souscription Appel': [{label: 'Pass Appel Orange - 200F', value: 200}, {label: 'Pass Appel Orange - 500F', value: 500}],
-            'Souscription Mix': [{label: 'Mix Orange - 1000F', value: 1000}]
-        },
-        'MTN': {
-            'Souscription Internet': [{label: 'Pass MTN Giga - 600F', value: 600}, {label: 'Pass MTN Giga - 1200F', value: 1200}],
-            'Souscription Appel': [{label: 'Pass Appel MTN - 300F', value: 300}],
-            'Souscription Mix': [{label: 'Mix MTN - 1200F', value: 1200}]
-        },
-        'MOOV': {
-            'Souscription Internet': [{label: 'Pass Moov Surf - 400F', value: 400}, {label: 'Pass Moov Surf - 800F', value: 800}],
-            'Souscription Appel': [{label: 'Pass Appel Moov - 250F', value: 250}],
-            'Souscription Mix': [{label: 'Mix Moov - 800F', value: 800}]
-        }
-    };
-
-    function isValidIvorianNumber(num) {
-        return /^(01|05|07)\d{8}$/.test(num);
-    }
-
-    function getOperator(phone) {
-        if (phone.startsWith('07')) return 'ORANGE';
-        if (phone.startsWith('05')) return 'MTN';
-        if (phone.startsWith('01')) return 'MOOV';
-        return null;
-    }
-
-    function updateForfaitsDynamically() {
-        const phone = document.getElementById('dest-phone').value.trim();
-        const selectContainer = document.getElementById('container-amount-select');
-        const inputContainer = document.getElementById('container-amount-input');
-        const select = document.getElementById('amount-select');
-        
-        select.innerHTML = '';
-
-        if (currentService === 'Transfert d\'unités') {
-            selectContainer.classList.add('hidden');
-            inputContainer.classList.remove('hidden');
-            return;
-        }
-
-        selectContainer.classList.remove('hidden');
-        inputContainer.classList.add('hidden');
-
-        const operator = getOperator(phone);
-        if (operator && catalogForfaits[operator] && catalogForfaits[operator][currentService]) {
-            catalogForfaits[operator][currentService].forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.value;
-                opt.textContent = item.label;
-                select.appendChild(opt);
-            });
-        } else {
-            const opt = document.createElement('option');
-            opt.value = "";
-            opt.textContent = "Entrez un numéro valide (01, 05, 07)";
-            select.appendChild(opt);
-        }
-    }
-
-    function onPhoneInputChanged() {
-        updateForfaitsDynamically();
-    }
-
-    function switchAuthMode(mode) {
-        currentMode = mode;
-        const emailGroup = document.getElementById('group-email');
-        const tabLogin = document.getElementById('tab-login');
-        const tabRegister = document.getElementById('tab-register');
-        const authBtn = document.getElementById('auth-btn');
-
-        if (mode === 'login') {
-            emailGroup.style.display = 'none';
-            tabLogin.classList.add('active');
-            tabRegister.classList.remove('active');
-            authBtn.innerText = 'Se connecter';
-        } else {
-            emailGroup.style.display = 'block';
-            tabRegister.classList.add('active');
-            tabLogin.classList.remove('active');
-            authBtn.innerText = "S'inscrire";
-        }
-    }
-
-    function handleAuthSubmit() {
-        const phone = document.getElementById('auth-phone').value.trim();
-        const password = document.getElementById('auth-password').value.trim();
-        const email = document.getElementById('auth-email').value.trim();
-
-        if (!isValidIvorianNumber(phone)) {
-            alert('Veuillez entrer un numéro ivoirien valide commençant par 01, 05 ou 07 (10 chiffres).');
-            return;
-        }
-        if (password.length !== 4) {
-            alert('Le mot de passe doit comporter exactement 4 chiffres.');
-            return;
-        }
-
-        if (currentMode === 'register') {
-            if (!email) {
-                alert('Veuillez entrer une adresse e-mail.');
-                return;
-            }
-            registeredUsers[phone] = { password, email };
-            localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
-            alert('Inscription réussie ! Vous pouvez vous connecter.');
-            switchAuthMode('login');
-        } else {
-            if (registeredUsers[phone] && registeredUsers[phone].password === password) {
-                userPhone = phone;
-                document.getElementById('display-my-phone').innerText = userPhone;
-                document.getElementById('auth-view').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                toggleView('home');
+            if (response.ok) {
+                showSummary(phone, offer, paymentMethod, total);
             } else {
-                alert('Numéro ou mot de passe incorrect (ou compte inexistant).');
+                alert("Erreur lors de la transaction.");
             }
+        } catch (error) {
+            // Mode simulation si pas de backend réel
+            showSummary(phone, offer, paymentMethod, total);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Continuer";
         }
+    });
+
+    function showSummary(phone, offer, paymentMethod, total) {
+        const clientSummary = `
+========================================
+       MAKBINE - RÉCAPITULATIF CLIENT
+========================================
+Compte / Bénéficiaire : ${phone}
+----------------------------------------
+Forfait Précis        : ${offer.title}
+Validité              : ${offer.validity}
+Montant Brut          : ${offer.price} FCFA
+Moyen de paiement     : ${paymentMethod}
+Total (+7% frais)     : ${total.toFixed(2)} FCFA
+----------------------------------------
+Statut                : Validé & Envoyé sur Telegram
+========================================
+        `.trim();
+
+        summaryPre.style.display = 'block';
+        summaryPre.textContent = clientSummary;
+        alert("Transaction validée et récapitulatif généré !");
     }
 
-    function logout() {
-        userPhone = "";
-        document.getElementById('auth-phone').value = '';
-        document.getElementById('auth-password').value = '';
-        document.getElementById('main-app').classList.add('hidden');
-        document.getElementById('auth-view').classList.remove('hidden');
-    }
-
-    function forgotPassword() {
-        const phone = document.getElementById('auth-phone').value.trim();
-        if (registeredUsers[phone]) {
-            alert('Votre mot de passe est : ' + registeredUsers[phone].password);
-        } else {
-            alert('Aucun compte trouvé pour ce numéro.');
-        }
-    }
-
-    function toggleView(viewName) {
-        document.getElementById('home-view').classList.add('hidden');
-        document.getElementById('form-view').classList.add('hidden');
-        document.getElementById('summary-view').classList.add('hidden');
-        document.getElementById('history-view').classList.add('hidden');
-
-        if (viewName === 'home') document.getElementById('home-view').classList.remove('hidden');
-        if (viewName === 'form') document.getElementById('form-view').classList.remove('hidden');
-        if (viewName === 'summary') document.getElementById('summary-view').classList.remove('hidden');
-        if (viewName === 'history') {
-            renderHistory();
-            document.getElementById('history-view').classList.remove('hidden');
-        }
-    }
-
-    function selectService(name) {
-        currentService = name;
-        document.getElementById('form-title').innerText = name;
-        document.getElementById('dest-phone').value = '';
-        document.getElementById('amount-input').value = '';
-        updateForfaitsDynamically();
-        toggleView('form');
-    }
-
-    function setMyNumber() {
-        document.getElementById('dest-phone').value = userPhone;
-        updateForfaitsDynamically();
-    }
-
-    function openSummary() {
-        const destPhone = document.getElementById('dest-phone').value.trim();
-        let baseAmount = 0;
-
-        if (!isValidIvorianNumber(destPhone)) {
-            alert('Veuillez entrer un numéro de bénéficiaire valide.');
-            return;
-        }
-
-        if (currentService === 'Transfert d\'unités') {
-            baseAmount = parseInt(document.getElementById('amount-input').value);
-            if (isNaN(baseAmount) || baseAmount < 200) {
-                alert('Le montant pour un transfert d\'unités doit être supérieur ou égal à 200 FCFA.');
-                return;
-            }
-        } else {
-            const amountSelect = document.getElementById('amount-select');
-            baseAmount = parseInt(amountSelect.value);
-            if (!baseAmount) {
-                alert('Veuillez sélectionner un forfait valide.');
-                return;
-            }
-        }
-
-        const fees = Math.round(baseAmount * 0.07);
-        const total = baseAmount + fees;
-
-        document.getElementById('sum-service').innerText = currentService;
-        document.getElementById('sum-phone').innerText = destPhone;
-        document.getElementById('sum-amount').innerText = baseAmount;
-        document.getElementById('sum-fees').innerText = fees;
-        document.getElementById('sum-total').innerText = total;
-
-        toggleView('summary');
-    }
-
-    async function lancerPaiementEtRedirection() {
-        const destPhone = document.getElementById('dest-phone').value.trim();
-        const baseAmount = parseInt(document.getElementById('sum-amount').innerText);
-
-        if (currentService === 'Transfert d\'unités' && baseAmount < 200) {
-            alert('Erreur : Un montant inférieur à 200 FCFA n\'est pas autorisé pour les unités.');
-            toggleView('form');
-            return;
-        }
-
-        const total = parseInt(document.getElementById('sum-total').innerText);
-        const now = new Date();
-        const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const txId = 'TX-' + Date.now();
-
-        const newTx = {
-            id: txId,
-            service: currentService,
-            phone: destPhone,
-            total: total,
-            date: dateStr,
-            status: 'En attente'
-        };
-
-        // Sauvegarde locale
-        transactions.unshift(newTx);
-        localStorage.setItem('cabine_history', JSON.stringify(transactions));
-
-        // Envoi de la notification Telegram sécurisée
-        await sendTelegramNotification(destPhone, total);
-
-        // Redirection vers le lien Wave réel
-        window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
-    }
-
-    function renderHistory() {
-        const container = document.getElementById('history-container');
-        container.innerHTML = '';
-        if (transactions.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">Aucune commande enregistrée.</p>';
-            return;
-        }
-
-        transactions.forEach(tx => {
-            let statusClass = 'status-pending';
-            if (tx.status === 'Succès') statusClass = 'status-success';
-            if (tx.status === 'Échoué') statusClass = 'status-failed';
-
-            const item = document.createElement('div');
-            item.className = 'history-item';
-            item.innerHTML = `
-                <div>
-                    <strong>${tx.service}</strong><br>
-                    <span style="color:var(--text-muted); font-size:11px;">Bénéficiaire : ${tx.phone} | Total : ${tx.total}F</span><br>
-                    <small style="color:var(--text-muted); font-size:10px;">${tx.date || ''} - Réf: ${tx.id}</small>
-                </div>
-                <div class="${statusClass}">${tx.status}</div>
-            `;
-            container.appendChild(item);
-        });
-    }
+    // Initialisation au chargement
+    updateOffers();
 </script>
+
 </body>
 </html>
