@@ -9,8 +9,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: 'Paramètres manquants' });
   }
 
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID || "6749069821";
+  // Vos identifiants directs et sécurisés côté serveur Vercel
+  const botToken = "8567123903:AAG06QpO0z7KiRBnjaWoVL5YW6zWMrdRs6E";
+  const chatId = "6749069821";
 
   const message = `🔔 Nouvelle transaction MaKbine !\n📱 Téléphone : ${phone}\n💰 Total : ${total} FCFA`;
 
