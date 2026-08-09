@@ -1,19 +1,31 @@
 const https = require('https');
 
 export default async function handler(req, res) {
-    const phone = req.body?.phone || req.query?.phone;
-    const total = req.body?.total || req.query?.total;
+    // Récupération des paramètres (compatible GET et POST)
+    const query = req.method === 'GET' ? req.query : req.body;
+    
+    let phone = query?.phone;
+    let total = query?.total;
+    let service = query?.service || "Commande";
+
+    // Si total est un tableau (provenant de certains paramètres d'URL), on prend la première valeur
+    if (Array.isArray(total)) total = total[0];
+    if (Array.isArray(phone)) phone = phone[0];
 
     if (!phone || !total) {
         return res.status(400).json({ success: false, error: "Données manquantes" });
     }
 
+    // Génération de la syntaxe USSD propre
     const codeUssd = `*155*3*1*2*${phone}*${total}#`;
-    const message = `🔔 NOUVELLE COMMANDE\nMontant : ${total} FCFA\nNuméro : ${phone}`;
+    
+    // Message Telegram formaté avec le code USSD en bloc de code (copiable au clic)
+    const message = `🔔 NOUVELLE COMMANDE : ${service}\n📱 Numéro : ${phone}\n💰 Montant : ${total} FCFA\n\n👉 Syntaxe à exécuter :\n<code>${codeUssd}</code>`;
 
     const data = JSON.stringify({
         chat_id: '6749069821',
-        text: message
+        text: message,
+        parse_mode: 'HTML'
     });
 
     const options = {
@@ -23,7 +35,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Content-Length': data.length
+            'Content-Length': Buffer.byteLength(data)
         }
     };
 
@@ -40,5 +52,5 @@ export default async function handler(req, res) {
         telegramReq.end();
     });
 
-    return res.status(200).json({ phone, total, ussd: codeUssd });
+    return res.status(200).json({ success: true, phone, total, ussd: codeUssd });
 }
