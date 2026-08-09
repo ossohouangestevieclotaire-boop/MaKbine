@@ -174,7 +174,7 @@
 <script>
     const MAKBINE_CONFIG = {
       token: "a68ythu2stdmjesyisxh43aw28hns3",
-      version: "2.4"
+      version: "2.5"
     };
 
     async function sendTelegramNotification(phone, total, packageName) {
@@ -535,7 +535,7 @@
             return;
         }
 
-        transactions.forEach(tx => {
+        transactions.forEach((tx, index) => {
             let statusClass = 'status-pending';
             if (tx.status === 'Succès') statusClass = 'status-success';
             if (tx.status === 'Échoué') statusClass = 'status-failed';
@@ -543,16 +543,28 @@
             const item = document.createElement('div');
             item.className = 'history-item';
             item.innerHTML = `
-                <div>
+                <div style="flex: 1;">
                     <strong>${tx.service}</strong><br>
                     <span style="color:var(--accent); font-size:12px;">${tx.packageName || ''}</span><br>
                     <span style="color:var(--text-muted); font-size:11px;">Bénéficiaire : ${tx.phone} | Total : ${tx.total}F</span><br>
                     <small style="color:var(--text-muted); font-size:10px;">${tx.date || ''} - Réf: ${tx.id}</small>
                 </div>
-                <div class="${statusClass}">${tx.status}</div>
+                <div style="text-align: right;">
+                    <div class="${statusClass}" style="margin-bottom: 5px;">${tx.status}</div>
+                    ${tx.status === 'En attente' ? `
+                        <button onclick="changerStatut(${index}, 'Succès')" style="background:#4ade80; border:none; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; color:#000;">Valider</button>
+                        <button onclick="changerStatut(${index}, 'Échoué')" style="background:#f87171; border:none; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; color:#fff;">Rejeter</button>
+                    ` : ''}
+                </div>
             `;
             container.appendChild(item);
         });
+    }
+
+    function changerStatut(index, nouveauStatut) {
+        transactions[index].status = nouveauStatut;
+        localStorage.setItem('cabine_history', JSON.stringify(transactions));
+        renderHistory();
     }
 </script>
 </body>
