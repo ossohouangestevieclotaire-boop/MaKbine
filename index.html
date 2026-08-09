@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cabine Express</title>
-    <!-- Intégration du script Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -47,7 +46,9 @@
         .history-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .status-success { color: #4ade80; font-weight: bold; }
         .status-pending { color: #fbbf24; font-weight: bold; }
-        .status-failed { color: #f87171; font-weight: bold; }
+        
+        .btn-validate { background: #22c55e; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .btn-validate:hover { background: #16a34a; }
 
         .support-bubble { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-decoration: none; z-index: 100; }
         .hidden { display: none; }
@@ -157,7 +158,7 @@
                 <p><strong>Montant de base :</strong> <span id="sum-amount"></span> FCFA</p>
                 <p><strong>Frais (7%) :</strong> <span id="sum-fees"></span> FCFA</p>
                 <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA</p>
-                <p style="font-size: 11px; color: #fbbf24;">⚠️ Cliquez sur Payer pour lancer votre transaction Wave.</p>
+                <p style="font-size: 11px; color: #fbbf24;">⚠️ Cliquez sur Payer pour enregistrer et lancer Wave.</p>
             </div>
             <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtRedirection()">Payer avec Wave</button>
         </div>
@@ -174,7 +175,6 @@
 <a href="https://wa.me/2250100483015?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
 
 <script>
-    // CONFIGURATION SUPABASE AVEC VOS VRAIS IDENTIFIANTS
     const SUPABASE_URL = 'https://vxaqlbaqfpxitbdimeqj.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_otC4yztme4tqkL9BA8FM5Q_APYQrtGg';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -185,23 +185,6 @@
       token: "a68ythu2stdmjesyisxh43aw28hns3",
       version: "3.0"
     };
-
-    async function sendTelegramNotification(phone, total, packageName) {
-        try {
-            await fetch('/api/transacter', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    phone: phone, 
-                    total: total,
-                    packageName: packageName || "Transfert d'unités",
-                    token: MAKBINE_CONFIG.token
-                })
-            });
-        } catch (error) {
-            console.error("Erreur Telegram:", error);
-        }
-    }
 
     let currentMode = 'login';
     let currentService = "";
@@ -236,28 +219,7 @@
         mix: [
           { label: "12 Go + 200 min + Illimité 5 FAF - 30 Jours - 2500F", value: 2500 },
           { label: "18 Go + Illimité Tous Réseaux & 5 FAF - 30 Jours - 3500F", value: 3500 },
-          { label: "60 Go + Illimité Tous Réseaux & 5 FAF - 30 Jours - 15000F", value: 15000 },
-          { label: "10 min + 15 Mo + 30 SMS - 1 Jour - 150F", value: 150 },
-          { label: "17 min + 25 Mo + 50 SMS - 1 Jour - 200F", value: 200 },
-          { label: "30 min + 100 Mo + 5 Numéros Gratuits + 100 SMS - 1 Jour - 300F", value: 300 },
-          { label: "55 min + 300 Mo + 5 Numéros Gratuits + 250 SMS - 7 Jours - 500F", value: 500 },
-          { label: "70 min + 700 Mo + 350 SMS - 7 Jours - 700F", value: 700 },
-          { label: "100 min + 1 Go + 500 SMS + 5 Numéros Gratuits - 7 Jours - 1000F", value: 1000 },
-          { label: "200 min + 1,5 Go + 5 Numéros Gratuits + 500 SMS - 14 Jours - 1500F", value: 1500 },
-          { label: "250 min + 2,5 Go + 5 Numéros Gratuits + 500 SMS - 30 Jours - 2500F", value: 2500 },
-          { label: "500 min + 5 Go + 5 Numéros Gratuits + 500 SMS - 30 Jours - 5000F", value: 5000 },
-          { label: "Nuit Soft (2 Go/4 Go V-S + 30 min + Illimité FAF) - 1 Nuit - 200F", value: 200 },
-          { label: "Réseaux Sociaux Jour (500 Mo FB/WA/Viber) - 1 Jour - 200F", value: 200 },
-          { label: "Forfait TikTok (1 Go/3 Go S-D) - Week-end - 300F", value: 300 },
-          { label: "1,5 Go (Bon plan) - 7 Jours - 500F", value: 500 },
-          { label: "4 Go (Bon plan) - 30 Jours - 1000F", value: 1000 },
-          { label: "1 Heure illimitée - 1 Heure - 300F", value: 300 },
-          { label: "2 Heures illimitées - 2 Heures - 500F", value: 500 },
-          { label: "6 Heures illimitées - 6 Heures - 1300F", value: 1300 },
-          { label: "120 min + Illimité 5 FAF (Gbêssê) - 7 Jours - 500F", value: 500 },
-          { label: "1 Go + 1 Heure (Gbêssê) - 7 Jours - 500F", value: 500 },
-          { label: "1,5 Go (Moov 20 ans) - 7 Jours - 500F", value: 500 },
-          { label: "20 Go + 200 min + 200 SMS (Folie 20 ans) - 30 Jours - 1000F", value: 1000 }
+          { label: "60 Go + Illimité Tous Réseaux & 5 FAF - 30 Jours - 15000F", value: 15000 }
         ]
       },
       MTN: {
@@ -265,17 +227,14 @@
           { label: "MTN Internet - 1 Go - 24 Heures - 600F", value: 600 },
           { label: "MTN Internet - 2 Go - 7 Jours - 1000F", value: 1000 },
           { label: "MTN Internet - 5 Go - 30 Jours - 2500F", value: 2500 },
-          { label: "MTN Internet - 15 Go - 30 Jours - 5000F", value: 5000 },
-          { label: "MTN Internet - 35 Go - 30 Jours - 10000F", value: 10000 }
+          { label: "MTN Internet - 15 Go - 30 Jours - 5000F", value: 5000 }
         ],
         appel: [
           { label: "MTN Kouman - 30 min vers tous - 24 Heures - 300F", value: 300 },
-          { label: "MTN Kouman - 80 min vers tous - 7 Jours - 500F", value: 500 },
-          { label: "MTN Kouman - 200 min vers tous - 30 Jours - 1000F", value: 1000 }
+          { label: "MTN Kouman - 80 min vers tous - 7 Jours - 500F", value: 500 }
         ],
         mix: [
-          { label: "MTN Yello Maxi - 3 Go + Appels Illimités MTN - 7 Jours - 2000F", value: 2000 },
-          { label: "MTN Yello Maxi - 10 Go + Appels Illimités MTN - 30 Jours - 5000F", value: 5000 }
+          { label: "MTN Yello Maxi - 3 Go + Appels Illimités MTN - 7 Jours - 2000F", value: 2000 }
         ]
       },
       ORANGE: {
@@ -378,7 +337,7 @@
         const email = document.getElementById('auth-email').value.trim();
 
         if (!isValidIvorianNumber(phone)) {
-            alert("Veuillez entrer un numéro ivoirien valide (01, 05 ou 07 suivi de 8 chiffres).");
+            alert("Veuillez entrer un numéro ivoirien valide.");
             return;
         }
 
@@ -516,7 +475,7 @@
         payBtn.disabled = true;
 
         try {
-            const { data, error } = await _supabase
+            const { error } = await _supabase
                 .from('transactions')
                 .insert([
                     {
@@ -524,7 +483,7 @@
                         phone: pendingTransaction.phone,
                         package_name: pendingTransaction.package_name,
                         total: pendingTransaction.total,
-                        status: 'Validé',
+                        status: 'En attente',
                         date: pendingTransaction.date
                     }
                 ]);
@@ -533,8 +492,7 @@
                 console.error("Erreur Supabase:", error);
                 alert("Erreur lors de l'enregistrement de la transaction.");
             } else {
-                await sendTelegramNotification(pendingTransaction.phone, pendingTransaction.total, pendingTransaction.package_name);
-                alert("Transaction enregistrée avec succès ! Redirection vers Wave...");
+                alert("Transaction enregistrée ! Redirection vers Wave...");
                 window.location.href = "https://pay.wave.com/";
             }
         } catch (err) {
@@ -574,6 +532,15 @@
             data.forEach(tx => {
                 const item = document.createElement('div');
                 item.className = 'history-item';
+                
+                let statusBadgeClass = tx.status === 'Validé' ? 'status-success' : 'status-pending';
+                
+                // Si l'utilisateur est admin, on ajoute un bouton pour valider/mettre en succès directement
+                let adminActionHtml = '';
+                if (isAdmin && tx.status !== 'Validé') {
+                    adminActionHtml = `<br><button class="btn-validate" onclick="validerTransactionAdmin('${tx.id}')">Mettre Succès</button>`;
+                }
+
                 item.innerHTML = `
                     <div>
                         <strong>${tx.service}</strong><br>
@@ -582,7 +549,8 @@
                     </div>
                     <div style="text-align:right;">
                         <span style="color:var(--accent); font-weight:bold;">${tx.total}F</span><br>
-                        <span class="status-success">${tx.status || 'Validé'}</span>
+                        <span class="${statusBadgeClass}">${tx.status || 'En attente'}</span>
+                        ${adminActionHtml}
                     </div>
                 `;
                 container.appendChild(item);
@@ -590,6 +558,21 @@
         } catch (err) {
             container.innerHTML = "Impossible de récupérer l'historique.";
             console.error(err);
+        }
+    }
+
+    async function validerTransactionAdmin(id) {
+        const { error } = await _supabase
+            .from('transactions')
+            .update({ status: 'Validé' })
+            .eq('id', id);
+
+        if (error) {
+            alert("Erreur lors de la mise à jour.");
+            console.error(error);
+        } else {
+            alert("Transaction validée avec succès !");
+            loadHistory();
         }
     }
 
