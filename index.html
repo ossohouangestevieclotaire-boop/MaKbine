@@ -85,7 +85,7 @@
                 <input type="text" id="auth-phone" placeholder="Ex: 0700000000" maxlength="10">
             </div>
             <div class="form-group">
-                <label>Mot de passe (4 chiffres ou Code Admin)</label>
+                <label>Mot de passe (4 chiffres)</label>
                 <input type="password" id="auth-password" placeholder="Ex: 1234" maxlength="30">
             </div>
             <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
@@ -140,7 +140,7 @@
                 <div class="form-group">
                     <label>Moyen de paiement</label>
                     <div class="payment-info-box">
-                        <span>Wave</span>
+                        <span>Wave (EPC Service)</span>
                     </div>
                 </div>
                 <button class="btn-main" onclick="openSummary()">Continuer</button>
@@ -467,6 +467,23 @@
         toggleView('summary');
     }
 
+    async function envoyerNotificationTelegram(tx) {
+        try {
+            const botToken = "VOTRE_BOT_TOKEN"; // Remplacer par le token du bot si configuré
+            const chatId = "VOTRE_CHAT_ID";     // Remplacer par le chat ID si configuré
+            if(botToken && chatId) {
+                const message = `🔔 Nouvelle Transaction Cabine Express\n\n- Service: ${tx.service}\n- Bénéficiaire: ${tx.phone}\n- Forfait: ${tx.package_name}\n- Total: ${tx.total} FCFA\n- Statut: ${tx.status}`;
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: message })
+                });
+            }
+        } catch (e) {
+            console.error("Erreur Telegram:", e);
+        }
+    }
+
     async function lancerPaiementEtRedirection() {
         if (!pendingTransaction) return;
 
@@ -492,8 +509,11 @@
                 console.error("Erreur Supabase:", error);
                 alert("Erreur lors de l'enregistrement de la transaction.");
             } else {
+                // Tentative d'envoi de la notification Telegram
+                await envoyerNotificationTelegram(pendingTransaction);
+
                 alert("Transaction enregistrée ! Redirection vers Wave...");
-                window.location.href = "https://pay.wave.com/";
+                window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
             }
         } catch (err) {
             console.error("Erreur inattendue:", err);
@@ -535,7 +555,6 @@
                 
                 let statusBadgeClass = tx.status === 'Validé' ? 'status-success' : 'status-pending';
                 
-                // Si l'utilisateur est admin, on ajoute un bouton pour valider/mettre en succès directement
                 let adminActionHtml = '';
                 if (isAdmin && tx.status !== 'Validé') {
                     adminActionHtml = `<br><button class="btn-validate" onclick="validerTransactionAdmin('${tx.id}')">Mettre Succès</button>`;
