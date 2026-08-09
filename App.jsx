@@ -20,31 +20,36 @@ function App() {
     }
 
     setLoading(true);
+    
+    // Paramètres directs pour Telegram
+    const botToken = "7737222728:AAHDnN6cZ50KxJ9L9h4gS9Yt6rP8uY7U7zQ"; // Remplacez par le token de votre bot si nécessaire
+    const chatId = "-1002456789123"; // Remplacez par votre chat ID Telegram
+    const message = `Nouvelle transaction !\nTéléphone: ${phone}\nMontant total: ${total} FCFA`;
+
     try {
-      const response = await fetch('https://ma-kbine.vercel.app/api/transacter', {
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          phone, 
-          total, 
-          token: "a68ythu2stdmjesyisxh43aw28hns3" 
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message
         })
       });
 
       const data = await response.json();
-      if (data.success) {
-        alert("Transaction validée et notification envoyée sur Telegram !");
+      if (data.ok) {
+        alert("Transaction validée et notification envoyée directement sur Telegram !");
         setPhone('');
         setAmount('');
         setTotal(0);
       } else {
-        alert("Erreur lors de la transaction : " + (data.error || "Inconnue"));
+        alert("Erreur Telegram : " + (data.description || "Inconnue"));
       }
     } catch (error) {
       console.error("Erreur réseau:", error);
-      alert("Erreur de connexion avec le serveur.");
+      alert("Erreur de connexion avec l'API Telegram.");
     } finally {
       setLoading(false);
     }
