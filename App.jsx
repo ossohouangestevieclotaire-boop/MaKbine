@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 const MAKBINE_CONFIG = {
   token: "a68ythu2stdmjesyisxh43aw28hns3",
   version: "2.0",
-  operator: "Moov Côte d'Ivoire"
+  operator: "Multi-Opérateurs (Moov & MTN Côte d'Ivoire)"
 };
 
-// Base de données complète des forfaits Moov intégrés
-const moovOffersDatabase = {
+// Base de données complète des forfaits Moov et MTN intégrés
+const offersDatabase = {
   moovFoliePro: [
     { id: "pro_1", title: "12 Go + 200 min Tous Réseaux + Illimité 5 FAF", price: 2500, validity: "10 Jours" },
     { id: "pro_2", title: "18 Go + Illimité Tous Réseaux & 5 FAF", price: 3500, validity: "15 Jours" },
@@ -35,7 +35,7 @@ const moovOffersDatabase = {
     { id: "izy_10", title: "830 min + 10 Go (+10 Go bonus) + 5 Numéros Gratuits + 500 SMS", price: 10000, validity: "30 Jours" },
     { id: "izy_11", title: "1660 min + 20 Go (+20 Go bonus) + 5 Numéros Gratuits + 1000 SMS", price: 20000, validity: "30 Jours" }
   ],
-  forfaitsInternet: [
+  forfaitsInternetMoov: [
     { id: "net_1", title: "150 Mo (+150 Mo bonus)", price: 150, validity: "1 Jour" },
     { id: "net_2", title: "220 Mo (+220 Mo bonus)", price: 200, validity: "2 Jours" },
     { id: "net_3", title: "400 Mo (+400 Mo bonus)", price: 300, validity: "2 Jours" },
@@ -70,18 +70,35 @@ const moovOffersDatabase = {
     { id: "moov20_1", title: "5 000 points (Forfait Point - Moov 20 ans)", price: 500, validity: "Jusqu'au 31 Octobre 2026" },
     { id: "moov20_2", title: "1,5 Go (Moov 20 ans)", price: 500, validity: "3 Jours" },
     { id: "moov20_3", title: "20 Go + 200 min + 200 SMS (Folie 20 ans)", price: 1000, validity: "2 Jours" }
+  ],
+  // Nouveaux forfaits MTN intégrés
+  mtnKouman: [
+    { id: "mtn_k_1", title: "MTN Kouman - 30 min vers tous les réseaux", price: 300, validity: "1 Jour" },
+    { id: "mtn_k_2", title: "MTN Kouman - 80 min vers tous les réseaux", price: 500, validity: "3 Jours" },
+    { id: "mtn_k_3", title: "MTN Kouman - 200 min vers tous les réseaux", price: 1000, validity: "7 Jours" }
+  ],
+  mtnInternet: [
+    { id: "mtn_net_1", title: "MTN Internet - 1 Go", price: 600, validity: "1 Jour" },
+    { id: "mtn_net_2", title: "MTN Internet - 2 Go", price: 1000, validity: "2 Jours" },
+    { id: "mtn_net_3", title: "MTN Internet - 5 Go", price: 2500, validity: "7 Jours" },
+    { id: "mtn_net_4", title: "MTN Internet - 15 Go", price: 5000, validity: "30 Jours" },
+    { id: "mtn_net_5", title: "MTN Internet - 35 Go", price: 10000, validity: "30 Jours" }
+  ],
+  mtnYello: [
+    { id: "mtn_y_1", title: "MTN Yello Maxi - 3 Go + Appels Illimités MTN", price: 2000, validity: "7 Jours" },
+    { id: "mtn_y_2", title: "MTN Yello Maxi - 10 Go + Appels Illimités MTN", price: 5000, validity: "30 Jours" }
   ]
 };
 
 function App() {
   const [phone, setPhone] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('forfaitsInternet');
-  const [selectedOfferId, setSelectedOfferId] = useState(moovOffersDatabase.forfaitsInternet[0].id);
+  const [selectedCategory, setSelectedCategory] = useState('forfaitsInternetMoov');
+  const [selectedOfferId, setSelectedOfferId] = useState(offersDatabase.forfaitsInternetMoov[0].id);
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState('');
 
   // Récupérer la liste des offres de la catégorie active
-  const currentOffers = moovOffersDatabase[selectedCategory] || [];
+  const currentOffers = offersDatabase[selectedCategory] || [];
   
   // Trouver l'objet offre sélectionné
   const currentOffer = currentOffers.find(o => o.id === selectedOfferId) || currentOffers[0];
@@ -94,8 +111,8 @@ function App() {
     const cat = e.target.value;
     setSelectedCategory(cat);
     // Sélectionner automatiquement le premier forfait de la nouvelle catégorie
-    if (moovOffersDatabase[cat] && moovOffersDatabase[cat].length > 0) {
-      setSelectedOfferId(moovOffersDatabase[cat][0].id);
+    if (offersDatabase[cat] && offersDatabase[cat].length > 0) {
+      setSelectedOfferId(offersDatabase[cat][0].id);
     }
   };
 
@@ -169,29 +186,36 @@ Statut        : Validé (Mode Simulation)
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial', maxWidth: '600px', margin: '0 auto' }}>
-      <h1>MaKbine - Achat de Forfaits Moov</h1>
+      <h1>MaKbine - Achat de Forfaits</h1>
       
       <label>Numéro de téléphone :</label>
       <input 
         type="text" 
         value={phone} 
         onChange={(e) => setPhone(e.target.value)} 
-        placeholder="07xxxxxxxx" 
+        placeholder="07xxxxxxxx / 05xxxxxxxx" 
         style={{ display: 'block', margin: '10px 0', width: '100%', padding: '10px', boxSizing: 'border-box' }}
       />
 
-      <label>Catégorie de Forfait :</label>
+      <label>Catégorie de Forfait (Moov & MTN) :</label>
       <select 
         value={selectedCategory} 
         onChange={handleCategoryChange}
         style={{ display: 'block', margin: '10px 0', width: '100%', padding: '10px', boxSizing: 'border-box' }}
       >
-        <option value="forfaitsInternet">Forfaits Internet</option>
-        <option value="moovFoliePro">Moov Folie Pro</option>
-        <option value="moovFolieAppels">Moov Folie Appels</option>
-        <option value="izyMixPlus">Forfaits Izy Mix Plus</option>
-        <option value="forfaitsSpeciauxEtIllimites">Forfaits Spéciaux & Illimités</option>
-        <option value="gbesseEtMoov20Ans">Gbêssê & Moov 20 ans</option>
+        <optgroup label="--- MOOV CI ---">
+          <option value="forfaitsInternetMoov">Forfaits Internet Moov</option>
+          <option value="moovFoliePro">Moov Folie Pro</option>
+          <option value="moovFolieAppels">Moov Folie Appels</option>
+          <option value="izyMixPlus">Forfaits Izy Mix Plus</option>
+          <option value="forfaitsSpeciauxEtIllimites">Forfaits Spéciaux & Illimités Moov</option>
+          <option value="gbesseEtMoov20Ans">Gbêssê & Moov 20 ans</option>
+        </optgroup>
+        <optgroup label="--- MTN CI ---">
+          <option value="mtnInternet">Forfaits Internet MTN</option>
+          <option value="mtnKouman">MTN Kouman (Appels)</option>
+          <option value="mtnYello">MTN Yello Maxi</option>
+        </optgroup>
       </select>
 
       <label>Forfait Précis :</label>
