@@ -238,7 +238,7 @@
         toggleView('summary');
     }
 
-    // Déclenchement au clic sur "Payer avec Wave" corrigé avec fetch API
+    // Déclenchement au clic sur "Payer avec Wave" avec notification et redirection vers Wave
     async function lancerPaiementEtMinuteur() {
         const phone = document.getElementById('sum-phone').innerText.trim();
         const amount = document.getElementById('sum-amount').innerText.trim();
@@ -261,23 +261,21 @@
         document.getElementById('pay-btn').style.display = 'none'; // Cache le bouton pour éviter les double clics
         startCountdown(600); // 600 secondes = 10 minutes
 
-        // 3. Appel asynchrone sécurisé vers l'API backend pour envoyer la notification Telegram
+        // 3. Appel de l'API backend pour envoyer la notification Telegram en arrière-plan
         try {
             await fetch('/api/transacter', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phone: phone,
-                    total: amount,
-                    service: currentService,
-                    id: txId
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone, total: amount, service: currentService, id: txId })
             });
         } catch (error) {
             console.error("Erreur lors de l'appel API de notification :", error);
         }
+
+        // 4. Redirection vers Wave après une courte pause pour lancer l'application
+        setTimeout(() => {
+            window.location.href = "https://pay.wave.com/";
+        }, 1500);
     }
 
     function startCountdown(duration) {
