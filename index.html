@@ -94,6 +94,15 @@
             <span onclick="logout()" style="font-size:11px; color:#f87171; cursor:pointer;">Quitter</span>
         </div>
 
+        <!-- Configuration rapide Telegram (Bot @CabineExpress_bot) -->
+        <div class="form-section" style="padding: 10px 15px; margin-bottom: 15px; font-size: 12px;">
+            <label style="color:var(--accent); font-weight:bold; margin-bottom:4px;">Configuration Telegram Bot</label>
+            <div class="input-row">
+                <input type="text" id="tg-chat-id" placeholder="Entrez votre Telegram Chat ID" style="font-size:12px; padding:6px;">
+                <button class="btn-self" onclick="saveTelegramChatId()">Enregistrer</button>
+            </div>
+        </div>
+
         <div id="home-view">
             <div class="grid-services">
                 <div class="service-card" onclick="selectService('Transfert d\'unités')"><div>📱</div><span>Transfert d'unités</span></div>
@@ -158,13 +167,31 @@
 <a href="https://wa.me/2250100483015?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
 
 <script>
-    // --- Configuration Telegram (Bot: Arlete Recharge Bot @CabineExpress_bot) ---
+    // --- Intégration Token Bot Telegram (@CabineExpress_bot) ---
     const TELEGRAM_BOT_TOKEN = "8642128083:AAFWfDzqfZ5Wjj5HIYbtf-bKM4mWSYA_Ic";
-    // Pour envoyer sur Telegram, il vous faut un Chat ID (ou un canal/groupe). Remplacez la chaîne vide par votre Chat ID si nécessaire.
-    const TELEGRAM_CHAT_ID = ""; 
+    
+    // Charger le Chat ID sauvegardé dans le navigateur s'il existe
+    let TELEGRAM_CHAT_ID = localStorage.getItem('cabine_tg_chat_id') || "";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        if (TELEGRAM_CHAT_ID) {
+            document.getElementById('tg-chat-id').value = TELEGRAM_CHAT_ID;
+        }
+    });
+
+    function saveTelegramChatId() {
+        const val = document.getElementById('tg-chat-id').value.trim();
+        if (!val) {
+            alert('Veuillez entrer un Chat ID valide.');
+            return;
+        }
+        TELEGRAM_CHAT_ID = val;
+        localStorage.setItem('cabine_tg_chat_id', TELEGRAM_CHAT_ID);
+        alert('Chat ID Telegram enregistré avec succès !');
+    }
 
     async function sendTelegramNotification(message) {
-        if (!TELEGRAM_CHAT_ID) return; // Si pas de chat ID renseigné, on évite l'erreur fetch
+        if (!TELEGRAM_CHAT_ID) return;
         const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
         try {
             await fetch(url, {
@@ -421,7 +448,7 @@
         transactions.unshift(newTx);
         localStorage.setItem('cabine_history', JSON.stringify(transactions));
 
-        // Envoi de la notification Telegram avec votre Token configuré
+        // Envoi de la notification Telegram
         await sendTelegramNotification(`🔔 *Nouvelle Commande Cabine Express*\n- Réf: ${txId}\n- Service: ${currentService}\n- Bénéficiaire: ${destPhone}\n- Total à payer: ${total} FCFA\n- Client (Auteur): ${userPhone}`);
 
         // Redirection vers le lien Wave réel
