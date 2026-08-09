@@ -145,7 +145,7 @@
                 <p><strong>Service :</strong> <span id="sum-service"></span></p>
                 <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
                 <p><strong>Montant exact à payer :</strong> <span id="sum-amount" style="color:#f97316; font-size:16px;"></span> FCFA</p>
-                <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez entrer exactement ce montant sur Wave.</p>
+                <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez entrer exactement ce montant.</p>
             </div>
             <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtMinuteur()">Payer avec Wave</button>
         </div>
@@ -238,8 +238,8 @@
         toggleView('summary');
     }
 
-    // Déclenchement au clic sur "Payer avec Wave"
-    function lancerPaiementEtMinuteur() {
+    // Déclenchement au clic sur "Payer avec Wave" corrigé avec fetch API
+    async function lancerPaiementEtMinuteur() {
         const phone = document.getElementById('sum-phone').innerText.trim();
         const amount = document.getElementById('sum-amount').innerText.trim();
         const txId = "TX-" + Date.now();
@@ -261,11 +261,23 @@
         document.getElementById('pay-btn').style.display = 'none'; // Cache le bouton pour éviter les double clics
         startCountdown(600); // 600 secondes = 10 minutes
 
-        // 3. Appel de l'API backend pour envoyer la notification/récapitulatif et ouvrir Wave
-        setTimeout(() => {
-            const urlTraitement = `/api/transacter?id=${txId}&phone=${phone}&montant=${amount}&service=${encodeURIComponent(currentService)}`;
-            window.location.href = urlTraitement;
-        }, 1000); // Petite pause d'une seconde pour bien voir le minuteur s'enclencher
+        // 3. Appel asynchrone sécurisé vers l'API backend pour envoyer la notification Telegram
+        try {
+            await fetch('/api/transacter', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phone: phone,
+                    total: amount,
+                    service: currentService,
+                    id: txId
+                })
+            });
+        } catch (error) {
+            console.error("Erreur lors de l'appel API de notification :", error);
+        }
     }
 
     function startCountdown(duration) {
