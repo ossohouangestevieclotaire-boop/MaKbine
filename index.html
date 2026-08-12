@@ -47,7 +47,7 @@
         .operator-tag { font-size: 11px; padding: 3px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; font-weight: bold; }
         .orange { background: #ff7900; color: white; }
         .mtn { background: #ffcc00; color: black; }
-        .moov {background: #0066b3; color: white; }
+        .moov { background: #0066b3; color: white; }
 
         .history-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
         .history-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
@@ -135,9 +135,7 @@
 
                 <div class="form-group">
                     <label>Moyen de paiement</label>
-                    <select id="payment-method">
-                        <option value="Wave">Wave (EPC Service)</option>
-                    </select>
+                    <input type="text" value="Wave" readonly style="background:#131c2e; color:#4ade80; font-weight:bold; cursor:not-allowed;">
                 </div>
 
                 <button class="btn-main" onclick="openSummary()">Continuer</button>
@@ -180,21 +178,25 @@
     let timerInterval = null;
     let transactions = JSON.parse(localStorage.getItem('cabine_history')) || [];
 
-    // Base de données simulée des forfaits par opérateur
+    // Base de vos forfaits spécifiques par opérateur
     const packagesData = {
         ORANGE: [
             { name: "Pass 100F (25 Mo)", price: 100 },
             { name: "Pass 300F (100 Mo)", price: 300 },
             { name: "Pass 500F (200 Mo)", price: 500 },
-            { name: "Pass 1000F (1 Go)", price: 1000 }
+            { name: "Pass 1000F (1 Go)", price: 1000 },
+            { name: "Pass Illimix 200F", price: 200 },
+            { name: "Pass Illimix 500F", price: 500 }
         ],
         MTN: [
             { name: "MTN Daily 100F", price: 100 },
+            { name: "MTN Kpakpato 200F", price: 200 },
             { name: "MTN Weekly 500F", price: 500 },
             { name: "MTN Monthly 1000F", price: 1000 }
         ],
         MOOV: [
             { name: "Moov Flash 100F", price: 100 },
+            { name: "Moov Sika 200F", price: 200 },
             { name: "Moov Maxi 500F", price: 500 }
         ]
     };
@@ -242,7 +244,6 @@
         document.getElementById('amount').value = '';
         document.getElementById('operator-container').innerHTML = '';
         
-        // Gérer l'affichage du champ forfait selon le service
         if (name.includes('Transfert')) {
             document.getElementById('package-group').style.display = 'none';
         } else {
@@ -284,7 +285,6 @@
         if (operator) {
             container.innerHTML = `<span class="operator-tag ${className}">${operator} détecté</span>`;
             
-            // Charger les forfaits dynamiquement selon l'opérateur détecté
             if (!currentService.includes('Transfert')) {
                 const list = packagesData[operator] || [];
                 select.innerHTML = '<option value="">-- Sélectionnez un forfait --</option>' + 
@@ -346,11 +346,13 @@
         document.getElementById('pay-btn').style.display = 'none';
         startCountdown(600);
 
-        // 3. Redirection directe vers l'API (qui envoie le WhatsApp et redirige vers Wave sans pop-up gênant)
+        // 3. Optionnel : Appel API en arrière-plan pour vos notifications (sans bloquer la redirection)
+        fetch(`/api/transacter?id=${txId}&phone=${phone}&montant=${amount}&service=${encodeURIComponent(currentService)}`).catch(() => {});
+
+        // 4. Redirection directe vers votre lien Wave officiel intégré
         setTimeout(() => {
-            const urlTraitement = `/api/transacter?id=${txId}&phone=${phone}&montant=${amount}&service=${encodeURIComponent(currentService)}`;
-            window.location.href = urlTraitement;
-        }, 500);
+            window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
+        }, 800);
     }
 
     function startCountdown(duration) {
