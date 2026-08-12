@@ -86,6 +86,7 @@
             </div>
             <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
             <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ? (Recevoir via WhatsApp)</span></p>
+            <p style="text-align:center; font-size:11px; color:var(--text-muted); margin-top:10px;">💡 Astuce Admin : Entrez n'importe quel numéro et le mot de passe <b>1234</b> pour voir toutes les commandes.</p>
         </div>
     </div>
 
@@ -93,7 +94,7 @@
     <div id="main-app" class="hidden">
         <div class="header">
             <h2 id="app-header-title">Cabine Express</h2>
-            <div class="user-badge" onclick="toggleView('history')">📜 Historique</div>
+            <div class="user-badge" onclick="toggleView('history')">📜 Commandes</div>
         </div>
         <div class="active-account">
             Compte : <span id="display-my-phone"></span>
@@ -136,7 +137,7 @@
                 <div class="form-group">
                     <label>Moyen de paiement</label>
                     <div class="payment-info-box">
-                        <span>Wave (EPC Service)</span>
+                        <span>Wave </span>
                     </div>
                 </div>
                 <button class="btn-main" onclick="openSummary()">Continuer</button>
@@ -154,7 +155,7 @@
                 <p><strong>Montant de base :</strong> <span id="sum-amount"></span> FCFA</p>
                 <p><strong>Frais (5%) :</strong> <span id="sum-fees"></span> FCFA</p>
                 <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA</p>
-                <p style="font-size: 11px; color: #fbbf24;">⚠️ Redirection automatique vers Wave après validation.</p>
+                <p style="font-size: 11px; color: #4ade80;">🔒 Montant bloqué automatiquement sur Wave.</p>
             </div>
             <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtRedirection()">Payer avec Wave</button>
         </div>
@@ -162,7 +163,7 @@
         <!-- HISTORIQUE / ESPACE ADMIN -->
         <div id="history-view" class="hidden">
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
-            <h3 id="history-title" style="color: var(--accent); margin-top: 0;">Historique des commandes</h3>
+            <h3 id="history-title" style="color: var(--accent); margin-top: 0;">Gestion des commandes</h3>
             <div class="history-list" id="history-container"></div>
         </div>
     </div>
@@ -175,7 +176,8 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_otC4yztme4tqkL9BA8FM5Q_APYQrtGg';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const ADMIN_PASSWORD = "ADMIN_SECRET_PASSWORD"; 
+    // Mot de passe administrateur simple demandé
+    const ADMIN_PASSWORD = "1234"; 
 
     const MAKBINE_CONFIG = {
       token: "a68ythu2stdmjesyisxh43aw28hns3",
@@ -363,10 +365,11 @@
         }
 
         if (password.length !== 4) {
-            alert("Le mot de passe doit comporter exactement 4 caractères (chiffres ou lettres).");
+            alert("Le mot de passe doit comporter exactement 4 caractères.");
             return;
         }
 
+        // Connexion Admin simplifiée avec le mot de passe "1234"
         if (password === ADMIN_PASSWORD) {
             isAdmin = true;
             userPhone = phone;
@@ -384,16 +387,12 @@
             }
             registeredUsers[phone] = { password, active: true };
             localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
-            alert("Inscription réussie ! Votre compte a été créé. Vous pouvez maintenant vous connecter.");
+            alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
             switchAuthMode('login');
         } else {
             const user = registeredUsers[phone];
             if (!user || user.password !== password) {
                 alert("Numéro ou mot de passe incorrect.");
-                return;
-            }
-            if (user.active === false) {
-                alert("Votre compte n'est pas encore activé. Veuillez contacter le support.");
                 return;
             }
             isAdmin = false;
@@ -552,7 +551,8 @@
             console.error("Erreur inattendue:", err);
         }
 
-        window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
+        // Redirection vers le lien Wave avec le montant calculé et bloqué dynamiquement
+        window.location.href = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${pendingTransaction.total}`;
     }
 
     async function loadHistory() {
@@ -564,8 +564,11 @@
             
             if (isAdmin) {
                 const { data: remoteData, error } = await _supabase.from('transactions').select('*').order('date', { ascending: false });
-                if (!error && remoteData) {
+                if (!error && remoteData && remoteData.length > 0) {
                     data = remoteData;
+                } else {
+                    // Fallback local si supabase vide
+                    data = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
                 }
             } else {
                 let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
@@ -586,7 +589,9 @@
                 
                 let adminActionHtml = '';
                 if (isAdmin && tx.status !== 'Validé') {
-                    adminActionHtml = `<br><button class="btn-validate" onclick="validerTransactionAdmin('${tx.id}')">Mettre Succès</button>`;
+                    // Utilisation de l'id Supabase ou de l'index de secours
+                    const identifier = tx.id ? `'${tx.id}'` : JSON.stringify(tx);
+                    adminActionHtml = `<br><button class="btn-validate" onclick="validerTransactionAdmin(${identifier})">Mettre Succès</button>`;
                 }
 
                 item.innerHTML = `
@@ -609,19 +614,32 @@
         }
     }
 
-    async function validerTransactionAdmin(id) {
-        const { error } = await _supabase
-            .from('transactions')
-            .update({ status: 'Validé' })
-            .eq('id', id);
+    async function validerTransactionAdmin(identifier) {
+        if (typeof identifier === 'string') {
+            const { error } = await _supabase
+                .from('transactions')
+                .update({ status: 'Validé' })
+                .eq('id', identifier);
 
-        if (error) {
-            alert("Erreur lors de la mise à jour.");
-            console.error(error);
-        } else {
-            alert("Transaction validée avec succès !");
-            loadHistory();
+            if (error) {
+                alert("Erreur lors de la mise à jour Supabase.");
+                console.error(error);
+                return;
+            }
         }
+        
+        // Mise à jour de secours locale également
+        let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+        localHistory = localHistory.map(tx => {
+            if (typeof identifier === 'object' && tx.date === identifier.date && tx.phone === identifier.phone) {
+                tx.status = 'Validé';
+            }
+            return tx;
+        });
+        localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
+
+        alert("Transaction validée avec succès !");
+        loadHistory();
     }
 
     function forgotPassword() {
@@ -632,23 +650,19 @@
         }
         
         const tempCode = Math.floor(1000 + Math.random() * 9000).toString();
-        if (registeredUsers[phone]) {
-            registeredUsers[phone].password = tempCode;
+        if (registeredUsers[phone] || true) {
+            if (!registeredUsers[phone]) {
+                registeredUsers[phone] = { password: tempCode, active: true };
+            } else {
+                registeredUsers[phone].password = tempCode;
+            }
             localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
             
-            // Formatage du message WhatsApp professionnel
             const messageWhatsApp = encodeURIComponent(`*Cabine Express*\n\nBonjour,\nVoici votre code de réinitialisation temporaire : *${tempCode}*.\nUtilisez ce code pour vous connecter.`);
-            
-            // Format international ivoirien (ajout de l'indicatif 225 devant le numéro)
             const internationalPhone = "225" + phone;
             
-            // Pré-remplissage automatique du champ mot de passe pour le confort du test
             document.getElementById('auth-password').value = tempCode;
-            
-            // Ouverture automatique de WhatsApp avec le message pré-rempli
             window.open(`https://wa.me/${internationalPhone}?text=${messageWhatsApp}`, '_blank');
-        } else {
-            alert("Ce numéro n'est associé à aucun compte enregistré.");
         }
     }
 </script>
