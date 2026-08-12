@@ -76,17 +76,13 @@
             <div id="tab-register" class="tab" onclick="switchAuthMode('register')">Inscription</div>
         </div>
         <div class="form-section">
-            <div class="form-group" id="group-email" style="display: none;">
-                <label>Adresse E-mail valide</label>
-                <input type="email" id="auth-email" placeholder="Ex: monclient@gmail.com">
-            </div>
             <div class="form-group">
-                <label>Votre Numéro (01, 05 ou 07)</label>
+                <label>Numéro de téléphone (01, 05 ou 07 - 10 chiffres)</label>
                 <input type="text" id="auth-phone" placeholder="Ex: 0700000000" maxlength="10">
             </div>
             <div class="form-group">
-                <label>Mot de passe (4 chiffres)</label>
-                <input type="password" id="auth-password" placeholder="Ex: 1234" maxlength="30">
+                <label>Mot de passe (4 caractères obligatoires)</label>
+                <input type="password" id="auth-password" placeholder="Ex: 1234" maxlength="4">
             </div>
             <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
             <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ?</span></p>
@@ -140,7 +136,7 @@
                 <div class="form-group">
                     <label>Moyen de paiement</label>
                     <div class="payment-info-box">
-                        <span>Wave </span>
+                        <span>Wave (EPC Service)</span>
                     </div>
                 </div>
                 <button class="btn-main" onclick="openSummary()">Continuer</button>
@@ -228,6 +224,7 @@
       },
       ORANGE: {
         internet: [
+          { label: "Pass Internet 100 Mo - 24 Heures - 100F", value: 100 },
           { label: "Pass Internet 300 Mo - 24 Heures - 300F", value: 300 },
           { label: "Pass Internet 1 Go - 24 Heures - 600F", value: 600 },
           { label: "Pass Max It 1.5 Go - 3 Jrs - 500F", value: 500 },
@@ -341,18 +338,15 @@
 
     function switchAuthMode(mode) {
         currentMode = mode;
-        const emailGroup = document.getElementById('group-email');
         const tabLogin = document.getElementById('tab-login');
         const tabRegister = document.getElementById('tab-register');
         const btn = document.getElementById('auth-btn');
 
         if (mode === 'login') {
-            emailGroup.style.display = 'none';
             tabLogin.classList.add('active');
             tabRegister.classList.remove('active');
             btn.textContent = 'Se connecter';
         } else {
-            emailGroup.style.display = 'block';
             tabRegister.classList.add('active');
             tabLogin.classList.remove('active');
             btn.textContent = "S'inscrire";
@@ -362,10 +356,14 @@
     function handleAuthSubmit() {
         const phone = document.getElementById('auth-phone').value.trim();
         const password = document.getElementById('auth-password').value.trim();
-        const email = document.getElementById('auth-email').value.trim();
 
         if (!isValidIvorianNumber(phone)) {
-            alert("Veuillez entrer un numéro ivoirien valide.");
+            alert("Le numéro doit comporter exactement 10 chiffres et commencer par 01, 05 ou 07.");
+            return;
+        }
+
+        if (password.length !== 4) {
+            alert("Le mot de passe doit comporter exactement 4 caractères (chiffres ou lettres).");
             return;
         }
 
@@ -380,18 +378,23 @@
         }
 
         if (currentMode === 'register') {
-            if (!email) {
-                alert("Veuillez entrer un e-mail valide.");
+            if (registeredUsers[phone]) {
+                alert("Ce numéro est déjà inscrit. Veuillez vous connecter.");
                 return;
             }
-            registeredUsers[phone] = { email, password };
+            // Enregistrement avec un statut "actif: false" pour empêcher la connexion directe immédiate si requis, ou création standard
+            registeredUsers[phone] = { password, active: true };
             localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
-            alert("Inscription réussie ! Vous pouvez vous connecter.");
+            alert("Inscription réussie ! Votre compte a été créé. Vous pouvez maintenant vous connecter.");
             switchAuthMode('login');
         } else {
             const user = registeredUsers[phone];
             if (!user || user.password !== password) {
                 alert("Numéro ou mot de passe incorrect.");
+                return;
+            }
+            if (user.active === false) {
+                alert("Votre compte n'est pas encore activé. Veuillez contacter le support.");
                 return;
             }
             isAdmin = false;
@@ -571,7 +574,7 @@
             }
 
             if (!data || data.length === 0) {
-                container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune transaction trouvée.</p>";
+                container.innerHTML = "<p style='text-align:center; color:var::text-muted;'>Aucune transaction trouvée.</p>";
                 return;
             }
 
@@ -623,7 +626,22 @@
     }
 
     function forgotPassword() {
-        alert("Veuillez contacter le support WhatsApp pour réinitialiser votre mot de passe.");
+        const phone = document.getElementById('auth-phone').value.trim();
+        if (!isValidIvorianNumber(phone)) {
+            alert("Veuillez d'abord saisir votre numéro de téléphone à 10 chiffres dans le champ ci-dessus.");
+            return;
+        }
+        
+        // Simulation d'envoi de code de réinitialisation par SMS
+        const tempCode = Math.floor(1000 + Math.random() * 9000);
+        if (registeredUsers[phone]) {
+            registeredUsers[phone].tempPassword = tempCode.toString();
+            localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
+            alert("Un code de réinitialisation temporaire (4 chiffres) a été simulé et envoyé par SMS au " + phone + ".\nCode temporaire : " + tempCode);
+            document.getElementById('auth-password').value = tempCode;
+        } else {
+            alert("Ce numéro n'est associé à aucun compte enregistré.");
+        }
     }
 </script>
 </body>
