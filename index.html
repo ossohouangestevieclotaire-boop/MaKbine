@@ -633,11 +633,13 @@
         
         const tempCode = Math.floor(1000 + Math.random() * 9000).toString();
         if (registeredUsers[phone]) {
-            // Mettre à jour immédiatement le mot de passe dans la base de données locale
             registeredUsers[phone].password = tempCode;
             localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
             
-            alert("Un code de réinitialisation temporaire (4 chiffres) a été simulé et envoyé par SMS au " + phone + ".\nCode temporaire : " + tempCode);
+            // Formatage d'un message SMS réaliste
+            const smsMessage = `[Cabine Express] Votre code de reinitialisation temporaire est : ${tempCode}. Utilisez ce code pour vous connecter.`;
+            alert(smsMessage);
+            
             document.getElementById('auth-password').value = tempCode;
         } else {
             alert("Ce numéro n'est associé à aucun compte enregistré.");
