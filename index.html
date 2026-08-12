@@ -85,7 +85,7 @@
                 <input type="password" id="auth-password" placeholder="Ex: 1234" maxlength="4">
             </div>
             <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
-            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ?</span></p>
+            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ? (Recevoir via WhatsApp)</span></p>
         </div>
     </div>
 
@@ -636,11 +636,17 @@
             registeredUsers[phone].password = tempCode;
             localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
             
-            // Formatage d'un message SMS réaliste
-            const smsMessage = `[Cabine Express] Votre code de reinitialisation temporaire est : ${tempCode}. Utilisez ce code pour vous connecter.`;
-            alert(smsMessage);
+            // Formatage du message WhatsApp professionnel
+            const messageWhatsApp = encodeURIComponent(`*Cabine Express*\n\nBonjour,\nVoici votre code de réinitialisation temporaire : *${tempCode}*.\nUtilisez ce code pour vous connecter.`);
             
+            // Format international ivoirien (ajout de l'indicatif 225 devant le numéro)
+            const internationalPhone = "225" + phone;
+            
+            // Pré-remplissage automatique du champ mot de passe pour le confort du test
             document.getElementById('auth-password').value = tempCode;
+            
+            // Ouverture automatique de WhatsApp avec le message pré-rempli
+            window.open(`https://wa.me/${internationalPhone}?text=${messageWhatsApp}`, '_blank');
         } else {
             alert("Ce numéro n'est associé à aucun compte enregistré.");
         }
