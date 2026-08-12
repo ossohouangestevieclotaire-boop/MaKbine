@@ -77,16 +77,15 @@
         </div>
         <div class="form-section">
             <div class="form-group">
-                <label>Numéro de téléphone (01, 05 ou 07 - 10 chiffres)</label>
-                <input type="text" id="auth-phone" placeholder="Ex: 0700000000" maxlength="10">
+                <label>Numéro de téléphone (10 chiffres)</label>
+                <input type="tel" id="auth-phone" placeholder="Ex: 0700000000" maxlength="10">
             </div>
             <div class="form-group">
-                <label>Mot de passe (4 caractères obligatoires)</label>
-                <input type="password" id="auth-password" placeholder="Ex: 1234" maxlength="4">
+                <label id="password-label">Mot de passe (4 chiffres)</label>
+                <input type="password" id="auth-password" placeholder="Ex: 1234" inputmode="numeric" pattern="[0-9]*" maxlength="10">
             </div>
             <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
             <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ? (Recevoir via WhatsApp)</span></p>
-            <p style="text-align:center; font-size:11px; color:var(--text-muted); margin-top:10px;">💡 Astuce Admin : Entrez n'importe quel numéro et le mot de passe <b>1234</b> pour voir toutes les commandes.</p>
         </div>
     </div>
 
@@ -118,7 +117,7 @@
                 <div class="form-group">
                     <label>Numéro du bénéficiaire</label>
                     <div class="input-row">
-                        <input type="text" id="dest-phone" placeholder="Ex: 0700000000" maxlength="10" oninput="onPhoneInputChanged()">
+                        <input type="tel" id="dest-phone" placeholder="Ex: 0700000000" maxlength="10" oninput="onPhoneInputChanged()">
                         <button class="btn-self" onclick="setMyNumber()">Pour moi</button>
                     </div>
                     <div id="operator-container"></div>
@@ -137,7 +136,7 @@
                 <div class="form-group">
                     <label>Moyen de paiement</label>
                     <div class="payment-info-box">
-                        <span>Wave </span>
+                        <span>Wave (EPC Service)</span>
                     </div>
                 </div>
                 <button class="btn-main" onclick="openSummary()">Continuer</button>
@@ -155,7 +154,6 @@
                 <p><strong>Montant de base :</strong> <span id="sum-amount"></span> FCFA</p>
                 <p><strong>Frais (5%) :</strong> <span id="sum-fees"></span> FCFA</p>
                 <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA</p>
-                <p style="font-size: 11px; color: #4ade80;">🔒 Montant bloqué automatiquement sur Wave.</p>
             </div>
             <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtRedirection()">Payer avec Wave</button>
         </div>
@@ -176,8 +174,9 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_otC4yztme4tqkL9BA8FM5Q_APYQrtGg';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Mot de passe administrateur simple demandé
-    const ADMIN_PASSWORD = "1234"; 
+    // Votre identifiant administrateur officiel (10 chiffres) et son mot de passe dédié
+    const ADMIN_PHONE = "0556724316";
+    const ADMIN_PASSWORD = "0556724316"; 
 
     const MAKBINE_CONFIG = {
       token: "a68ythu2stdmjesyisxh43aw28hns3",
@@ -343,6 +342,8 @@
         const tabLogin = document.getElementById('tab-login');
         const tabRegister = document.getElementById('tab-register');
         const btn = document.getElementById('auth-btn');
+        const passInput = document.getElementById('auth-password');
+        const passLabel = document.getElementById('password-label');
 
         if (mode === 'login') {
             tabLogin.classList.add('active');
@@ -353,6 +354,7 @@
             tabLogin.classList.remove('active');
             btn.textContent = "S'inscrire";
         }
+        passInput.value = '';
     }
 
     function handleAuthSubmit() {
@@ -364,19 +366,24 @@
             return;
         }
 
-        if (password.length !== 4) {
-            alert("Le mot de passe doit comporter exactement 4 caractères.");
-            return;
-        }
-
-        // Connexion Admin simplifiée avec le mot de passe "1234"
-        if (password === ADMIN_PASSWORD) {
+        // Vérification si c'est l'administrateur officiel
+        if (phone === ADMIN_PHONE) {
+            if (password !== ADMIN_PASSWORD) {
+                alert("Mot de passe administrateur incorrect.");
+                return;
+            }
             isAdmin = true;
             userPhone = phone;
             document.getElementById('display-my-phone').textContent = phone + " (ADMIN)";
             document.getElementById('auth-view').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             loadHistory();
+            return;
+        }
+
+        // Pour les utilisateurs normaux : exactement 4 chiffres obligatoires
+        if (password.length !== 4) {
+            alert("Pour les utilisateurs, le mot de passe doit comporter exactement 4 chiffres.");
             return;
         }
 
@@ -551,8 +558,8 @@
             console.error("Erreur inattendue:", err);
         }
 
-        // Redirection vers le lien Wave avec le montant calculé et bloqué dynamiquement
-        window.location.href = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${pendingTransaction.total}`;
+        // Redirection avec verrouillage strict du montant pour Android et iPhone
+        window.location.href = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${pendingTransaction.total}&lock_amount=true`;
     }
 
     async function loadHistory() {
@@ -567,7 +574,6 @@
                 if (!error && remoteData && remoteData.length > 0) {
                     data = remoteData;
                 } else {
-                    // Fallback local si supabase vide
                     data = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
                 }
             } else {
@@ -589,7 +595,6 @@
                 
                 let adminActionHtml = '';
                 if (isAdmin && tx.status !== 'Validé') {
-                    // Utilisation de l'id Supabase ou de l'index de secours
                     const identifier = tx.id ? `'${tx.id}'` : JSON.stringify(tx);
                     adminActionHtml = `<br><button class="btn-validate" onclick="validerTransactionAdmin(${identifier})">Mettre Succès</button>`;
                 }
@@ -628,7 +633,6 @@
             }
         }
         
-        // Mise à jour de secours locale également
         let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
         localHistory = localHistory.map(tx => {
             if (typeof identifier === 'object' && tx.date === identifier.date && tx.phone === identifier.phone) {
@@ -648,22 +652,25 @@
             alert("Veuillez d'abord saisir votre numéro de téléphone à 10 chiffres dans le champ ci-dessus.");
             return;
         }
+
+        if (phone === ADMIN_PHONE) {
+            alert("Pour des raisons de sécurité, le mot de passe administrateur ne peut pas être réinitialisé via cette option automatique.");
+            return;
+        }
         
         const tempCode = Math.floor(1000 + Math.random() * 9000).toString();
-        if (registeredUsers[phone] || true) {
-            if (!registeredUsers[phone]) {
-                registeredUsers[phone] = { password: tempCode, active: true };
-            } else {
-                registeredUsers[phone].password = tempCode;
-            }
-            localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
-            
-            const messageWhatsApp = encodeURIComponent(`*Cabine Express*\n\nBonjour,\nVoici votre code de réinitialisation temporaire : *${tempCode}*.\nUtilisez ce code pour vous connecter.`);
-            const internationalPhone = "225" + phone;
-            
-            document.getElementById('auth-password').value = tempCode;
-            window.open(`https://wa.me/${internationalPhone}?text=${messageWhatsApp}`, '_blank');
+        if (!registeredUsers[phone]) {
+            registeredUsers[phone] = { password: tempCode, active: true };
+        } else {
+            registeredUsers[phone].password = tempCode;
         }
+        localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
+        
+        const messageWhatsApp = encodeURIComponent(`*Cabine Express*\n\nBonjour,\nVoici votre code de réinitialisation temporaire : *${tempCode}*.\nUtilisez ce code pour vous connecter.`);
+        const internationalPhone = "225" + phone;
+        
+        document.getElementById('auth-password').value = tempCode;
+        window.open(`https://wa.me/${internationalPhone}?text=${messageWhatsApp}`, '_blank');
     }
 </script>
 </body>
