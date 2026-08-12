@@ -156,9 +156,9 @@
                 <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
                 <p id="sum-package-container"><strong>Forfait :</strong> <span id="sum-package" style="color:var(--accent);"></span></p>
                 <p><strong>Montant de base :</strong> <span id="sum-amount"></span> FCFA</p>
-                <p><strong>Frais (7%) :</strong> <span id="sum-fees"></span> FCFA</p>
+                <p><strong>Frais (5%) :</strong> <span id="sum-fees"></span> FCFA</p>
                 <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA</p>
-                <p style="font-size: 11px; color: #fbbf24;">⚠️ Cliquez sur Payer pour enregistrer et lancer Wave.</p>
+                <p style="font-size: 11px; color: #fbbf24;">⚠️ Redirection automatique vers Wave après validation.</p>
             </div>
             <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtRedirection()">Payer avec Wave</button>
         </div>
@@ -239,17 +239,24 @@
       },
       ORANGE: {
         internet: [
-          { label: "Orange Internet - 1 Go - 24 Heures - 600F", value: 600 },
-          { label: "Orange Internet - 2 Go - 7 Jours - 1000F", value: 1000 },
-          { label: "Orange Internet - 5 Go - 30 Jours - 2500F", value: 2500 },
-          { label: "Orange Internet - 10 Go - 30 Jours - 5000F", value: 5000 }
+          { label: "Pass Internet 100 Mo - 24 Heures - 100F", value: 100 },
+          { label: "Pass Internet 300 Mo - 24 Heures - 300F", value: 300 },
+          { label: "Pass Internet 1 Go - 24 Heures - 600F", value: 600 },
+          { label: "Pass Internet 1.5 Go - 7 Jours - 1000F", value: 1000 },
+          { label: "Pass Internet 4 Go - 7 Jours - 2000F", value: 2000 },
+          { label: "Pass Internet 5 Go - 30 Jours - 2500F", value: 2500 },
+          { label: "Pass Internet 12 Go - 30 Jours - 5000F", value: 5000 },
+          { label: "Pass Internet 30 Go - 30 Jours - 10000F", value: 10000 }
         ],
         appel: [
-          { label: "Orange Appel - 30 min - 24 Heures - 300F", value: 300 },
-          { label: "Orange Appel - 75 min - 7 Jours - 500F", value: 500 }
+          { label: "Pass Appel 30 min Tous Réseaux - 24H - 300F", value: 300 },
+          { label: "Pass Appel 75 min Tous Réseaux - 7 Jours - 500F", value: 500 },
+          { label: "Pass Appel Illimité Orange - 30 Jours - 5000F", value: 5000 }
         ],
         mix: [
-          { label: "Orange Max - 3 Go + Appels - 7 Jours - 2000F", value: 2000 }
+          { label: "KDO Max Mix (Internet + Appels) - 1 Jour - 200F", value: 200 },
+          { label: "KDO Max Mix (Internet + Appels) - 7 Jours - 1000F", value: 1000 },
+          { label: "Orange Max 3 Go + Appels - 7 Jours - 2000F", value: 2000 }
         ]
       }
     };
@@ -453,7 +460,8 @@
             packageName = selectedOpt.getAttribute('data-label');
         }
 
-        const fees = Math.round(baseAmount * 0.07);
+        // Frais ajustés à 5%
+        const fees = Math.round(baseAmount * 0.05);
         const total = baseAmount + fees;
 
         pendingTransaction = {
@@ -498,11 +506,17 @@
         if (!pendingTransaction) return;
 
         const payBtn = document.getElementById('pay-btn');
-        payBtn.textContent = "Enregistrement en cours...";
+        payBtn.textContent = "Traitement en cours...";
         payBtn.disabled = true;
 
+        // Sauvegarde locale instantanée pour l'historique client
+        let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+        localHistory.unshift(pendingTransaction);
+        localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
+
         try {
-            const { error } = await _supabase
+            // Enregistrement asynchrone Supabase et Telegram en arrière-plan (sans bloquer la redirection)
+            _supabase
                 .from('transactions')
                 .insert([
                     {
@@ -513,28 +527,23 @@
                         status: 'En attente',
                         date: pendingTransaction.date
                     }
-                ]);
+                ])
+                .then(({ error }) => {
+                    if (error) console.error("Erreur Supabase:", error);
+                });
 
-            if (error) {
-                console.error("Erreur Supabase:", error);
-                alert("Erreur lors de l'enregistrement de la transaction.");
-            } else {
-                await sendTelegramNotification(
-                    pendingTransaction.phone, 
-                    pendingTransaction.total, 
-                    pendingTransaction.package_name
-                );
+            sendTelegramNotification(
+                pendingTransaction.phone, 
+                pendingTransaction.total, 
+                pendingTransaction.package_name
+            );
 
-                alert("Transaction enregistrée ! Redirection vers Wave...");
-                window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
-            }
         } catch (err) {
             console.error("Erreur inattendue:", err);
-            alert("Une erreur est survenue.");
-        } finally {
-            payBtn.textContent = "Payer avec Wave";
-            payBtn.disabled = false;
         }
+
+        // Redirection directe vers Wave sans blocage
+        window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
     }
 
     async function loadHistory() {
@@ -542,18 +551,18 @@
         container.innerHTML = "Chargement...";
 
         try {
-            let query = _supabase.from('transactions').select('*').order('date', { ascending: false });
+            let data = [];
             
-            if (!isAdmin) {
-                query = query.eq('phone', userPhone);
-            }
-
-            const { data, error } = await query;
-
-            if (error) {
-                container.innerHTML = "Erreur de chargement de l'historique.";
-                console.error(error);
-                return;
+            // Si admin, essaie de récupérer depuis Supabase
+            if (isAdmin) {
+                const { data: remoteData, error } = await _supabase.from('transactions').select('*').order('date', { ascending: false });
+                if (!error && remoteData) {
+                    data = remoteData;
+                }
+            } else {
+                // Pour l'utilisateur normal, lecture depuis le localStorage partagé du navigateur
+                let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+                data = localHistory.filter(tx => tx.phone === userPhone);
             }
 
             if (!data || data.length === 0) {
