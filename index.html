@@ -382,7 +382,6 @@
                 alert("Ce numéro est déjà inscrit. Veuillez vous connecter.");
                 return;
             }
-            // Enregistrement avec un statut "actif: false" pour empêcher la connexion directe immédiate si requis, ou création standard
             registeredUsers[phone] = { password, active: true };
             localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
             alert("Inscription réussie ! Votre compte a été créé. Vous pouvez maintenant vous connecter.");
@@ -574,7 +573,7 @@
             }
 
             if (!data || data.length === 0) {
-                container.innerHTML = "<p style='text-align:center; color:var::text-muted;'>Aucune transaction trouvée.</p>";
+                container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune transaction trouvée.</p>";
                 return;
             }
 
@@ -632,11 +631,12 @@
             return;
         }
         
-        // Simulation d'envoi de code de réinitialisation par SMS
-        const tempCode = Math.floor(1000 + Math.random() * 9000);
+        const tempCode = Math.floor(1000 + Math.random() * 9000).toString();
         if (registeredUsers[phone]) {
-            registeredUsers[phone].tempPassword = tempCode.toString();
+            // Mettre à jour immédiatement le mot de passe dans la base de données locale
+            registeredUsers[phone].password = tempCode;
             localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
+            
             alert("Un code de réinitialisation temporaire (4 chiffres) a été simulé et envoyé par SMS au " + phone + ".\nCode temporaire : " + tempCode);
             document.getElementById('auth-password').value = tempCode;
         } else {
