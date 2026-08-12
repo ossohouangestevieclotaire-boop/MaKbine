@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cabine Express</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -41,23 +42,27 @@
         .btn-main { width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; }
         .btn-main:hover { opacity: 0.9; }
 
-        .timer-box { background: #334155; border: 1px solid var(--accent); padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px; display: none; }
-        .timer-box span { font-size: 18px; font-weight: bold; color: #fbbf24; }
-
-        .operator-tag { font-size: 11px; padding: 3px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; font-weight: bold; }
-        .orange { background: #ff7900; color: white; }
-        .mtn { background: #ffcc00; color: black; }
-        .moov { background: #0066b3; color: white; }
-
         .history-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
         .history-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .status-success { color: #4ade80; font-weight: bold; }
         .status-pending { color: #fbbf24; font-weight: bold; }
-        .status-failed { color: #f87171; font-weight: bold; }
+        
+        .btn-validate { background: #22c55e; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .btn-validate:hover { background: #16a34a; }
 
         .support-bubble { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-decoration: none; z-index: 100; }
         .hidden { display: none; }
         .back-link { color: var(--text-muted); font-size: 13px; cursor: pointer; margin-bottom: 10px; display: inline-block; }
+        .tabs { display: flex; margin-bottom: 15px; background: #0f172a; border-radius: 8px; padding: 4px; border: 1px solid var(--border); }
+        .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; cursor: pointer; border-radius: 6px; color: var(--text-muted); font-weight: 600; }
+        .tab.active { background: var(--accent); color: white; }
+        
+        .operator-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-top: 5px; }
+        .badge-moov { background: #0284c7; color: white; }
+        .badge-mtn { background: #eab308; color: black; }
+        .badge-orange { background: #f97316; color: white; }
+        
+        .payment-info-box { background: var(--card-bg); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; font-size: 14px; color: #4ade80; font-weight: bold; display: flex; align-items: center; gap: 8px; }
     </style>
 </head>
 <body>
@@ -65,44 +70,46 @@
 <div class="app-container">
     <!-- PAGE AUTHENTIFICATION -->
     <div id="auth-view">
-        <h2 style="text-align:center; color:var(--accent);">Cabine Express</h2>
-        <p style="text-align:center; font-size:13px; color:var(--text-muted);">Connexion / Inscription</p>
+        <h2 style="text-align:center; color:var(--accent); margin-bottom: 5px;">Cabine Express</h2>
+        <div class="tabs" style="margin-top: 15px;">
+            <div id="tab-login" class="tab active" onclick="switchAuthMode('login')">Connexion</div>
+            <div id="tab-register" class="tab" onclick="switchAuthMode('register')">Inscription</div>
+        </div>
         <div class="form-section">
+            <div class="form-group" id="group-email" style="display: none;">
+                <label>Adresse E-mail valide</label>
+                <input type="email" id="auth-email" placeholder="Ex: monclient@gmail.com">
+            </div>
             <div class="form-group">
                 <label>Votre Numéro (01, 05 ou 07)</label>
                 <input type="text" id="auth-phone" placeholder="Ex: 0700000000" maxlength="10">
             </div>
-            <button class="btn-main" onclick="handleAuth()">Accéder à mon compte</button>
+            <div class="form-group">
+                <label>Mot de passe (4 chiffres)</label>
+                <input type="password" id="auth-password" placeholder="Ex: 1234" maxlength="30">
+            </div>
+            <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
+            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ?</span></p>
         </div>
     </div>
 
-    <!-- APPLICATION PRINCIPALE -->
+    <!-- APPLICATION CLIENT -->
     <div id="main-app" class="hidden">
         <div class="header">
-            <h2>Cabine Express</h2>
+            <h2 id="app-header-title">Cabine Express</h2>
             <div class="user-badge" onclick="toggleView('history')">📜 Historique</div>
         </div>
-
         <div class="active-account">
             Compte : <span id="display-my-phone"></span>
-            <button class="btn-self" onclick="location.reload()" style="padding: 4px 8px;">Quitter</button>
+            <span onclick="logout()" style="font-size:11px; color:#f87171; cursor:pointer;">Quitter</span>
         </div>
 
-        <!-- ACCUEIL -->
         <div id="home-view">
             <div class="grid-services">
-                <div class="service-card" onclick="selectService('Transfert d\'unités')">
-                    <div>📱</div><span>Transfert d'unités</span>
-                </div>
-                <div class="service-card" onclick="selectService('Souscription Internet')">
-                    <div>🌐</div><span>Souscription Internet</span>
-                </div>
-                <div class="service-card" onclick="selectService('Souscription Appel')">
-                    <div>📞</div><span>Souscription Appel</span>
-                </div>
-                <div class="service-card" onclick="selectService('Souscription Mix')">
-                    <div>⚡</div><span>Souscription Mix</span>
-                </div>
+                <div class="service-card" onclick="selectService('Transfert d\'unités')"><div>📱</div><span>Transfert d'unités</span></div>
+                <div class="service-card" onclick="selectService('Souscription Internet')"><div>🌐</div><span>Souscription Internet</span></div>
+                <div class="service-card" onclick="selectService('Souscription Appel')"><div>📞</div><span>Souscription Appel</span></div>
+                <div class="service-card" onclick="selectService('Souscription Mix')"><div>⚡</div><span>Souscription Mix</span></div>
             </div>
         </div>
 
@@ -110,34 +117,32 @@
         <div id="form-view" class="hidden">
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
             <h3 id="form-title" style="color: var(--accent); margin-top: 0;"></h3>
-            
             <div class="form-section">
                 <div class="form-group">
                     <label>Numéro du bénéficiaire</label>
                     <div class="input-row">
-                        <input type="text" id="dest-phone" placeholder="Ex: 0700000000" maxlength="10" oninput="detectOperator()">
+                        <input type="text" id="dest-phone" placeholder="Ex: 0700000000" maxlength="10" oninput="onPhoneInputChanged()">
                         <button class="btn-self" onclick="setMyNumber()">Pour moi</button>
                     </div>
                     <div id="operator-container"></div>
                 </div>
-
-                <div class="form-group" id="package-group">
+                
+                <div class="form-group" id="container-amount-select">
                     <label>Choisir le forfait adapté</label>
-                    <select id="package-select" onchange="updateAmountFromPackage()">
-                        <option value="">-- Sélectionnez un forfait --</option>
-                    </select>
+                    <select id="amount-select"></select>
                 </div>
 
-                <div class="form-group">
-                    <label>Montant (FCFA)</label>
-                    <input type="number" id="amount" placeholder="Ex: 500">
+                <div class="form-group hidden" id="container-amount-input">
+                    <label>Montant en FCFA (Minimum 200 FCFA)</label>
+                    <input type="number" id="amount-input" placeholder="Ex: 250" min="200">
                 </div>
 
                 <div class="form-group">
                     <label>Moyen de paiement</label>
-                    <input type="text" value="Wave" readonly style="background:#131c2e; color:#4ade80; font-weight:bold; cursor:not-allowed;">
+                    <div class="payment-info-box">
+                        <span>Wave (EPC Service)</span>
+                    </div>
                 </div>
-
                 <button class="btn-main" onclick="openSummary()">Continuer</button>
             </div>
         </div>
@@ -146,25 +151,22 @@
         <div id="summary-view" class="hidden">
             <span class="back-link" onclick="toggleView('form')">← Modifier</span>
             <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif</h3>
-            
-            <div id="active-timer-box" class="timer-box">
-                <div>⏳ Paiement en cours - Temps restant :</div>
-                <span id="countdown">10:00</span>
-            </div>
-
             <div class="form-section" style="line-height: 1.8; font-size: 14px;">
                 <p><strong>Service :</strong> <span id="sum-service"></span></p>
                 <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
-                <p><strong>Montant exact à payer :</strong> <span id="sum-amount" style="color:#f97316; font-size:16px;"></span> FCFA</p>
-                <p style="font-size: 11px; color: #fbbf24;">⚠️ Veuillez entrer exactement ce montant sur Wave.</p>
+                <p id="sum-package-container"><strong>Forfait :</strong> <span id="sum-package" style="color:var(--accent);"></span></p>
+                <p><strong>Montant de base :</strong> <span id="sum-amount"></span> FCFA</p>
+                <p><strong>Frais (7%) :</strong> <span id="sum-fees"></span> FCFA</p>
+                <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA</p>
+                <p style="font-size: 11px; color: #fbbf24;">⚠️ Cliquez sur Payer pour enregistrer et lancer Wave.</p>
             </div>
-            <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtMinuteur()">Payer avec Wave</button>
+            <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtRedirection()">Payer avec Wave</button>
         </div>
 
-        <!-- HISTORIQUE -->
+        <!-- HISTORIQUE / ESPACE ADMIN -->
         <div id="history-view" class="hidden">
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
-            <h3 style="color: var(--accent); margin-top: 0;">Historique des commandes</h3>
+            <h3 id="history-title" style="color: var(--accent); margin-top: 0;">Historique des commandes</h3>
             <div class="history-list" id="history-container"></div>
         </div>
     </div>
@@ -173,235 +175,442 @@
 <a href="https://wa.me/2250100483015?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
 
 <script>
+    const SUPABASE_URL = 'https://vxaqlbaqfpxitbdimeqj.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_otC4yztme4tqkL9BA8FM5Q_APYQrtGg';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const ADMIN_PASSWORD = "ADMIN_SECRET_PASSWORD"; 
+
+    const MAKBINE_CONFIG = {
+      token: "a68ythu2stdmjesyisxh43aw28hns3",
+      version: "3.0"
+    };
+
+    let currentMode = 'login';
     let currentService = "";
     let userPhone = "";
-    let timerInterval = null;
-    let transactions = JSON.parse(localStorage.getItem('cabine_history')) || [];
+    let isAdmin = false;
+    let registeredUsers = JSON.parse(localStorage.getItem('cabine_users')) || {};
 
-    // Base de vos forfaits spécifiques par opérateur
-    const packagesData = {
-        ORANGE: [
-            { name: "Pass 100F (25 Mo)", price: 100 },
-            { name: "Pass 300F (100 Mo)", price: 300 },
-            { name: "Pass 500F (200 Mo)", price: 500 },
-            { name: "Pass 1000F (1 Go)", price: 1000 },
-            { name: "Pass Illimix 200F", price: 200 },
-            { name: "Pass Illimix 500F", price: 500 }
+    const catalogForfaits = {
+      MOOV: {
+        internet: [
+          { label: "150 Mo (+150 Mo bonus) - 1 Jour - 150F", value: 150 },
+          { label: "220 Mo (+220 Mo bonus) - 1 Jour - 200F", value: 200 },
+          { label: "400 Mo (+400 Mo bonus) - 1 Jour - 300F", value: 300 },
+          { label: "750 Mo (+750 Mo bonus) - 7 Jours - 500F", value: 500 },
+          { label: "1 Go (+1 Go bonus) - 7 Jours - 750F", value: 750 },
+          { label: "1,5 Go (+1,5 Go bonus) - 7 Jours - 1000F", value: 1000 },
+          { label: "2,5 Go (+2,5 Go bonus) - 7 Jours - 1500F", value: 1500 },
+          { label: "3 Go (+3 Go bonus) - 30 Jours - 2000F", value: 2000 },
+          { label: "7,4 Go (+7,4 Go bonus) - 30 Jours - 4900F", value: 4900 },
+          { label: "20 Go (+20 Go bonus) - 30 Jours - 9900F", value: 9900 },
+          { label: "30 Go (+30 Go bonus) - 30 Jours - 14900F", value: 14900 },
+          { label: "45 Go (+45 Go bonus) - 30 Jours - 19900F", value: 19900 }
         ],
-        MTN: [
-            { name: "MTN Daily 100F", price: 100 },
-            { name: "MTN Kpakpato 200F", price: 200 },
-            { name: "MTN Weekly 500F", price: 500 },
-            { name: "MTN Monthly 1000F", price: 1000 }
+        appel: [
+          { label: "12 minutes Tous Réseaux - 1 Jour - 150F", value: 150 },
+          { label: "20 minutes Tous Réseaux - 1 Jour - 200F", value: 200 },
+          { label: "35 minutes Tous Réseaux + 5 Numéros FAF - 3 Jours - 300F", value: 300 },
+          { label: "120 minutes Tous Réseaux + 5 Numéros FAF - 7 Jours - 500F", value: 500 },
+          { label: "140 minutes Tous Réseaux + 5 Numéros FAF - 30 Jours - 1000F", value: 1000 },
+          { label: "210 minutes Tous Réseaux + 5 Numéros FAF - 30 Jours - 1500F", value: 1500 }
         ],
-        MOOV: [
-            { name: "Moov Flash 100F", price: 100 },
-            { name: "Moov Sika 200F", price: 200 },
-            { name: "Moov Maxi 500F", price: 500 }
+        mix: [
+          { label: "12 Go + 200 min + Illimité 5 FAF - 30 Jours - 2500F", value: 2500 },
+          { label: "18 Go + Illimité Tous Réseaux & 5 FAF - 30 Jours - 3500F", value: 3500 },
+          { label: "60 Go + Illimité Tous Réseaux & 5 FAF - 30 Jours - 15000F", value: 15000 }
         ]
+      },
+      MTN: {
+        internet: [
+          { label: "MTN Internet - 1 Go - 24 Heures - 600F", value: 600 },
+          { label: "MTN Internet - 2 Go - 7 Jours - 1000F", value: 1000 },
+          { label: "MTN Internet - 5 Go - 30 Jours - 2500F", value: 2500 },
+          { label: "MTN Internet - 15 Go - 30 Jours - 5000F", value: 5000 }
+        ],
+        appel: [
+          { label: "MTN Kouman - 30 min vers tous - 24 Heures - 300F", value: 300 },
+          { label: "MTN Kouman - 80 min vers tous - 7 Jours - 500F", value: 500 }
+        ],
+        mix: [
+          { label: "MTN Yello Maxi - 3 Go + Appels Illimités MTN - 7 Jours - 2000F", value: 2000 }
+        ]
+      },
+      ORANGE: {
+        internet: [
+          { label: "Orange Internet - 1 Go - 24 Heures - 600F", value: 600 },
+          { label: "Orange Internet - 2 Go - 7 Jours - 1000F", value: 1000 },
+          { label: "Orange Internet - 5 Go - 30 Jours - 2500F", value: 2500 },
+          { label: "Orange Internet - 10 Go - 30 Jours - 5000F", value: 5000 }
+        ],
+        appel: [
+          { label: "Orange Appel - 30 min - 24 Heures - 300F", value: 300 },
+          { label: "Orange Appel - 75 min - 7 Jours - 500F", value: 500 }
+        ],
+        mix: [
+          { label: "Orange Max - 3 Go + Appels - 7 Jours - 2000F", value: 2000 }
+        ]
+      }
     };
 
     function isValidIvorianNumber(num) {
         return /^(01|05|07)\d{8}$/.test(num);
     }
 
-    function handleAuth() {
-        const phoneInput = document.getElementById('auth-phone').value.trim();
-        if (!isValidIvorianNumber(phoneInput)) {
-            alert("Numéro invalide ! Il doit comporter 10 chiffres et commencer par 01, 05 ou 07.");
-            return;
-        }
-        userPhone = phoneInput;
-        document.getElementById('display-my-phone').innerText = userPhone;
-        document.getElementById('auth-view').classList.add('hidden');
-        document.getElementById('main-app').classList.remove('hidden');
-        renderHistory();
+    function getOperator(phone) {
+        if (phone.startsWith('07')) return 'ORANGE';
+        if (phone.startsWith('05')) return 'MTN';
+        if (phone.startsWith('01')) return 'MOOV';
+        return null;
     }
 
-    function toggleView(view) {
-        clearInterval(timerInterval);
-        document.getElementById('active-timer-box').style.display = 'none';
-        document.getElementById('pay-btn').style.display = 'block';
+    function updateForfaitsDynamically() {
+        const phone = document.getElementById('dest-phone').value.trim();
+        const selectContainer = document.getElementById('container-amount-select');
+        const inputContainer = document.getElementById('container-amount-input');
+        const select = document.getElementById('amount-select');
+        const operatorContainer = document.getElementById('operator-container');
+        
+        select.innerHTML = '';
+        operatorContainer.innerHTML = '';
 
+        if (currentService === 'Transfert d\'unités') {
+            selectContainer.classList.add('hidden');
+            inputContainer.classList.remove('hidden');
+            if (isValidIvorianNumber(phone)) {
+                const op = getOperator(phone);
+                operatorContainer.innerHTML = `<span class="operator-badge badge-${op.toLowerCase()}">${op} détecté</span>`;
+            }
+            return;
+        }
+
+        selectContainer.classList.remove('hidden');
+        inputContainer.classList.add('hidden');
+
+        if (!isValidIvorianNumber(phone)) {
+            const opt = document.createElement('option');
+            opt.value = "";
+            opt.textContent = "Entrez un numéro valide (01, 05, 07)";
+            select.appendChild(opt);
+            return;
+        }
+
+        const operator = getOperator(phone);
+        if (operator) {
+            let badgeClass = operator === 'MOOV' ? 'badge-moov' : (operator === 'MTN' ? 'badge-mtn' : 'badge-orange');
+            operatorContainer.innerHTML = `<span class="operator-badge ${badgeClass}">${operator} détecté</span>`;
+
+            let subCategory = '';
+            if (currentService === 'Souscription Internet') subCategory = 'internet';
+            else if (currentService === 'Souscription Appel') subCategory = 'appel';
+            else if (currentService === 'Souscription Mix') subCategory = 'mix';
+
+            const list = catalogForfaits[operator][subCategory] || [];
+            list.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.value;
+                opt.setAttribute('data-label', item.label);
+                opt.textContent = item.label;
+                select.appendChild(opt);
+            });
+        }
+    }
+
+    function onPhoneInputChanged() {
+        updateForfaitsDynamically();
+    }
+
+    function switchAuthMode(mode) {
+        currentMode = mode;
+        const emailGroup = document.getElementById('group-email');
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+        const btn = document.getElementById('auth-btn');
+
+        if (mode === 'login') {
+            emailGroup.style.display = 'none';
+            tabLogin.classList.add('active');
+            tabRegister.classList.remove('active');
+            btn.textContent = 'Se connecter';
+        } else {
+            emailGroup.style.display = 'block';
+            tabRegister.classList.add('active');
+            tabLogin.classList.remove('active');
+            btn.textContent = "S'inscrire";
+        }
+    }
+
+    function handleAuthSubmit() {
+        const phone = document.getElementById('auth-phone').value.trim();
+        const password = document.getElementById('auth-password').value.trim();
+        const email = document.getElementById('auth-email').value.trim();
+
+        if (!isValidIvorianNumber(phone)) {
+            alert("Veuillez entrer un numéro ivoirien valide.");
+            return;
+        }
+
+        if (password === ADMIN_PASSWORD) {
+            isAdmin = true;
+            userPhone = phone;
+            document.getElementById('display-my-phone').textContent = phone + " (ADMIN)";
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            loadHistory();
+            return;
+        }
+
+        if (currentMode === 'register') {
+            if (!email) {
+                alert("Veuillez entrer un e-mail valide.");
+                return;
+            }
+            registeredUsers[phone] = { email, password };
+            localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
+            alert("Inscription réussie ! Vous pouvez vous connecter.");
+            switchAuthMode('login');
+        } else {
+            const user = registeredUsers[phone];
+            if (!user || user.password !== password) {
+                alert("Numéro ou mot de passe incorrect.");
+                return;
+            }
+            isAdmin = false;
+            userPhone = phone;
+            document.getElementById('display-my-phone').textContent = phone;
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            loadHistory();
+        }
+    }
+
+    function logout() {
+        isAdmin = false;
+        userPhone = "";
+        document.getElementById('main-app').classList.add('hidden');
+        document.getElementById('auth-view').classList.remove('hidden');
+        document.getElementById('auth-password').value = '';
+    }
+
+    function toggleView(viewName) {
         document.getElementById('home-view').classList.add('hidden');
         document.getElementById('form-view').classList.add('hidden');
         document.getElementById('summary-view').classList.add('hidden');
         document.getElementById('history-view').classList.add('hidden');
 
-        if (view === 'home') document.getElementById('home-view').classList.remove('hidden');
-        if (view === 'form') document.getElementById('form-view').classList.remove('hidden');
-        if (view === 'summary') document.getElementById('summary-view').classList.remove('hidden');
-        if (view === 'history') {
-            renderHistory();
+        if (viewName === 'home') document.getElementById('home-view').classList.remove('hidden');
+        if (viewName === 'form') document.getElementById('form-view').classList.remove('hidden');
+        if (viewName === 'summary') document.getElementById('summary-view').classList.remove('hidden');
+        if (viewName === 'history') {
             document.getElementById('history-view').classList.remove('hidden');
+            loadHistory();
         }
     }
 
-    function selectService(name) {
-        currentService = name;
-        document.getElementById('form-title').innerText = name;
+    function selectService(serviceName) {
+        currentService = serviceName;
+        document.getElementById('form-title').textContent = serviceName;
         document.getElementById('dest-phone').value = '';
-        document.getElementById('amount').value = '';
         document.getElementById('operator-container').innerHTML = '';
-        
-        if (name.includes('Transfert')) {
-            document.getElementById('package-group').style.display = 'none';
-        } else {
-            document.getElementById('package-group').style.display = 'block';
-            resetPackages();
-        }
+        updateForfaitsDynamically();
         toggleView('form');
     }
 
     function setMyNumber() {
+        if (!userPhone) return;
         document.getElementById('dest-phone').value = userPhone;
-        detectOperator();
+        updateForfaitsDynamically();
     }
 
-    function resetPackages() {
-        const select = document.getElementById('package-select');
-        select.innerHTML = '<option value="">-- Entrez un numéro d\'abord --</option>';
-    }
-
-    function detectOperator() {
-        const phone = document.getElementById('dest-phone').value.trim();
-        const container = document.getElementById('operator-container');
-        const select = document.getElementById('package-select');
-
-        if (phone.length < 2) {
-            container.innerHTML = '';
-            if (!currentService.includes('Transfert')) resetPackages();
-            return;
-        }
-
-        const prefix = phone.substring(0, 2);
-        let operator = "";
-        let className = "";
-
-        if (prefix === "07") { operator = "ORANGE"; className = "orange"; }
-        else if (prefix === "05") { operator = "MTN"; className = "mtn"; }
-        else if (prefix === "01") { operator = "MOOV"; className = "moov"; }
-
-        if (operator) {
-            container.innerHTML = `<span class="operator-tag ${className}">${operator} détecté</span>`;
-            
-            if (!currentService.includes('Transfert')) {
-                const list = packagesData[operator] || [];
-                select.innerHTML = '<option value="">-- Sélectionnez un forfait --</option>' + 
-                    list.map(p => `<option value="${p.price}">${p.name} (${p.price}F)</option>`).join('');
-            }
-        } else {
-            container.innerHTML = `<span style="font-size:11px; color:#f87171;">Préfixe inconnu</span>`;
-            if (!currentService.includes('Transfert')) resetPackages();
-        }
-    }
-
-    function updateAmountFromPackage() {
-        const select = document.getElementById('package-select');
-        const val = select.value;
-        if (val) {
-            document.getElementById('amount').value = val;
-        }
-    }
+    let pendingTransaction = null;
 
     function openSummary() {
-        const phone = document.getElementById('dest-phone').value.trim();
-        const amount = document.getElementById('amount').value.trim();
-
-        if (!isValidIvorianNumber(phone)) {
-            alert("Le numéro du bénéficiaire doit comporter 10 chiffres et commencer par 01, 05 ou 07.");
-            return;
-        }
-        if (!amount || amount <= 0) {
-            alert("Veuillez entrer ou sélectionner un montant valide.");
+        const destPhone = document.getElementById('dest-phone').value.trim();
+        if (!isValidIvorianNumber(destPhone)) {
+            alert("Veuillez entrer un numéro de téléphone valide.");
             return;
         }
 
-        document.getElementById('sum-service').innerText = currentService;
-        document.getElementById('sum-phone').innerText = phone;
-        document.getElementById('sum-amount').innerText = amount;
+        let baseAmount = 0;
+        let packageName = "";
+
+        if (currentService === 'Transfert d\'unités') {
+            baseAmount = parseInt(document.getElementById('amount-input').value);
+            if (isNaN(baseAmount) || baseAmount < 200) {
+                alert("Le montant minimum est de 200 FCFA.");
+                return;
+            }
+            packageName = "Transfert d'unités (" + baseAmount + "F)";
+        } else {
+            const select = document.getElementById('amount-select');
+            baseAmount = parseInt(select.value);
+            if (!baseAmount) {
+                alert("Veuillez sélectionner un forfait.");
+                return;
+            }
+            const selectedOpt = select.options[select.selectedIndex];
+            packageName = selectedOpt.getAttribute('data-label');
+        }
+
+        const fees = Math.round(baseAmount * 0.07);
+        const total = baseAmount + fees;
+
+        pendingTransaction = {
+            service: currentService,
+            phone: destPhone,
+            package_name: packageName,
+            amount: baseAmount,
+            fees: fees,
+            total: total,
+            status: 'En attente',
+            date: new Date().toISOString()
+        };
+
+        document.getElementById('sum-service').textContent = currentService;
+        document.getElementById('sum-phone').textContent = destPhone;
+        document.getElementById('sum-package').textContent = packageName;
+        document.getElementById('sum-amount').textContent = baseAmount;
+        document.getElementById('sum-fees').textContent = fees;
+        document.getElementById('sum-total').textContent = total;
 
         toggleView('summary');
     }
 
-    function lancerPaiementEtMinuteur() {
-        const phone = document.getElementById('sum-phone').innerText.trim();
-        const amount = document.getElementById('sum-amount').innerText.trim();
-        const txId = "TX-" + Date.now();
-
-        // 1. Enregistrement local
-        const newTx = {
-            id: txId,
-            service: currentService,
-            phone: phone,
-            amount: amount,
-            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            status: 'PENDING'
-        };
-        transactions.unshift(newTx);
-        localStorage.setItem('cabine_history', JSON.stringify(transactions));
-
-        // 2. Affichage immédiat du minuteur et masquage du bouton
-        document.getElementById('active-timer-box').style.display = 'block';
-        document.getElementById('pay-btn').style.display = 'none';
-        startCountdown(600);
-
-        // 3. Optionnel : Appel API en arrière-plan pour vos notifications (sans bloquer la redirection)
-        fetch(`/api/transacter?id=${txId}&phone=${phone}&montant=${amount}&service=${encodeURIComponent(currentService)}`).catch(() => {});
-
-        // 4. Redirection directe vers votre lien Wave officiel intégré
-        setTimeout(() => {
-            window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
-        }, 800);
-    }
-
-    function startCountdown(duration) {
-        clearInterval(timerInterval);
-        let timer = duration, minutes, seconds;
-        const display = document.getElementById('countdown');
-
-        timerInterval = setInterval(() => {
-            minutes = parseInt(timer / 60, 10);
-            seconds = parseInt(timer % 60, 10);
-
-            minutes = minutes < 10 ? "0" + minutes : minutes;
-            seconds = seconds < 10 ? "0" + seconds : seconds;
-
-            display.textContent = minutes + ":" + seconds;
-
-            if (--timer < 0) {
-                clearInterval(timerInterval);
-                alert("Le temps imparti pour cette transaction a expiré.");
-                toggleView('home');
-            }
-        }, 1000);
-    }
-
-    function renderHistory() {
-        const container = document.getElementById('history-container');
-        if (transactions.length === 0) {
-            container.innerHTML = `<p style="text-align:center; color:var(--text-muted);">Aucune commande pour le moment.</p>`;
-            return;
+    async function sendTelegramNotification(phone, total, packageName) {
+        try {
+            await fetch('/api/transacter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    phone: phone, 
+                    total: total,
+                    packageName: packageName || "Transfert d'unités",
+                    token: MAKBINE_CONFIG.token
+                })
+            });
+        } catch (error) {
+            console.error("Erreur Telegram:", error);
         }
+    }
 
-        container.innerHTML = transactions.map(tx => {
-            let statusBadge = `<span class="status-pending">EN ATTENTE</span>`;
-            if (tx.status === 'SUCCESS') statusBadge = `<span class="status-success">ABOUTIE</span>`;
-            if (tx.status === 'FAILED') statusBadge = `<span class="status-failed">ÉCHOUÉE</span>`;
+    async function lancerPaiementEtRedirection() {
+        if (!pendingTransaction) return;
 
-            return `
-                <div class="history-item">
+        const payBtn = document.getElementById('pay-btn');
+        payBtn.textContent = "Enregistrement en cours...";
+        payBtn.disabled = true;
+
+        try {
+            const { error } = await _supabase
+                .from('transactions')
+                .insert([
+                    {
+                        service: pendingTransaction.service,
+                        phone: pendingTransaction.phone,
+                        package_name: pendingTransaction.package_name,
+                        total: pendingTransaction.total,
+                        status: 'En attente',
+                        date: pendingTransaction.date
+                    }
+                ]);
+
+            if (error) {
+                console.error("Erreur Supabase:", error);
+                alert("Erreur lors de l'enregistrement de la transaction.");
+            } else {
+                await sendTelegramNotification(
+                    pendingTransaction.phone, 
+                    pendingTransaction.total, 
+                    pendingTransaction.package_name
+                );
+
+                alert("Transaction enregistrée ! Redirection vers Wave...");
+                window.location.href = "https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/";
+            }
+        } catch (err) {
+            console.error("Erreur inattendue:", err);
+            alert("Une erreur est survenue.");
+        } finally {
+            payBtn.textContent = "Payer avec Wave";
+            payBtn.disabled = false;
+        }
+    }
+
+    async function loadHistory() {
+        const container = document.getElementById('history-container');
+        container.innerHTML = "Chargement...";
+
+        try {
+            let query = _supabase.from('transactions').select('*').order('date', { ascending: false });
+            
+            if (!isAdmin) {
+                query = query.eq('phone', userPhone);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                container.innerHTML = "Erreur de chargement de l'historique.";
+                console.error(error);
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune transaction trouvée.</p>";
+                return;
+            }
+
+            container.innerHTML = '';
+            data.forEach(tx => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                
+                let statusBadgeClass = tx.status === 'Validé' ? 'status-success' : 'status-pending';
+                
+                let adminActionHtml = '';
+                if (isAdmin && tx.status !== 'Validé') {
+                    adminActionHtml = `<br><button class="btn-validate" onclick="validerTransactionAdmin('${tx.id}')">Mettre Succès</button>`;
+                }
+
+                item.innerHTML = `
                     <div>
                         <strong>${tx.service}</strong><br>
-                        <small style="color:var(--text-muted)">Client: ${tx.phone} | ${tx.amount} FCFA</small><br>
-                        <small style="font-size:10px; color:var(--text-muted);">${tx.date}</small>
+                        <small style="color:var(--text-muted);">${tx.package_name || ''}</small><br>
+                        <small style="color:var(--text-muted);">Tél: ${tx.phone} - ${new Date(tx.date).toLocaleDateString()}</small>
                     </div>
-                    <div>${statusBadge}</div>
-                </div>
-            `;
-        }).join('');
+                    <div style="text-align:right;">
+                        <span style="color:var(--accent); font-weight:bold;">${tx.total}F</span><br>
+                        <span class="${statusBadgeClass}">${tx.status || 'En attente'}</span>
+                        ${adminActionHtml}
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        } catch (err) {
+            container.innerHTML = "Impossible de récupérer l'historique.";
+            console.error(err);
+        }
+    }
+
+    async function validerTransactionAdmin(id) {
+        const { error } = await _supabase
+            .from('transactions')
+            .update({ status: 'Validé' })
+            .eq('id', id);
+
+        if (error) {
+            alert("Erreur lors de la mise à jour.");
+            console.error(error);
+        } else {
+            alert("Transaction validée avec succès !");
+            loadHistory();
+        }
+    }
+
+    function forgotPassword() {
+        alert("Veuillez contacter le support WhatsApp pour réinitialiser votre mot de passe.");
     }
 </script>
-
 </body>
 </html>
