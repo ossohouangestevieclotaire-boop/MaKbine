@@ -174,7 +174,6 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_otC4yztme4tqkL9BA8FM5Q_APYQrtGg';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Votre identifiant administrateur officiel (10 chiffres) et son mot de passe dédié
     const ADMIN_PHONE = "0556724316";
     const ADMIN_PASSWORD = "0556724316"; 
 
@@ -343,7 +342,6 @@
         const tabRegister = document.getElementById('tab-register');
         const btn = document.getElementById('auth-btn');
         const passInput = document.getElementById('auth-password');
-        const passLabel = document.getElementById('password-label');
 
         if (mode === 'login') {
             tabLogin.classList.add('active');
@@ -366,7 +364,6 @@
             return;
         }
 
-        // Vérification si c'est l'administrateur officiel
         if (phone === ADMIN_PHONE) {
             if (password !== ADMIN_PASSWORD) {
                 alert("Mot de passe administrateur incorrect.");
@@ -381,7 +378,6 @@
             return;
         }
 
-        // Pour les utilisateurs normaux : exactement 4 chiffres obligatoires
         if (password.length !== 4) {
             alert("Pour les utilisateurs, le mot de passe doit comporter exactement 4 chiffres.");
             return;
@@ -527,12 +523,9 @@
         payBtn.textContent = "Traitement en cours...";
         payBtn.disabled = true;
 
-        let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-        localHistory.unshift(pendingTransaction);
-        localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
-
         try {
-            _supabase
+            // Insérer directement dans Supabase pour récupérer un ID unique propre
+            const { data, error } = await _supabase
                 .from('transactions')
                 .insert([
                     {
@@ -544,9 +537,20 @@
                         date: pendingTransaction.date
                     }
                 ])
-                .then(({ error }) => {
-                    if (error) console.error("Erreur Supabase:", error);
-                });
+                .select();
+
+            if (error) {
+                console.error("Erreur Supabase insertion:", error);
+                // Solution de secours locale si Supabase échoue
+                let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+                localHistory.unshift(pendingTransaction);
+                localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
+            } else if (data && data[0]) {
+                // Sauvegarde locale avec l'ID Supabase pour cohérence
+                let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+                localHistory.unshift(data[0]);
+                localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
+            }
 
             sendTelegramNotification(
                 pendingTransaction.phone, 
@@ -558,7 +562,7 @@
             console.error("Erreur inattendue:", err);
         }
 
-        // Redirection avec verrouillage strict du montant pour Android et iPhone
+        // Redirection Wave avec verrouillage strict du montant
         window.location.href = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${pendingTransaction.total}&lock_amount=true`;
     }
 
@@ -569,16 +573,19 @@
         try {
             let data = [];
             
-            if (isAdmin) {
-                const { data: remoteData, error } = await _supabase.from('transactions').select('*').order('date', { ascending: false });
-                if (!error && remoteData && remoteData.length > 0) {
-                    data = remoteData;
-                } else {
-                    data = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-                }
+            // Charger depuis Supabase pour tout le monde afin d'avoir les données en temps réel
+            const { data: remoteData, error } = await _supabase.from('transactions').select('*').order('date', { ascending: false });
+            
+            if (!error && remoteData) {
+                data = remoteData;
             } else {
-                let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-                data = localHistory.filter(tx => tx.phone === userPhone);
+                // Si Supabase ne répond pas, on utilise le localStorage
+                data = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+            }
+
+            // Si ce n'est pas l'admin, on filtre uniquement les commandes du numéro connecté
+            if (!isAdmin) {
+                data = data.filter(tx => tx.phone === userPhone);
             }
 
             if (!data || data.length === 0) {
@@ -595,8 +602,9 @@
                 
                 let adminActionHtml = '';
                 if (isAdmin && tx.status !== 'Validé') {
-                    const identifier = tx.id ? `'${tx.id}'` : JSON.stringify(tx);
-                    adminActionHtml = `<br><button class="btn-validate" onclick="validerTransactionAdmin(${identifier})">Mettre Succès</button>`;
+                    // On passe l'ID ou l'objet complet sérialisé pour identifier la ligne de façon unique
+                    const txId = tx.id ? `'${tx.id}'` : `'local_${tx.date}_${tx.phone}'`;
+                    adminActionHtml = `<br><button class="btn-validate" onclick="validerTransactionAdmin(${txId}, ${JSON.stringify(tx.phone)}, ${JSON.stringify(tx.date)})">Mettre Succès</button>`;
                 }
 
                 item.innerHTML = `
@@ -619,23 +627,34 @@
         }
     }
 
-    async function validerTransactionAdmin(identifier) {
-        if (typeof identifier === 'string') {
+    async function validerTransactionAdmin(id, phone, date) {
+        // 1. Mise à jour dans Supabase si l'ID est un UUID valide
+        if (id && !id.toString().startsWith('local_')) {
             const { error } = await _supabase
                 .from('transactions')
                 .update({ status: 'Validé' })
-                .eq('id', identifier);
+                .eq('id', id);
 
             if (error) {
-                alert("Erreur lors de la mise à jour Supabase.");
-                console.error(error);
-                return;
+                console.error("Erreur Supabase:", error);
             }
         }
-        
+
+        // 2. Mise à jour par critères (Date + Téléphone) pour forcer la mise à jour même si l'ID diffère
+        const { error: errorFallback } = await _supabase
+            .from('transactions')
+            .update({ status: 'Validé' })
+            .eq('phone', phone)
+            .eq('date', date);
+
+        if (errorFallback) {
+            console.error("Erreur fallback Supabase:", errorFallback);
+        }
+
+        // 3. Mise à jour locale pour synchroniser immédiatement
         let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
         localHistory = localHistory.map(tx => {
-            if (typeof identifier === 'object' && tx.date === identifier.date && tx.phone === identifier.phone) {
+            if (tx.phone === phone && tx.date === date) {
                 tx.status = 'Validé';
             }
             return tx;
