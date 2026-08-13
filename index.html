@@ -46,7 +46,6 @@
         .history-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .status-success { color: #4ade80; font-weight: bold; }
         .status-pending { color: #fbbf24; font-weight: bold; }
-        .status-refunded { color: #f87171; font-weight: bold; }
         
         .btn-validate { background: #22c55e; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; font-weight: bold; margin-top: 5px; }
         .btn-validate:hover { background: #16a34a; }
@@ -64,7 +63,6 @@
         .badge-orange { background: #f97316; color: white; }
         
         .payment-info-box { background: var(--card-bg); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; font-size: 14px; color: #4ade80; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        .timer-badge { color: #fbbf24; font-family: monospace; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -190,9 +188,6 @@
     let userPhone = "";
     let isAdmin = false;
     let registeredUsers = JSON.parse(localStorage.getItem('cabine_users')) || {};
-    let globalTimerInterval = null;
-    let realtimeChannel = null;
-    let cachedTransactions = [];
 
     const catalogForfaits = {
       MOOV: {
@@ -464,33 +459,19 @@
         document.getElementById('auth-view').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
         document.getElementById('display-my-phone').textContent = userPhone;
-        initRealtimeSubscription();
         toggleView('home');
+        
+        // Activer l'écoute en direct (Realtime) des changements de statut pour ce client
+        setupRealtimeListener();
     }
 
     function logout() {
         userPhone = "";
         isAdmin = false;
-        if (globalTimerInterval) clearInterval(globalTimerInterval);
-        if (realtimeChannel) _supabase.removeChannel(realtimeChannel);
         document.getElementById('main-app').classList.add('hidden');
         document.getElementById('auth-view').classList.remove('hidden');
         document.getElementById('auth-phone').value = '';
         document.getElementById('auth-password').value = '';
-    }
-
-    function initRealtimeSubscription() {
-        if (realtimeChannel) _supabase.removeChannel(realtimeChannel);
-
-        realtimeChannel = _supabase
-            .channel('public:transactions')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, payload => {
-                // Dès qu'une modification survient en base (validation, ajout, etc.), on recharge l'historique instantanément partout !
-                if (document.getElementById('history-view').classList.contains('hidden') === false) {
-                    loadHistory();
-                }
-            })
-            .subscribe();
     }
 
     function toggleView(viewName) {
@@ -498,8 +479,6 @@
         document.getElementById('form-view').classList.add('hidden');
         document.getElementById('summary-view').classList.add('hidden');
         document.getElementById('history-view').classList.add('hidden');
-
-        if (globalTimerInterval) clearInterval(globalTimerInterval);
 
         if (viewName === 'home') {
             document.getElementById('home-view').classList.remove('hidden');
@@ -583,7 +562,7 @@
             const telegramUrl = `https://api.telegram.org/bot${MAKBINE_CONFIG.token}/sendMessage`;
             const message = `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📦 Forfait : ${packageName}\n💰 Total : ${total} FCFA`;
             
-            await fetch(telegramUrl, {
+            const response = await fetch(telegramUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -592,6 +571,10 @@
                     parse_mode: 'Markdown'
                 })
             });
+            const data = await response.json();
+            if (!data.ok) {
+                console.error("Erreur Telegram API:", data);
+            }
         } catch (error) {
             console.error("Erreur Telegram Réseau:", error);
         }
@@ -604,6 +587,23 @@
         const payBtn = document.getElementById('pay-btn');
         payBtn.textContent = "Traitement en cours...";
         payBtn.disabled = true;
+
+        const newTx = {
+            id: 'local_' + Date.now(),
+            user_phone: userPhone,
+            dest_phone: tx.destPhone,
+            service: currentService,
+            package_name: tx.packageName,
+            amount: tx.baseAmount,
+            fees: tx.fees,
+            total: tx.total,
+            status: 'En attente',
+            created_at: new Date().toISOString()
+        };
+
+        let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+        localTransactions.unshift(newTx);
+        localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
 
         try {
             await sendTelegramNotification(tx.destPhone, tx.total, tx.packageName);
@@ -630,9 +630,27 @@
         window.location.href = waveUrl;
     }
 
+    function setupRealtimeListener() {
+        // Écoute les modifications sur la table transactions en temps réel
+        _supabase
+            .channel('public:transactions')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'transactions' }, payload => {
+                const updated = payload.new;
+                // Si la transaction appartient à l'utilisateur connecté et qu'elle passe à Validé
+                if (updated.user_phone === userPhone && updated.status === 'Validé') {
+                    alert(`🎉 Bonne nouvelle ! Votre commande pour ${updated.dest_phone} (${updated.package_name || updated.service}) vient d'être validée avec SUCCÈS !`);
+                    // Rafraîchir l'historique si l'écran est ouvert
+                    loadHistory();
+                }
+            })
+            .subscribe();
+    }
+
     async function loadHistory() {
         const container = document.getElementById('history-container');
         container.innerHTML = "Chargement...";
+
+        let allTransactions = [];
 
         try {
             let query = _supabase.from('transactions').select('*').order('created_at', { ascending: false });
@@ -641,26 +659,42 @@
             }
             const { data, error } = await query;
             if (!error && data) {
-                cachedTransactions = data;
+                allTransactions = data;
             }
         } catch (err) {
             console.error("Supabase inaccessible:", err);
         }
 
-        if (cachedTransactions.length === 0) {
+        let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+        if (!isAdmin) {
+            localTransactions = localTransactions.filter(t => t.user_phone === userPhone);
+        }
+
+        localTransactions.forEach(localItem => {
+            const exists = allTransactions.some(t => t.dest_phone === localItem.dest_phone && t.total === localItem.total && Math.abs(new Date(t.created_at) - new Date(localItem.created_at)) < 60000);
+            if (!exists) {
+                allTransactions.push(localItem);
+            }
+        });
+
+        allTransactions.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+        if (allTransactions.length === 0) {
             container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune commande trouvée.</p>";
             return;
         }
 
         container.innerHTML = "";
-
-        cachedTransactions.forEach(item => {
+        allTransactions.forEach(item => {
             const div = document.createElement('div');
             div.className = 'history-item';
             
+            let statusClass = item.status === 'Validé' ? 'status-success' : 'status-pending';
             let adminActionHtml = '';
-            if (isAdmin && item.status !== 'Validé' && item.status !== 'Remboursé') {
-                adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${item.id}')">Valider</button>`;
+
+            if (isAdmin && item.status !== 'Validé') {
+                const identifier = item.id || '';
+                adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${identifier}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
             }
 
             let formattedDate = '';
@@ -669,139 +703,47 @@
                 formattedDate = dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' à ' + dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
             }
 
-            if (item.status === 'Validé') {
-                let durationText = '';
-                if (item.created_at && item.validated_at) {
-                    const diffMs = new Date(item.validated_at) - new Date(item.created_at);
-                    const diffMins = Math.floor(diffMs / 60000);
-                    const diffSecs = Math.floor((diffMs % 60000) / 1000);
-                    durationText = `<br><small style="color:#4ade80;">⏱️ Traité en ${diffMins}m ${diffSecs}s</small>`;
-                } else {
-                    durationText = `<br><small style="color:#4ade80;">⏱️ Succès</small>`;
-                }
-
-                div.innerHTML = `
-                    <div>
-                        <strong>${item.service}</strong><br>
-                        <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
-                        <small style="color:var(--text-muted);">${item.package_name || ''}</small><br>
-                        <small style="color:var(--accent);">${formattedDate}</small>
-                    </div>
-                    <div style="text-align:right;">
-                        <span class="status-success">Validé</span>
-                        ${durationText}
-                    </div>
-                `;
-            } else if (item.status === 'Remboursé') {
-                div.innerHTML = `
-                    <div>
-                        <strong>${item.service}</strong><br>
-                        <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
-                        <small style="color:var(--text-muted);">${item.package_name || ''}</small><br>
-                        <small style="color:var(--accent);">${formattedDate}</small>
-                    </div>
-                    <div style="text-align:right;">
-                        <span class="status-refunded">Remboursé</span><br>
-                        <small style="font-size:10px; color:#f87171;">Délai expiré (10 min)</small>
-                    </div>
-                `;
-            } else {
-                div.innerHTML = `
-                    <div>
-                        <strong>${item.service}</strong><br>
-                        <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
-                        <small style="color:var(--text-muted);">${item.package_name || ''}</small><br>
-                        <small style="color:var(--accent);">${formattedDate}</small>
-                    </div>
-                    <div style="text-align:right;">
-                        <span class="status-pending">En attente</span><br>
-                        <small class="timer-badge" data-created="${item.created_at}" data-id="${item.id}">10:00</small><br>
-                        <small style="font-size:10px; color:var(--text-muted);">Vérification en cours...</small><br>
-                        <small style="font-size:9px; color:#f87171; display:block; max-width:130px; line-height:1.1; margin-top:2px;">Remboursement auto après 10 min si non validé</small>
-                        ${adminActionHtml}
-                    </div>
-                `;
-            }
+            div.innerHTML = `
+                <div>
+                    <strong>${item.service}</strong><br>
+                    <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
+                    <small style="color:var(--text-muted);">${item.package_name || ''}</small><br>
+                    <small style="color:var(--accent);">${formattedDate}</small>
+                </div>
+                <div style="text-align:right;">
+                    <span class="${statusClass}">${item.status}</span>
+                    ${adminActionHtml}
+                </div>
+            `;
             container.appendChild(div);
         });
-
-        startGlobalTimer();
     }
 
-    function startGlobalTimer() {
-        if (globalTimerInterval) clearInterval(globalTimerInterval);
+    async function adminValidate(id, phone, packageName, total) {
+        if (!confirm(`Valider la commande pour ${phone} (${packageName}) ?`)) return;
 
-        const updateTimers = () => {
-            const timerElements = document.querySelectorAll('.timer-badge');
-            let needsRefresh = false;
-
-            timerElements.forEach(el => {
-                const createdAtStr = el.getAttribute('data-created');
-                if (!createdAtStr) return;
-                const createdAt = new Date(createdAtStr).getTime();
-                const now = new Date().getTime();
-                const elapsedSecs = Math.floor((now - createdAt) / 1000);
-                const totalDurationSecs = 10 * 60; // 10 minutes
-                const remainingSecs = totalDurationSecs - elapsedSecs;
-
-                if (remainingSecs <= 0) {
-                    el.textContent = "00:00";
-                    const txId = el.getAttribute('data-id');
-                    markAsRefunded(txId);
-                    needsRefresh = true;
-                } else {
-                    const mins = Math.floor(remainingSecs / 60);
-                    const secs = remainingSecs % 60;
-                    el.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                }
+        if (String(id).startsWith('local_')) {
+            let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+            localTransactions = localTransactions.map(t => {
+                if (t.id === id) t.status = 'Validé';
+                return t;
             });
-
-            if (needsRefresh) {
-                loadHistory();
-            }
-        };
-
-        updateTimers();
-        globalTimerInterval = setInterval(updateTimers, 1000);
-    }
-
-    async function markAsRefunded(id) {
-        if (!isAdmin) return; // Seul l'admin déclenche le statut remboursé pour éviter les conflits
-        try {
-            await _supabase
-                .from('transactions')
-                .update({ status: 'Remboursé' })
-                .eq('id', id)
-                .eq('status', 'En attente');
-        } catch (error) {
-            console.error("Erreur remboursement Supabase:", error);
+            localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
         }
-    }
-
-    async function adminValidate(id) {
-        if (!confirm("Valider cette commande ?")) return;
-
-        const validationTimestamp = new Date().toISOString();
 
         try {
-            const { error } = await _supabase
-                .from('transactions')
-                .update({ 
-                    status: 'Validé',
-                    validated_at: validationTimestamp 
-                })
-                .eq('id', id);
-
-            if (error) {
-                console.error("Erreur Supabase:", error);
-                alert("Erreur lors de la validation.");
-            } else {
-                // Le Realtime s'occupe de propager instantanément l'événement sur tous les écrans connectés.
-                loadHistory();
+            if (!String(id).startsWith('local_')) {
+                await _supabase
+                    .from('transactions')
+                    .update({ status: 'Validé' })
+                    .eq('id', id);
             }
         } catch (err) {
-            console.error("Erreur réseau Supabase:", err);
+            console.error("Mise à jour Supabase échouée:", err);
         }
+
+        alert("Commande validée avec succès !");
+        loadHistory();
     }
 
     function forgotPassword() {
