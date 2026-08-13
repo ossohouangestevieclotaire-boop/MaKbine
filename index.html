@@ -191,6 +191,8 @@
     let isAdmin = false;
     let registeredUsers = JSON.parse(localStorage.getItem('cabine_users')) || {};
     let globalTimerInterval = null;
+    let realtimeChannel = null;
+    let cachedTransactions = [];
 
     const catalogForfaits = {
       MOOV: {
@@ -462,6 +464,7 @@
         document.getElementById('auth-view').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
         document.getElementById('display-my-phone').textContent = userPhone;
+        initRealtimeSubscription();
         toggleView('home');
     }
 
@@ -469,10 +472,25 @@
         userPhone = "";
         isAdmin = false;
         if (globalTimerInterval) clearInterval(globalTimerInterval);
+        if (realtimeChannel) _supabase.removeChannel(realtimeChannel);
         document.getElementById('main-app').classList.add('hidden');
         document.getElementById('auth-view').classList.remove('hidden');
         document.getElementById('auth-phone').value = '';
         document.getElementById('auth-password').value = '';
+    }
+
+    function initRealtimeSubscription() {
+        if (realtimeChannel) _supabase.removeChannel(realtimeChannel);
+
+        realtimeChannel = _supabase
+            .channel('public:transactions')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, payload => {
+                // Dès qu'une modification survient en base (validation, ajout, etc.), on recharge l'historique instantanément partout !
+                if (document.getElementById('history-view').classList.contains('hidden') === false) {
+                    loadHistory();
+                }
+            })
+            .subscribe();
     }
 
     function toggleView(viewName) {
@@ -565,7 +583,7 @@
             const telegramUrl = `https://api.telegram.org/bot${MAKBINE_CONFIG.token}/sendMessage`;
             const message = `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📦 Forfait : ${packageName}\n💰 Total : ${total} FCFA`;
             
-            const response = await fetch(telegramUrl, {
+            await fetch(telegramUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -574,10 +592,6 @@
                     parse_mode: 'Markdown'
                 })
             });
-            const data = await response.json();
-            if (!data.ok) {
-                console.error("Erreur Telegram API:", data);
-            }
         } catch (error) {
             console.error("Erreur Telegram Réseau:", error);
         }
@@ -590,23 +604,6 @@
         const payBtn = document.getElementById('pay-btn');
         payBtn.textContent = "Traitement en cours...";
         payBtn.disabled = true;
-
-        const newTx = {
-            id: 'local_' + Date.now(),
-            user_phone: userPhone,
-            dest_phone: tx.destPhone,
-            service: currentService,
-            package_name: tx.packageName,
-            amount: tx.baseAmount,
-            fees: tx.fees,
-            total: tx.total,
-            status: 'En attente',
-            created_at: new Date().toISOString()
-        };
-
-        let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-        localTransactions.unshift(newTx);
-        localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
 
         try {
             await sendTelegramNotification(tx.destPhone, tx.total, tx.packageName);
@@ -637,8 +634,6 @@
         const container = document.getElementById('history-container');
         container.innerHTML = "Chargement...";
 
-        let allTransactions = [];
-
         try {
             let query = _supabase.from('transactions').select('*').order('created_at', { ascending: false });
             if (!isAdmin) {
@@ -646,42 +641,26 @@
             }
             const { data, error } = await query;
             if (!error && data) {
-                allTransactions = data;
+                cachedTransactions = data;
             }
         } catch (err) {
             console.error("Supabase inaccessible:", err);
         }
 
-        let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-        if (!isAdmin) {
-            localTransactions = localTransactions.filter(t => t.user_phone === userPhone);
-        }
-
-        localTransactions.forEach(localItem => {
-            const exists = allTransactions.some(t => t.dest_phone === localItem.dest_phone && t.total === localItem.total && Math.abs(new Date(t.created_at) - new Date(localItem.created_at)) < 60000);
-            if (!exists) {
-                allTransactions.push(localItem);
-            }
-        });
-
-        allTransactions.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-
-        if (allTransactions.length === 0) {
+        if (cachedTransactions.length === 0) {
             container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune commande trouvée.</p>";
             return;
         }
 
         container.innerHTML = "";
 
-        allTransactions.forEach(item => {
+        cachedTransactions.forEach(item => {
             const div = document.createElement('div');
             div.className = 'history-item';
             
             let adminActionHtml = '';
             if (isAdmin && item.status !== 'Validé' && item.status !== 'Remboursé') {
-                const identifier = item.id || '';
-                const safeCreatedAt = item.created_at || '';
-                adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${identifier}', '${item.dest_phone}', '${item.package_name || item.service}', ${item.total}, '${safeCreatedAt}')">Valider</button>`;
+                adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${item.id}')">Valider</button>`;
             }
 
             let formattedDate = '';
@@ -711,7 +690,6 @@
                     <div style="text-align:right;">
                         <span class="status-success">Validé</span>
                         ${durationText}
-                        ${adminActionHtml}
                     </div>
                 `;
             } else if (item.status === 'Remboursé') {
@@ -737,7 +715,7 @@
                     </div>
                     <div style="text-align:right;">
                         <span class="status-pending">En attente</span><br>
-                        <small class="timer-badge" data-created="${item.created_at}" data-id="${item.id || ''}">10:00</small><br>
+                        <small class="timer-badge" data-created="${item.created_at}" data-id="${item.id}">10:00</small><br>
                         <small style="font-size:10px; color:var(--text-muted);">Vérification en cours...</small><br>
                         <small style="font-size:9px; color:#f87171; display:block; max-width:130px; line-height:1.1; margin-top:2px;">Remboursement auto après 10 min si non validé</small>
                         ${adminActionHtml}
@@ -769,7 +747,7 @@
                 if (remainingSecs <= 0) {
                     el.textContent = "00:00";
                     const txId = el.getAttribute('data-id');
-                    markAsRefunded(txId, createdAtStr);
+                    markAsRefunded(txId);
                     needsRefresh = true;
                 } else {
                     const mins = Math.floor(remainingSecs / 60);
@@ -787,92 +765,43 @@
         globalTimerInterval = setInterval(updateTimers, 1000);
     }
 
-    function markAsRefunded(id, createdAtStr) {
-        let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-        let updated = false;
-        localTransactions = localTransactions.map(t => {
-            if ((t.id === id || t.created_at === createdAtStr) && t.status === 'En attente') {
-                t.status = 'Remboursé';
-                updated = true;
-            }
-            return t;
-        });
-        if (updated) {
-            localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
-        }
-
-        if (id && !String(id).startsWith('local_')) {
-            _supabase
+    async function markAsRefunded(id) {
+        if (!isAdmin) return; // Seul l'admin déclenche le statut remboursé pour éviter les conflits
+        try {
+            await _supabase
                 .from('transactions')
                 .update({ status: 'Remboursé' })
                 .eq('id', id)
-                .then(({ error }) => {
-                    if (error) console.error("Erreur mise à jour remboursement Supabase:", error);
-                });
+                .eq('status', 'En attente');
+        } catch (error) {
+            console.error("Erreur remboursement Supabase:", error);
         }
     }
 
-    async function adminValidate(id, phone, packageName, total, createdAt) {
-        if (!confirm(`Valider la commande pour ${phone} (${packageName}) ?`)) return;
+    async function adminValidate(id) {
+        if (!confirm("Valider cette commande ?")) return;
 
         const validationTimestamp = new Date().toISOString();
 
-        // 1. Mettre à jour Supabase en priorité avec l'ID réel et l'heure de validation
-        if (id && !String(id).startsWith('local_')) {
-            try {
-                const { error } = await _supabase
-                    .from('transactions')
-                    .update({ 
-                        status: 'Validé',
-                        validated_at: validationTimestamp 
-                    })
-                    .eq('id', id);
+        try {
+            const { error } = await _supabase
+                .from('transactions')
+                .update({ 
+                    status: 'Validé',
+                    validated_at: validationTimestamp 
+                })
+                .eq('id', id);
 
-                if (error) {
-                    console.error("Erreur Supabase:", error);
-                }
-            } catch (err) {
-                console.error("Erreur réseau Supabase:", err);
+            if (error) {
+                console.error("Erreur Supabase:", error);
+                alert("Erreur lors de la validation.");
+            } else {
+                // Le Realtime s'occupe de propager instantanément l'événement sur tous les écrans connectés.
+                loadHistory();
             }
+        } catch (err) {
+            console.error("Erreur réseau Supabase:", err);
         }
-
-        // 2. Mettre à jour le localStorage pour stopper le chrono immédiatement chez l'admin et le client
-        let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-        let updatedLocal = false;
-        
-        localTransactions = localTransactions.map(t => {
-            const isSameId = t.id && id && String(t.id) === String(id);
-            const isSameCriteria = t.dest_phone === phone && Number(t.total) === Number(total) && (!createdAt || t.created_at === createdAt);
-
-            if (isSameId || isSameCriteria) {
-                t.status = 'Validé';
-                t.validated_at = validationTimestamp;
-                if (!t.created_at && createdAt) t.created_at = createdAt;
-                updatedLocal = true;
-            }
-            return t;
-        });
-
-        if (!updatedLocal) {
-            localTransactions.unshift({
-                id: id || ('local_' + Date.now()),
-                user_phone: phone,
-                dest_phone: phone,
-                service: packageName,
-                package_name: packageName,
-                amount: total,
-                fees: 0,
-                total: total,
-                status: 'Validé',
-                validated_at: validationTimestamp,
-                created_at: createdAt || validationTimestamp
-            });
-        }
-        
-        localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
-
-        alert("Commande validée avec succès !");
-        loadHistory();
     }
 
     function forgotPassword() {
@@ -897,7 +826,6 @@
                 users[phone] = newTempPass;
             }
         } else {
-            // S'il n'existe pas, on l'initialise
             users[phone] = newTempPass;
         }
 
