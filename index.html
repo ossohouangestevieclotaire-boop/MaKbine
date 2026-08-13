@@ -167,7 +167,6 @@
     </div>
 </div>
 
-<!-- Bulle WhatsApp mise à jour avec le numéro officiel 0100483015 -->
 <a href="https://wa.me/2250100483015?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
 
 <script>
@@ -175,12 +174,12 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_otC4yztme4tqkL9BA8FM5Q_APYQrtGg';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Administrateur officiel
     const ADMIN_PHONE = "0556724316";
     const ADMIN_PASSWORD = "0556724316"; 
 
     const MAKBINE_CONFIG = {
       token: "a68ythu2stdmjesyisxh43aw28hns3",
+      chatId: "0100483015",
       version: "3.0"
     };
 
@@ -503,12 +502,16 @@
 
     async function sendTelegramNotification(phone, total, packageName) {
         try {
-            await fetch('https://api.telegram.org/bot' + MAKBINE_CONFIG.token + '/sendMessage', {
+            const telegramUrl = `https://api.telegram.org/bot${MAKBINE_CONFIG.token}/sendMessage`;
+            const message = `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📦 Forfait : ${packageName}\n💰 Total : ${total} FCFA`;
+            
+            await fetch(telegramUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    chat_id: "0100483015", // Intégration correcte du chat ID configuré
-                    text: `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📦 Forfait : ${packageName}\n💰 Total : ${total} FCFA`
+                    chat_id: MAKBINE_CONFIG.chatId,
+                    text: message,
+                    parse_mode: 'Markdown'
                 })
             });
         } catch (error) {
@@ -588,6 +591,11 @@
                 
                 let statusBadgeClass = tx.status === 'Validé' ? 'status-success' : 'status-pending';
                 
+                // Formatage de la date et de l'heure
+                const txDate = new Date(tx.date);
+                const dateFormatted = txDate.toLocaleDateString();
+                const timeFormatted = txDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
                 let adminActionHtml = '';
                 if (isAdmin && tx.status !== 'Validé') {
                     const identifier = tx.id ? `'${tx.id}'` : JSON.stringify(tx);
@@ -598,7 +606,8 @@
                     <div>
                         <strong>${tx.service}</strong><br>
                         <small style="color:var(--text-muted);">${tx.package_name || ''}</small><br>
-                        <small style="color:var(--text-muted);">Tél: ${tx.phone} - ${new Date(tx.date).toLocaleDateString()}</small>
+                        <small style="color:var(--text-muted);">Tél: ${tx.phone}</small><br>
+                        <small style="color:var(--accent); font-weight:600;">📅 ${dateFormatted} à ${timeFormatted}</small>
                     </div>
                     <div style="text-align:right;">
                         <span style="color:var(--accent); font-weight:bold;">${tx.total}F</span><br>
