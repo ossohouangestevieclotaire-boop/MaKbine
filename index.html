@@ -460,6 +460,9 @@
         document.getElementById('main-app').classList.remove('hidden');
         document.getElementById('display-my-phone').textContent = userPhone;
         toggleView('home');
+        
+        // Activer l'écoute en direct (Realtime) des changements de statut pour ce client
+        setupRealtimeListener();
     }
 
     function logout() {
@@ -627,6 +630,22 @@
         window.location.href = waveUrl;
     }
 
+    function setupRealtimeListener() {
+        // Écoute les modifications sur la table transactions en temps réel
+        _supabase
+            .channel('public:transactions')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'transactions' }, payload => {
+                const updated = payload.new;
+                // Si la transaction appartient à l'utilisateur connecté et qu'elle passe à Validé
+                if (updated.user_phone === userPhone && updated.status === 'Validé') {
+                    alert(`🎉 Bonne nouvelle ! Votre commande pour ${updated.dest_phone} (${updated.package_name || updated.service}) vient d'être validée avec SUCCÈS !`);
+                    // Rafraîchir l'historique si l'écran est ouvert
+                    loadHistory();
+                }
+            })
+            .subscribe();
+    }
+
     async function loadHistory() {
         const container = document.getElementById('history-container');
         container.innerHTML = "Chargement...";
@@ -673,7 +692,6 @@
             let statusClass = item.status === 'Validé' ? 'status-success' : 'status-pending';
             let adminActionHtml = '';
 
-            // Permet d'afficher le bouton valider même pour les transactions locales si l'ID est géré ou si l'élément vient de Supabase
             if (isAdmin && item.status !== 'Validé') {
                 const identifier = item.id || '';
                 adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${identifier}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
@@ -741,8 +759,6 @@
         }
 
         let users = JSON.parse(localStorage.getItem('cabine_users')) || {};
-        
-        // Génération d'un nouveau code aléatoire à 4 chiffres
         const newTempPass = Math.floor(1000 + Math.random() * 9000).toString();
 
         if (users[phone]) {
@@ -755,7 +771,6 @@
             users[phone] = newTempPass;
         }
 
-        // Sauvegarde immédiate du nouveau code dans le stockage local
         localStorage.setItem('cabine_users', JSON.stringify(users));
 
         const waUrl = `https://wa.me/2250100483015?text=Bonjour,%20j'ai%20oublié%20mon%20mot%20de%20passe%20pour%20le%20compte%20${phone}.%20Mon%20nouveau%20mot%20de%20passe%20provisoire%20est:%20${newTempPass}`;
