@@ -105,7 +105,7 @@
                 <div class="service-card" onclick="selectService('Transfert d\'unités')"><div>📱</div><span>Transfert d'unités</span></div>
                 <div class="service-card" onclick="selectService('Souscription Internet')"><div>🌐</div><span>Souscription Internet</span></div>
                 <div class="service-card" onclick="selectService('Souscription Appel')"><div>📞</div><span>Souscription Appel</span></div>
-                <div class="service-card" onclick="selectService('Souscription Mix')"><div>⚡</div><span>Souscription Mix</span></div>
+                <div class="service-card" onclick="selectService('Souscription Mix')"><div>⚡</div><span>Souscription Mix(Appel ET Internet)</span></div>
             </div>
         </div>
 
@@ -192,22 +192,57 @@
     const catalogForfaits = {
       MOOV: {
         internet: [
-          { label: "150 Mo (+150 Mo bonus) - 1 Jour - 150F", value: 150 },
-          { label: "220 Mo (+220 Mo bonus) - 1 Jour - 200F", value: 200 },
-          { label: "400 Mo (+400 Mo bonus) - 1 Jour - 300F", value: 300 },
-          { label: "750 Mo (+750 Mo bonus) - 7 Jours - 500F", value: 500 },
-          { label: "1 Go (+1 Go bonus) - 7 Jours - 750F", value: 750 },
-          { label: "1,5 Go (+1,5 Go bonus) - 7 Jours - 1000F", value: 1000 },
-          { label: "2,5 Go (+2,5 Go bonus) - 7 Jours - 1500F", value: 1500 },
-          { label: "3 Go (+3 Go bonus) - 30 Jours - 2000F", value: 2000 }
+          { label: "150 Mo (100% mardi,jeudi,vendredi) - 1 Jour - 150F", value: 150 },
+          { label: "220 Mo (100% mardi,jeudi,vendredi) - 1 Jour - 200F", value: 200 },
+          { label: "400 Mo (100% mardi,jeudi,vendredi) - 1 Jour - 300F", value: 300 },
+          { label: "ILLIMITE -1 heure de forfait - Valable pendant 1 HEURE - 300F", value: 300 },
+          { label: "OFFRES SPECIALES 1 Go FORFAIT TIK TOK - Valable 03 Jour - 300F", value: 300 },
+          { label: "1 Go + 1 Heure - 2 Jour - 500F", value: 500 },
+          { label: "ILLIMITE - 1 heure de forfait -Valable pendant 2 HEURES - 500F", value: 500 },
+          { label: "750 Mo (100% mardi,jeudi,vendredi) - 7 Jours - 750F", value: 750 },
+          { label: "1,5 Go (100% mardi,jeudi,vendredi) - 10 Jours - 1000F", value: 1000 },
+          { label: "2,5 Go (100% mardi,jeudi,vendredi) - 15 Jours - 1500F", value: 1500 },
+          { label: "6 Go - 10 Jour - 1500F", value: 1500 },
+          { label: "3 Go (100% mardi,jeudi,vendredi) - 30 Jours - 2000F", value: 2000 },
+          { label: "7,4 Go (100% mardi,jeudi,vendredi) - 30 Jours - 4900F", value: 4900 },            
+          { label: "20 Go (100% mardi,jeudi,vendredi) - 30 Jours - 9900F", value: 9900 },
+          { label: "33 Go (100% mardi,jeudi,vendredi) - 30 Jours - 14900F", value: 14900 },
+          { label: "45 Go (100% mardi,jeudi,vendredi) - 30 Jours - 19900F", value: 19900 },
+          { label: "10 Go - 15 Jour - 2500F", value: 2500 }
         ],
         appel: [
-          { label: "12 minutes Tous Réseaux - 1 Jour - 150F", value: 150 },
-          { label: "20 minutes Tous Réseaux - 1 Jour - 200F", value: 200 },
-          { label: "35 minutes + 5 Numéros FAF - 3 Jours - 300F", value: 300 }
+          { label: "MOOV FOLIE 12 minutes  - 1 Jour - 150F", value: 150 },
+          { label: "MOOV FOLIE 20 minutes  - 1 Jour - 200F", value: 200 },
+          { label: "MOOV FOLIE 35 minutes - 2 Jours - 300F", value: 300 },
+          { label: "illimite - 1 jour - 500F", value: 500 },
+          { label: "MOOV FOLIE 120 minutes - 5 Jour - 500F", value: 500 },
+          { label: "MOOV FOLIE 140 minutes  - 10 Jour - 1000F", value: 1000 },
+          { label: "MOOV FOLIE 210 minutes  - 15 Jour - 1500F", value: 1500 },
+          { label: "MOOV FOLIE 350 minutes - 30 Jour - 2500F", value: 2500 },
+          { label: "MOOV FOLIE 700 minutes - 30 Jour - 5000F", value: 5000 }  
         ],
         mix: [
-          { label: "12 Go + 200 min + Illimité 5 FAF - 30 Jours - 2500F", value: 2500 }
+            { label: "Izy Mix Plus 10 min TR + 15 Mo + 30 SMS - 1 JOUR - 150F", value: 150 },
+            { label: "Izy Mix Plus 17 min TR + 25 Mo + 50 SMS - 2 JOUR - 200F", value: 200 },
+            { label: "OFFRES SPECIALES 30 min + 2 Go FORFAIT NUIT - Valable de 23:00 a 05:00 Jour - 200F", value: 200 },
+            { label: "Izy Mix Plus 30 min TR + 100 Mo + 100 SMS + Illimite 5 NP - 2 JOUR - 300F", value: 300 },
+            { label: "Izy Mix Plus 55 min TR + 300 Mo + 250 SMS + Illimite 5 NP - 5 JOUR - 500F", value: 500 },
+            { label: "Izy Mix Plus 70 min TR + 700 Mo + 350 SMS + Illimite 5 NP - 7 JOUR - 700F", value: 700 },
+            { label: "Izy Mix Plus 100 min TR + 1 Go + 500 SMS + Illimite 5 NP - 10 JOURS - 1000F", value: 1000 },
+            { label: "Izy Mix Plus 200 min TR + 1,5 Go + 500 SMS + Illimite 5 NP - 15 JOURS - 1500F", value: 1500 },
+            { label: "Izy Mix Plus 250 min TR + 2,5 Go + 500 SMS + Illimite 5 NP - 30 JOURS - 2500F", value: 2500 },
+            { label: "Izy Mix Plus 500 min TR + 5 Go + 500 SMS + Illimite 5 NP - 30 JOURS - 5000F", value: 5000 },
+            { label: "Izy Mix Plus 830 min TR + 10 Go + 500 SMS + Illimite 5 NP - 30 JOURS - 10000F", value: 10000 },
+            { label: "Izy Mix Plus 1660 min TR + 20 Go + 1000 SMS + Illimite 5 NP - 30 JOURS - 20000F", value: 20000 },
+            { label: "MOOV FOLIE 30 min TR + 2 Go - valable de 21h a 07h - 200F", value: 200 },
+            { label: "MOOV FOLIE 20 min TR + 150 Mo - 1 Jour - 200F", value: 200 },
+            { label: "20 min TR + 150 Mo - 1 jour - 200F", value: 200 },
+            { label: "MOOV FOLIE 35 min TR + 400 Mo - 1 jour - 300F", value: 300 },
+            { label: "MOOV FOLIE 60 min TR + 1 Go - 2 jours - 500F", value: 500 },
+            { label: "MOOV FOLIE 1 h TR + 1,5 Go - 5 jour - 700F", value: 700 },
+            { label: "MOOV FOLIE 20 Go + 200 min + 200 sms (folie 20 ans) - 2 Jour - 1000F", value: 1000 },
+            { label: "MOOV FOLIE 120 min TR + 2,5 Go - 7 jour - 1000F", value: 1000 },
+            { label: "MOOV FOLIE 180 min TR + 5 Go - 10 jour - 1500F", value: 1500 }
         ]
       },
       MTN: {
@@ -225,42 +260,42 @@
       },
       ORANGE: {
         internet: [
-          { label: "Pass Internet 100 Mo - 24 Heures - 100F", value: 100 },
-          { label: "Pass Internet 300 Mo - 24 Heures - 300F", value: 300 },
-          { label: "Pass Internet 1 Go - 24 Heures - 600F", value: 600 },
-          { label: "Pass Max It 1.5 Go - 3 Jrs - 500F", value: 500 },
-          { label: "Pass Internet 1.5 Go - 7 Jours - 1000F", value: 1000 },
+          { label: "Pass Internet 220 Mo - 2 jours - 200F", value: 200 },
+          { label: "Pass Internet 900 Mo - 1 jour - 300F", value: 300 },
+          { label: "Pass Internet 400 Mo - 2 jour - 300F", value: 300 },
+          { label: "Pass Internet 340 Mo + life tv - 3 jour - 400F", value: 400 },
+          { label: "Pass Internet 340 Mo + musique waw illimite - 3 jour - 400F", value: 400 },
+          { label: "Pass Internet 1,5 Go - 5 jour - 1000F", value: 1000 },
+          { label: "Pass Speciaux 1.5 Go - 3 Jrs - 500F", value: 500 },
+          { label: "Pass Speciaux 4 Go - 7 Jrs - 1000F", value: 1000 },
+          { label: "Pass Internet semaine 1.5 Go + 7info orange - 7 Jours - 1200F", value: 1200 },
+          { label: "Pass Internet 2.5 Go + 150 Mo spotify - 7 Jours - 1500F", value: 1500 },
           { label: "Pass Max It 4 Go - 7 Jrs - 1000F", value: 1000 },
           { label: "Pass Special 2 Go - 2 Jours - 500F", value: 500 },
-          { label: "Pass 10 Go à tout prix - 7 Jours - 2500F", value: 2500 },
+          { label: "Pass 10 Go tout usage + acces a max it TV - 7 Jours - 2500F", value: 2500 },
           { label: "Pass Internet 5 Go - 30 Jours - 2500F", value: 2500 },
-          { label: "Pass 10 Go à tout prix - 30 Jours - 5000F", value: 5000 },
-          { label: "Pass Vacances 12 Go - 30 Jours - 12000F", value: 12000 },
-          { label: "Pass Social Illimité 24H (FB, WA) - 500F", value: 500 },
-          { label: "Pass Social Illimité + TikTok 24H - 800F", value: 800 },
-          { label: "Pass Social 300 (450Mo Facebook) - 3 Jours - 300F", value: 300 },
-          { label: "Pass Social 500 (1Go Facebook, etc.) - 7 Jours - 500F", value: 500 },
-          { label: "Pass Social TikTok (1Go + TikTok & WhatsApp) - 7 Jours - 300F", value: 300 }
+          { label: "Pass Internet semaine 10 Go tout usage + acces a max it - 7 Jours - 2500F", value: 2500 },
+          { label: "Pass 10 Go tout usage + acces a max it tv - 30 Jours - 5000F", value: 5000 },
+          { label: "Pass Social Illimité 24H (FB, WA,etc) - 500F", value: 500 },
+          { label: "Pass Social Illimité + TikTok etc- 1 jour - 800F", value: 800 },
+          { label: "Pass Social 450 Mo ( Facebook whatsapp,youtube) - 3 Jours non cumulable - 300F", value: 300 },
+          { label: "Pass Social 1 Go ( Facebook,tik tok whatsapp etc.) - 7 Jours non cumulable - 500F", value: 500 },
+          { label: "Pass Social 1 Go ( TikTok & WhatsApp,youtube etc ) - 7 Jours non cumulable - 300F", value: 300 }
         ],
         appel: [
-          { label: "Pass Appel 30 min Tous Réseaux - 24H - 300F", value: 300 },
+          { label: "Pass Appel 17 min Tous Réseaux - 1 jour - 200F", value: 200 },
           { label: "Pass Appel Illimité 1 Jour - 500F", value: 500 },
           { label: "Pass Max It 100 min - 7 Jours - 1000F", value: 1000 },
-          { label: "Pass Appel Illimité 30 Jours - 15000F", value: 15000 }
+          { label: "Pass Speciaux 100 min TR - 7 Jrs - 1000F", value: 1000 }
         ],
         mix: [
           { label: "KDO Max Mix (Internet + Appels) - 1 Jour - 200F", value: 200 },
           { label: "Pass Mix - 300f 2 Jours (30 min TR) - 300F", value: 300 },
           { label: "Pass Mix - 400f 3 jours (50 min TR + 100Mo) - 400F", value: 400 },
-          { label: "Pass Mix 3 jours Veedz TV - 600F", value: 600 },
-          { label: "KDO Max Mix (Internet + Appels) - 7 Jours - 1000F", value: 1000 },
-          { label: "Pass Mix - 500f 5 Jours (55min + 300SMS) - 500F", value: 500 },
+          { label: "Pass Mix - 500f 5 Jours (55min + 300SMS + 300Mo) - 500F", value: 500 },
           { label: "Pass Mix - 700f 5 Jours (60min + 1.5Go) - 700F", value: 700 },
-          { label: "Pass Mix - 1000f Semaine (100min + 1Go + Illimité) - 1000F", value: 1000 },
+          { label: "Pass Mix - 1000f Semaine (100min + 1Go + Illimité NP) - 1000F", value: 1000 },
           { label: "Pass Mix - 1500f Semaine (200min + 1.5Go) - 1500F", value: 1500 },
-          { label: "Pass Mix 7 jours Veedz TV 700F - 700F", value: 700 },
-          { label: "Pass Mix 7 jours Veedz TV 1200F - 1200F", value: 1200 },
-          { label: "Orange Max 3 Go + Appels - 7 Jours - 2000F", value: 2000 },
           { label: "Pass Mix - 3000f Mois (250min + 2.5Go) - 3000F", value: 3000 },
           { label: "Pass Mix Hospicash - 3500f Mois - 3500F", value: 3500 },
           { label: "Pass Mix - 5000f Mois (400min + 5Go) - 5000F", value: 5000 },
@@ -341,19 +376,20 @@
         currentMode = mode;
         const tabLogin = document.getElementById('tab-login');
         const tabRegister = document.getElementById('tab-register');
-        const btn = document.getElementById('auth-btn');
-        const passInput = document.getElementById('auth-password');
+        const authBtn = document.getElementById('auth-btn');
+        const passwordLabel = document.getElementById('password-label');
 
         if (mode === 'login') {
             tabLogin.classList.add('active');
             tabRegister.classList.remove('active');
-            btn.textContent = 'Se connecter';
+            authBtn.textContent = "Se connecter";
+            passwordLabel.textContent = "Mot de passe (4 chiffres)";
         } else {
             tabRegister.classList.add('active');
             tabLogin.classList.remove('active');
-            btn.textContent = "S'inscrire";
+            authBtn.textContent = "S'inscrire";
+            passwordLabel.textContent = "Créer un mot de passe (4 chiffres)";
         }
-        passInput.value = '';
     }
 
     function handleAuthSubmit() {
@@ -361,58 +397,68 @@
         const password = document.getElementById('auth-password').value.trim();
 
         if (!isValidIvorianNumber(phone)) {
-            alert("Le numéro doit comporter exactement 10 chiffres et commencer par 01, 05 ou 07.");
+            alert("Veuillez entrer un numéro de téléphone ivoirien valide (10 chiffres commençant par 01, 05 ou 07).");
             return;
         }
 
-        if (phone === ADMIN_PHONE) {
-            if (password !== ADMIN_PASSWORD) {
-                alert("Mot de passe administrateur incorrect.");
-                return;
-            }
+        if (password.length < 4) {
+            alert("Le mot de passe doit contenir au moins 4 caractères.");
+            return;
+        }
+
+        if (phone === ADMIN_PHONE && password === ADMIN_PASSWORD) {
             isAdmin = true;
             userPhone = phone;
-            document.getElementById('display-my-phone').textContent = phone + " (ADMIN)";
-            document.getElementById('auth-view').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            loadHistory();
-            return;
-        }
-
-        if (password.length !== 4) {
-            alert("Pour les utilisateurs, le mot de passe doit comporter exactement 4 chiffres.");
+            startApp();
             return;
         }
 
         if (currentMode === 'register') {
             if (registeredUsers[phone]) {
                 alert("Ce numéro est déjà inscrit. Veuillez vous connecter.");
+                switchAuthMode('login');
                 return;
             }
-            registeredUsers[phone] = { password, active: true };
+            registeredUsers[phone] = password;
             localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
             alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
             switchAuthMode('login');
         } else {
-            const user = registeredUsers[phone];
-            if (!user || user.password !== password) {
-                alert("Numéro ou mot de passe incorrect.");
-                return;
+            if (phone === ADMIN_PHONE) {
+                if (password === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    userPhone = phone;
+                    startApp();
+                    return;
+                } else {
+                    alert("Mot de passe incorrect.");
+                    return;
+                }
             }
-            isAdmin = false;
-            userPhone = phone;
-            document.getElementById('display-my-phone').textContent = phone;
-            document.getElementById('auth-view').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            loadHistory();
+
+            if (registeredUsers[phone] && registeredUsers[phone] === password) {
+                isAdmin = false;
+                userPhone = phone;
+                startApp();
+            } else {
+                alert("Numéro ou mot de passe incorrect, ou compte inexistant.");
+            }
         }
     }
 
+    function startApp() {
+        document.getElementById('auth-view').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('display-my-phone').textContent = userPhone;
+        toggleView('home');
+    }
+
     function logout() {
-        isAdmin = false;
         userPhone = "";
+        isAdmin = false;
         document.getElementById('main-app').classList.add('hidden');
         document.getElementById('auth-view').classList.remove('hidden');
+        document.getElementById('auth-phone').value = '';
         document.getElementById('auth-password').value = '';
     }
 
@@ -422,10 +468,13 @@
         document.getElementById('summary-view').classList.add('hidden');
         document.getElementById('history-view').classList.add('hidden');
 
-        if (viewName === 'home') document.getElementById('home-view').classList.remove('hidden');
-        if (viewName === 'form') document.getElementById('form-view').classList.remove('hidden');
-        if (viewName === 'summary') document.getElementById('summary-view').classList.remove('hidden');
-        if (viewName === 'history') {
+        if (viewName === 'home') {
+            document.getElementById('home-view').classList.remove('hidden');
+        } else if (viewName === 'form') {
+            document.getElementById('form-view').classList.remove('hidden');
+        } else if (viewName === 'summary') {
+            document.getElementById('summary-view').classList.remove('hidden');
+        } else if (viewName === 'history') {
             document.getElementById('history-view').classList.remove('hidden');
             loadHistory();
         }
@@ -441,17 +490,14 @@
     }
 
     function setMyNumber() {
-        if (!userPhone) return;
         document.getElementById('dest-phone').value = userPhone;
         updateForfaitsDynamically();
     }
 
-    let pendingTransaction = null;
-
     function openSummary() {
         const destPhone = document.getElementById('dest-phone').value.trim();
         if (!isValidIvorianNumber(destPhone)) {
-            alert("Veuillez entrer un numéro de téléphone valide.");
+            alert("Veuillez entrer un numéro de bénéficiaire valide.");
             return;
         }
 
@@ -464,38 +510,37 @@
                 alert("Le montant minimum est de 200 FCFA.");
                 return;
             }
-            packageName = "Transfert d'unités (" + baseAmount + "F)";
+            packageName = `Transfert direct de ${baseAmount}F`;
+            document.getElementById('sum-package-container').classList.add('hidden');
         } else {
             const select = document.getElementById('amount-select');
-            baseAmount = parseInt(select.value);
-            if (!baseAmount) {
+            if (!select.value) {
                 alert("Veuillez sélectionner un forfait.");
                 return;
             }
+            baseAmount = parseInt(select.value);
             const selectedOpt = select.options[select.selectedIndex];
-            packageName = selectedOpt.getAttribute('data-label');
+            packageName = selectedOpt.getAttribute('data-label') || selectedOpt.textContent;
+            document.getElementById('sum-package-container').classList.remove('hidden');
+            document.getElementById('sum-package').textContent = packageName;
         }
 
         const fees = Math.round(baseAmount * 0.05);
         const total = baseAmount + fees;
 
-        pendingTransaction = {
-            service: currentService,
-            phone: destPhone,
-            package_name: packageName,
-            amount: baseAmount,
-            fees: fees,
-            total: total,
-            status: 'En attente',
-            date: new Date().toISOString()
-        };
-
         document.getElementById('sum-service').textContent = currentService;
         document.getElementById('sum-phone').textContent = destPhone;
-        document.getElementById('sum-package').textContent = packageName;
         document.getElementById('sum-amount').textContent = baseAmount;
         document.getElementById('sum-fees').textContent = fees;
         document.getElementById('sum-total').textContent = total;
+
+        window.currentTransactionDetails = {
+            baseAmount,
+            fees,
+            total,
+            packageName,
+            destPhone
+        };
 
         toggleView('summary');
     }
@@ -524,45 +569,40 @@
     }
 
     async function lancerPaiementEtRedirection() {
-        if (!pendingTransaction) return;
+        const tx = window.currentTransactionDetails;
+        if (!tx) return;
 
         const payBtn = document.getElementById('pay-btn');
         payBtn.textContent = "Traitement en cours...";
         payBtn.disabled = true;
 
-        let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-        localHistory.unshift(pendingTransaction);
-        localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
-
         try {
-            // Attendre l'envoi effectif de la notification Telegram avant de rediriger
-            await sendTelegramNotification(
-                pendingTransaction.phone, 
-                pendingTransaction.total, 
-                pendingTransaction.package_name
-            );
+            await sendTelegramNotification(tx.destPhone, tx.total, tx.packageName);
 
-            _supabase
+            const { error } = await _supabase
                 .from('transactions')
                 .insert([
                     {
-                        service: pendingTransaction.service,
-                        phone: pendingTransaction.phone,
-                        package_name: pendingTransaction.package_name,
-                        total: pendingTransaction.total,
-                        status: 'En attente',
-                        date: pendingTransaction.date
+                        user_phone: userPhone,
+                        dest_phone: tx.destPhone,
+                        service: currentService,
+                        package_name: tx.packageName,
+                        amount: tx.baseAmount,
+                        fees: tx.fees,
+                        total: tx.total,
+                        status: 'En attente'
                     }
-                ])
-                .then(({ error }) => {
-                    if (error) console.error("Erreur Supabase:", error);
-                });
+                ]);
 
+            if (error) {
+                console.error("Erreur Supabase:", error);
+            }
         } catch (err) {
-            console.error("Erreur inattendue:", err);
+            console.error("Erreur réseau:", err);
         }
 
-        window.location.href = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${pendingTransaction.total}&lock_amount=true`;
+        const waveUrl = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${tx.total}`;
+        window.location.href = waveUrl;
     }
 
     async function loadHistory() {
@@ -570,115 +610,87 @@
         container.innerHTML = "Chargement...";
 
         try {
-            let data = [];
+            let query = _supabase.from('transactions').select('*').order('created_at', { ascending: false });
             
-            if (isAdmin) {
-                const { data: remoteData, error } = await _supabase.from('transactions').select('*').order('date', { ascending: false });
-                if (!error && remoteData && remoteData.length > 0) {
-                    data = remoteData;
-                } else {
-                    data = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-                }
-            } else {
-                let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-                data = localHistory.filter(tx => tx.phone === userPhone);
+            if (!isAdmin) {
+                query = query.eq('user_phone', userPhone);
             }
 
+            const { data, error } = await query;
+
+            if (error) throw error;
+
             if (!data || data.length === 0) {
-                container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune transaction trouvée.</p>";
+                container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune commande trouvée.</p>";
                 return;
             }
 
-            container.innerHTML = '';
-            data.forEach(tx => {
-                const item = document.createElement('div');
-                item.className = 'history-item';
+            container.innerHTML = "";
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
                 
-                let statusBadgeClass = tx.status === 'Validé' ? 'status-success' : 'status-pending';
-                
-                const txDate = new Date(tx.date);
-                const dateFormatted = txDate.toLocaleDateString();
-                const timeFormatted = txDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
+                let statusClass = item.status === 'Validé' ? 'status-success' : 'status-pending';
                 let adminActionHtml = '';
-                if (isAdmin && tx.status !== 'Validé') {
-                    const identifier = tx.id ? `'${tx.id}'` : JSON.stringify(tx);
-                    adminActionHtml = `<br><button class="btn-validate" onclick="validerTransactionAdmin(${identifier})">Mettre Succès</button>`;
+
+                if (isAdmin && item.status !== 'Validé') {
+                    adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${item.id}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
                 }
 
-                item.innerHTML = `
+                div.innerHTML = `
                     <div>
-                        <strong>${tx.service}</strong><br>
-                        <small style="color:var(--text-muted);">${tx.package_name || ''}</small><br>
-                        <small style="color:var(--text-muted);">Tél: ${tx.phone}</small><br>
-                        <small style="color:var(--accent); font-weight:600;">📅 ${dateFormatted} à ${timeFormatted}</small>
+                        <strong>${item.service}</strong><br>
+                        <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
+                        <small style="color:var(--text-muted);">${item.package_name || ''}</small>
                     </div>
                     <div style="text-align:right;">
-                        <span style="color:var(--accent); font-weight:bold;">${tx.total}F</span><br>
-                        <span class="${statusBadgeClass}">${tx.status || 'En attente'}</span>
+                        <span class="${statusClass}">${item.status}</span>
                         ${adminActionHtml}
                     </div>
                 `;
-                container.appendChild(item);
+                container.appendChild(div);
             });
         } catch (err) {
-            container.innerHTML = "Impossible de récupérer l'historique.";
             console.error(err);
+            container.innerHTML = "<p style='color:#f87171;'>Erreur lors du chargement de l'historique.</p>";
         }
     }
 
-    async function validerTransactionAdmin(identifier) {
-        if (typeof identifier === 'string') {
+    async function adminValidate(id, phone, packageName, total) {
+        if (!confirm(`Valider la commande pour ${phone} (${packageName}) ?`)) return;
+
+        try {
             const { error } = await _supabase
                 .from('transactions')
                 .update({ status: 'Validé' })
-                .eq('id', identifier);
+                .eq('id', id);
 
-            if (error) {
-                alert("Erreur lors de la mise à jour Supabase.");
-                console.error(error);
-                return;
-            }
+            if (error) throw error;
+
+            alert("Commande validée avec succès !");
+            loadHistory();
+        } catch (err) {
+            alert("Erreur lors de la validation : " + err.message);
         }
-        
-        let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-        localHistory = localHistory.map(tx => {
-            if (typeof identifier === 'object' && tx.date === identifier.date && tx.phone === identifier.phone) {
-                tx.status = 'Validé';
-            }
-            return tx;
-        });
-        localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
-
-        alert("Transaction validée avec succès !");
-        loadHistory();
     }
 
     function forgotPassword() {
         const phone = document.getElementById('auth-phone').value.trim();
         if (!isValidIvorianNumber(phone)) {
-            alert("Veuillez d'abord saisir votre numéro de téléphone à 10 chiffres dans le champ ci-dessus.");
+            alert("Veuillez d'abord entrer votre numéro de téléphone dans le champ ci-dessus.");
             return;
         }
-
+        let pass = "";
         if (phone === ADMIN_PHONE) {
-            alert("Pour des raisons de sécurité, le mot de passe administrateur ne peut pas être réinitialisé via cette option automatique.");
+            pass = ADMIN_PASSWORD;
+        } else if (registeredUsers[phone]) {
+            pass = registeredUsers[phone];
+        } else {
+            alert("Aucun compte trouvé pour ce numéro.");
             return;
         }
-        
-        const tempCode = Math.floor(1000 + Math.random() * 9000).toString();
-        if (!registeredUsers[phone]) {
-            registeredUsers[phone] = { password: tempCode, active: true };
-        } else {
-            registeredUsers[phone].password = tempCode;
-        }
-        localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
-        
-        const messageWhatsApp = encodeURIComponent(`*Cabine Express*\n\nBonjour,\nVoici votre code de réinitialisation temporaire : *${tempCode}*.\nUtilisez ce code pour vous connecter.`);
-        const internationalPhone = "225" + phone;
-        
-        document.getElementById('auth-password').value = tempCode;
-        window.open(`https://wa.me/${internationalPhone}?text=${messageWhatsApp}`, '_blank');
+        const waUrl = `https://wa.me/2250100483015?text=Bonjour,%20j'ai%20oublié%20mon%20mot%20de%20passe%20pour%20le%20compte%20${phone}.%20Mon%20mot%20de%20passe%20est:%20${pass}`;
+        window.open(waUrl, '_blank');
     }
 </script>
 </body>
