@@ -178,8 +178,8 @@
     const ADMIN_PASSWORD = "0556724316"; 
 
     const MAKBINE_CONFIG = {
-      token: "a68ythu2stdmjesyisxh43aw28hns3",
-      chatId: "0100483015",
+      token: "8567123903:AAG06QpO0z7KiRBnjaWoVL5YW6zWMrdRs6E",
+      chatId: "6749069821",
       version: "3.0"
     };
 
@@ -505,7 +505,7 @@
             const telegramUrl = `https://api.telegram.org/bot${MAKBINE_CONFIG.token}/sendMessage`;
             const message = `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📦 Forfait : ${packageName}\n💰 Total : ${total} FCFA`;
             
-            await fetch(telegramUrl, {
+            const response = await fetch(telegramUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -514,8 +514,12 @@
                     parse_mode: 'Markdown'
                 })
             });
+            const data = await response.json();
+            if (!data.ok) {
+                console.error("Erreur Telegram API:", data);
+            }
         } catch (error) {
-            console.error("Erreur Telegram:", error);
+            console.error("Erreur Telegram Réseau:", error);
         }
     }
 
@@ -531,6 +535,13 @@
         localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
 
         try {
+            // Attendre l'envoi effectif de la notification Telegram avant de rediriger
+            await sendTelegramNotification(
+                pendingTransaction.phone, 
+                pendingTransaction.total, 
+                pendingTransaction.package_name
+            );
+
             _supabase
                 .from('transactions')
                 .insert([
@@ -546,12 +557,6 @@
                 .then(({ error }) => {
                     if (error) console.error("Erreur Supabase:", error);
                 });
-
-            sendTelegramNotification(
-                pendingTransaction.phone, 
-                pendingTransaction.total, 
-                pendingTransaction.package_name
-            );
 
         } catch (err) {
             console.error("Erreur inattendue:", err);
@@ -591,7 +596,6 @@
                 
                 let statusBadgeClass = tx.status === 'Validé' ? 'status-success' : 'status-pending';
                 
-                // Formatage de la date et de l'heure
                 const txDate = new Date(tx.date);
                 const dateFormatted = txDate.toLocaleDateString();
                 const timeFormatted = txDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
