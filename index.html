@@ -680,7 +680,8 @@
             let adminActionHtml = '';
             if (isAdmin && item.status !== 'Validé' && item.status !== 'Remboursé') {
                 const identifier = item.id || '';
-                adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${identifier}', '${item.dest_phone}', '${item.package_name || item.service}', ${item.total})">Valider</button>`;
+                const safeCreatedAt = item.created_at || '';
+                adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${identifier}', '${item.dest_phone}', '${item.package_name || item.service}', ${item.total}, '${safeCreatedAt}')">Valider</button>`;
             }
 
             let formattedDate = '';
@@ -811,19 +812,23 @@
         }
     }
 
-    async function adminValidate(id, phone, packageName, total) {
+    async function adminValidate(id, phone, packageName, total, createdAt) {
         if (!confirm(`Valider la commande pour ${phone} (${packageName}) ?`)) return;
 
         const validationTimestamp = new Date().toISOString();
-
-        // 1. Forcer la mise à jour dans le localStorage pour garantir l'action instantanée
-        let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
         let updatedLocal = false;
+
+        // 1. Mettre à jour le localStorage en ciblant par ID ou par critères stricts
+        let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
         
         localTransactions = localTransactions.map(t => {
-            if (t.id === id || (t.dest_phone === phone && t.total === total && t.status === 'En attente')) {
+            const isSameId = t.id && id && String(t.id) === String(id);
+            const isSameCriteria = t.dest_phone === phone && Number(t.total) === Number(total) && (!createdAt || t.created_at === createdAt);
+
+            if (isSameId || isSameCriteria) {
                 t.status = 'Validé';
                 t.validated_at = validationTimestamp;
+                if (!t.created_at && createdAt) t.created_at = createdAt;
                 updatedLocal = true;
             }
             return t;
@@ -841,13 +846,13 @@
                 total: total,
                 status: 'Validé',
                 validated_at: validationTimestamp,
-                created_at: validationTimestamp
+                created_at: createdAt || validationTimestamp
             });
         }
         
         localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
 
-        // 2. Synchronisation Supabase en arrière-plan (sans bloquer l'UI si échec)
+        // 2. Mettre à jour Supabase en arrière-plan
         if (id && !String(id).startsWith('local_')) {
             try {
                 await _supabase
@@ -858,16 +863,20 @@
                     })
                     .eq('id', id);
             } catch (err) {
-                console.error("Exception réseau Supabase (ID direct):", err);
+                console.error("Erreur Supabase ID direct:", err);
             }
         } else {
             try {
-                await _supabase
+                let query = _supabase
                     .from('transactions')
                     .update({ status: 'Validé', validated_at: validationTimestamp })
                     .eq('dest_phone', phone)
-                    .eq('total', total)
-                    .eq('status', 'En attente');
+                    .eq('total', total);
+                
+                if (createdAt) {
+                    query = query.eq('created_at', createdAt);
+                }
+                await query;
             } catch (e) {
                 console.error("Erreur Supabase par critères:", e);
             }
