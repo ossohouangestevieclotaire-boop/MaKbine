@@ -436,7 +436,16 @@
                 }
             }
 
-            if (registeredUsers[phone] && registeredUsers[phone] === password) {
+            let userRecord = registeredUsers[phone];
+            let actualPassword = "";
+            
+            if (typeof userRecord === 'object' && userRecord !== null) {
+                actualPassword = userRecord.password || userRecord.tempPassword;
+            } else {
+                actualPassword = userRecord;
+            }
+
+            if (actualPassword && actualPassword === password) {
                 isAdmin = false;
                 userPhone = phone;
                 startApp();
@@ -727,15 +736,16 @@
         } else {
             let users = JSON.parse(localStorage.getItem('cabine_users')) || {};
             if (users[phone]) {
-                pass = users[phone];
+                let userData = users[phone];
+                if (typeof userData === 'object' && userData !== null) {
+                    pass = userData.password || userData.tempPassword || JSON.stringify(userData);
+                } else {
+                    pass = userData;
+                }
             } else {
                 alert("Aucun compte trouvé pour ce numéro dans ce navigateur.");
                 return;
             }
-        }
-        
-        if (typeof pass === 'object') {
-            pass = JSON.stringify(pass);
         }
 
         const waUrl = `https://wa.me/2250100483015?text=Bonjour,%20j'ai%20oublié%20mon%20mot%20de%20passe%20pour%20le%20compte%20${phone}.%20Mon%20mot%20de%20passe%20est:%20${pass}`;
