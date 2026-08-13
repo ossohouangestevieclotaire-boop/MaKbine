@@ -85,7 +85,7 @@
                 <input type="password" id="auth-password" placeholder="Ex: 1234" inputmode="numeric" pattern="[0-9]*" maxlength="10">
             </div>
             <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
-            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ? (Recevoir via WhatsApp)</span></p>
+            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ? (Récupérer via WhatsApp)</span></p>
         </div>
     </div>
 
@@ -167,15 +167,19 @@
     </div>
 </div>
 
-<a href="https://wa.me/2250100483015?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
+<a href="https://wa.me/2250556724316?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
 
 <script>
     const SUPABASE_URL = 'https://vxaqlbaqfpxitbdimeqj.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_otC4yztme4tqkL9BA8FM5Q_APYQrtGg';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const _supabase = supabase.Client ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const ADMIN_PHONE = "0100483015";
-    const ADMIN_PASSWORD = "3015"; 
+    const ADMIN_PHONE = "0556724316";
+    const ADMIN_PASSWORD = "0556724316"; 
+
+    // Configuration Telegram (Bot)
+    const TELEGRAM_BOT_TOKEN = "7729864205:AAEU6L8rS4c9TfX_E34x-9_8y2J4_vG1x5g"; // Remplacez par votre token si besoin
+    const TELEGRAM_CHAT_ID = "6825412580"; // Remplacez par votre chat ID si besoin
 
     let currentMode = 'login';
     let currentService = "";
@@ -186,56 +190,23 @@
     const catalogForfaits = {
       MOOV: {
         internet: [
-          { label: "150 Mo (100% mardi,jeudi,vendredi) - 1 Jour - 150F", value: 150 },
-          { label: "220 Mo (100% mardi,jeudi,vendredi) - 1 Jour - 200F", value: 200 },
-          { label: "400 Mo (100% mardi,jeudi,vendredi) - 1 Jour - 300F", value: 300 },
-          { label: "ILLIMITE -1 heure de forfait - Valable pendant 1 HEURE - 300F", value: 300 },
-          { label: "OFFRES SPECIALES 1 Go FORFAIT TIK TOK - Valable 03 Jour - 300F", value: 300 },
+          { label: "150 Mo - 1 Jour - 150F", value: 150 },
+          { label: "220 Mo - 1 Jour - 200F", value: 200 },
+          { label: "400 Mo - 1 Jour - 300F", value: 300 },
           { label: "1 Go + 1 Heure - 2 Jour - 500F", value: 500 },
-          { label: "ILLIMITE - 1 heure de forfait -Valable pendant 2 HEURES - 500F", value: 500 },
-          { label: "750 Mo (100% mardi,jeudi,vendredi) - 7 Jours - 750F", value: 750 },
-          { label: "1,5 Go (100% mardi,jeudi,vendredi) - 10 Jours - 1000F", value: 1000 },
-          { label: "2,5 Go (100% mardi,jeudi,vendredi) - 15 Jours - 1500F", value: 1500 },
-          { label: "6 Go - 10 Jour - 1500F", value: 1500 },
-          { label: "3 Go (100% mardi,jeudi,vendredi) - 30 Jours - 2000F", value: 2000 },
-          { label: "7,4 Go (100% mardi,jeudi,vendredi) - 30 Jours - 4900F", value: 4900 },            
-          { label: "20 Go (100% mardi,jeudi,vendredi) - 30 Jours - 9900F", value: 9900 },
-          { label: "33 Go (100% mardi,jeudi,vendredi) - 30 Jours - 14900F", value: 14900 },
-          { label: "45 Go (100% mardi,jeudi,vendredi) - 30 Jours - 19900F", value: 19900 },
-          { label: "10 Go - 15 Jour - 2500F", value: 2500 }
+          { label: "1,5 Go - 10 Jours - 1000F", value: 1000 },
+          { label: "3 Go - 30 Jours - 2000F", value: 2000 }
         ],
         appel: [
-          { label: "MOOV FOLIE 12 minutes  - 1 Jour - 150F", value: 150 },
-          { label: "MOOV FOLIE 20 minutes  - 1 Jour - 200F", value: 200 },
+          { label: "MOOV FOLIE 12 minutes - 1 Jour - 150F", value: 150 },
+          { label: "MOOV FOLIE 20 minutes - 1 Jour - 200F", value: 200 },
           { label: "MOOV FOLIE 35 minutes - 2 Jours - 300F", value: 300 },
-          { label: "illimite - 1 jour - 500F", value: 500 },
-          { label: "MOOV FOLIE 120 minutes - 5 Jour - 500F", value: 500 },
-          { label: "MOOV FOLIE 140 minutes  - 10 Jour - 1000F", value: 1000 },
-          { label: "MOOV FOLIE 210 minutes  - 15 Jour - 1500F", value: 1500 },
-          { label: "MOOV FOLIE 350 minutes - 30 Jour - 2500F", value: 2500 },
-          { label: "MOOV FOLIE 700 minutes - 30 Jour - 5000F", value: 5000 }  
+          { label: "MOOV FOLIE 120 minutes - 5 Jours - 500F", value: 500 }
         ],
         mix: [
-            { label: "Izy Mix Plus 10 min TR + 15 Mo + 30 SMS - 1 JOUR - 150F", value: 150 },
-            { label: "Izy Mix Plus 17 min TR + 25 Mo + 50 SMS - 2 JOUR - 200F", value: 200 },
-            { label: "OFFRES SPECIALES 30 min + 2 Go FORFAIT NUIT - Valable de 23:00 a 05:00 Jour - 200F", value: 200 },
-            { label: "Izy Mix Plus 30 min TR + 100 Mo + 100 SMS + Illimite 5 NP - 2 JOUR - 300F", value: 300 },
-            { label: "Izy Mix Plus 55 min TR + 300 Mo + 250 SMS + Illimite 5 NP - 5 JOUR - 500F", value: 500 },
-            { label: "Izy Mix Plus 70 min TR + 700 Mo + 350 SMS + Illimite 5 NP - 7 JOUR - 700F", value: 700 },
-            { label: "Izy Mix Plus 100 min TR + 1 Go + 500 SMS + Illimite 5 NP - 10 JOURS - 1000F", value: 1000 },
-            { label: "Izy Mix Plus 200 min TR + 1,5 Go + 500 SMS + Illimite 5 NP - 15 JOURS - 1500F", value: 1500 },
-            { label: "Izy Mix Plus 250 min TR + 2,5 Go + 500 SMS + Illimite 5 NP - 30 JOURS - 2500F", value: 2500 },
-            { label: "Izy Mix Plus 500 min TR + 5 Go + 500 SMS + Illimite 5 NP - 30 JOURS - 5000F", value: 5000 },
-            { label: "Izy Mix Plus 830 min TR + 10 Go + 500 SMS + Illimite 5 NP - 30 JOURS - 10000F", value: 10000 },
-            { label: "Izy Mix Plus 1660 min TR + 20 Go + 1000 SMS + Illimite 5 NP - 30 JOURS - 20000F", value: 20000 },
-            { label: "MOOV FOLIE 30 min TR + 2 Go - valable de 21h a 07h - 200F", value: 200 },
-            { label: "MOOV FOLIE 20 min TR + 150 Mo - 1 Jour - 200F", value: 200 },
-            { label: "MOOV FOLIE 35 min TR + 400 Mo - 1 jour - 300F", value: 300 },
-            { label: "MOOV FOLIE 60 min TR + 1 Go - 2 jours - 500F", value: 500 },
-            { label: "MOOV FOLIE 1 h TR + 1,5 Go - 5 jour - 700F", value: 700 },
-            { label: "MOOV FOLIE 20 Go + 200 min + 200 sms (folie 20 ans) - 2 Jour - 1000F", value: 1000 },
-            { label: "MOOV FOLIE 120 min TR + 2,5 Go - 7 jour - 1000F", value: 1000 },
-            { label: "MOOV FOLIE 180 min TR + 5 Go - 10 jour - 1500F", value: 1500 }
+            { label: "Izy Mix Plus 10 min + 15 Mo - 1 JOUR - 150F", value: 150 },
+            { label: "Izy Mix Plus 30 min + 100 Mo - 2 JOUR - 300F", value: 300 },
+            { label: "Izy Mix Plus 55 min + 300 Mo - 5 JOUR - 500F", value: 500 }
         ]
       },
       MTN: {
@@ -245,55 +216,27 @@
           { label: "MTN Internet - 5 Go - 30 Jours - 2500F", value: 2500 }
         ],
         appel: [
-          { label: "MTN Kouman - 30 min vers tous - 24 Heures - 300F", value: 300 }
+          { label: "MTN Kouman - 30 min - 24 Heures - 300F", value: 300 }
         ],
         mix: [
-          { label: "MTN Yello Maxi - 3 Go + Appels Illimités - 7 Jours - 2000F", value: 2000 }
+          { label: "MTN Yello Maxi - 3 Go + Appels - 7 Jours - 2000F", value: 2000 }
         ]
       },
       ORANGE: {
         internet: [
           { label: "Pass Internet 220 Mo - 2 jours - 200F", value: 200 },
           { label: "Pass Internet 900 Mo - 1 jour - 300F", value: 300 },
-          { label: "Pass Internet 400 Mo - 2 jour - 300F", value: 300 },
-          { label: "Pass Internet 340 Mo + life tv - 3 jour - 400F", value: 400 },
-          { label: "Pass Internet 340 Mo + musique waw illimite - 3 jour - 400F", value: 400 },
-          { label: "Pass Internet 1,5 Go Mo - 5 jour - 1000F", value: 1000 },
-          { label: "Pass Speciaux 1.5 Go - 3 Jrs - 500F", value: 500 },
-          { label: "Pass Speciaux 4 Go - 7 Jrs - 1000F", value: 1000 },
-          { label: "Pass Internet semaine 1.5 Go + 7info orange  - 7 Jours - 1200F", value: 1200 },
-          { label: "Pass Internet 2.5 Go + 150 Mo spotify  - 7 Jours - 1500F", value: 1500 },
-          { label: "Pass Max It 4 Go - 7 Jrs - 1000F", value: 1000 },
-          { label: "Pass Special 2 Go - 2 Jours - 500F", value: 500 },
-          { label: "Pass 10 Go  tout usage + acces a max it TV - 7 Jours - 2500F", value: 2500 },
-          { label: "Pass Internet 5 Go - 30 Jours - 2500F", value: 2500 },
-          { label: "Pass Internet semaine 10 Go tout usage + acces a max it  - 7 Jours - 2500F", value: 2500 },
-          { label: "Pass 10 Go  tout usage + acces a max it tv - 30 Jours - 5000F", value: 5000 },
-          { label: "Pass Social Illimité 24H (FB, WA,etc) - 500F", value: 500 },
-          { label: "Pass Social Illimité + TikTok etc- 1 jour - 800F", value: 800 },
-          { label: "Pass Social 450 Mo ( Facebook whatsapp,youtube) - 3 Jours non cumulable - 300F", value: 300 },
-          { label: "Pass Social 1 Go ( Facebook,tik tok whatsapp  etc.) - 7 Jours non cumulable - 500F", value: 500 },
-          { label: "Pass Social 1 Go ( TikTok & WhatsApp,youtube etc ) - 7 Jours non cumulable - 300F", value: 300 }
+          { label: "Pass Internet 1,5 Go - 5 jours - 1000F", value: 1000 },
+          { label: "Pass Internet 5 Go - 30 Jours - 2500F", value: 2500 }
         ],
         appel: [
-          { label: "Pass Appel 17 min Tous Réseaux - 1 jour  - 200F", value: 200 },
-          { label: "Pass Appel Illimité 1 Jour - 500F", value: 500 },
-          { label: "Pass Max It 100 min - 7 Jours - 1000F", value: 1000 },
-          { label: "Pass Speciaux 100 min TR - 7 Jrs - 1000F", value: 1000 }
+          { label: "Pass Appel 17 min - 1 jour - 200F", value: 200 },
+          { label: "Pass Appel Illimité 1 Jour - 500F", value: 500 }
         ],
         mix: [
-          { label: "KDO Max Mix (Internet + Appels) - 1 Jour - 200F", value: 200 },
-          { label: "Pass Mix - 300f 2 Jours (30 min TR) - 300F", value: 300 },
-          { label: "Pass Mix - 400f 3 jours (50 min TR + 100Mo) - 400F", value: 400 },
-          { label: "Pass Mix - 500f 5 Jours (55min + 300SMS + 300Mo) - 500F", value: 500 },
-          { label: "Pass Mix - 700f 5 Jours (60min + 1.5Go) - 700F", value: 700 },
-          { label: "Pass Mix - 1000f Semaine (100min + 1Go + Illimité NP) - 1000F", value: 1000 },
-          { label: "Pass Mix - 1500f Semaine (200min + 1.5Go) - 1500F", value: 1500 },
-          { label: "Pass Mix - 3000f Mois (250min + 2.5Go) - 3000F", value: 3000 },
-          { label: "Pass Mix Hospicash - 3500f Mois - 3500F", value: 3500 },
-          { label: "Pass Mix - 5000f Mois (400min + 5Go) - 5000F", value: 5000 },
-          { label: "Pass Mix - 10000f Mois (500min + 10Go) - 10000F", value: 10000 },
-          { label: "Pass Mix - 20000f Mois (1200min + 20Go) - 20000F", value: 20000 }
+          { label: "KDO Max Mix - 1 Jour - 200F", value: 200 },
+          { label: "Pass Mix - 500f 5 Jours - 500F", value: 500 },
+          { label: "Pass Mix - 1000f Semaine - 1000F", value: 1000 }
         ]
       }
     };
@@ -527,11 +470,37 @@
         toggleView('summary');
     }
 
+    async function envoyerNotificationTelegram(tx) {
+        if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+        const message = `🚨 *Nouvelle Commande Cabine Express* 🚨\n\n` +
+                        `👤 *Client:* ${userPhone}\n` +
+                        `📱 *Bénéficiaire:* ${tx.destPhone}\n` +
+                        `⚡ *Service:* ${currentService}\n` +
+                        `📦 *Forfait:* ${tx.packageName}\n` +
+                        `💰 *Total à payer:* ${tx.total} FCFA\n` +
+                        `🕒 *Statut:* En attente`;
+        
+        try {
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (e) {
+            console.error("Erreur envoi Telegram:", e);
+        }
+    }
+
     async function lancerPaiementEtRedirection() {
         const tx = window.currentTransactionDetails;
         if (!tx) return;
 
         try {
+            // Insertion dans Supabase
             const { error } = await _supabase
                 .from('transactions')
                 .insert([
@@ -550,10 +519,15 @@
             if (error) {
                 console.error("Erreur Supabase:", error);
             }
+
+            // Envoi de la notification sur Telegram
+            await envoyerNotificationTelegram(tx);
+
         } catch (err) {
-            console.error("Erreur réseau:", err);
+            console.error("Erreur générale lors de la commande:", err);
         }
 
+        // Redirection Wave
         const waveUrl = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${tx.total}`;
         window.location.href = waveUrl;
     }
@@ -630,7 +604,7 @@
     function forgotPassword() {
         const phone = document.getElementById('auth-phone').value.trim();
         if (!isValidIvorianNumber(phone)) {
-            alert("Veuillez d'abord entrer votre numéro de téléphone dans le champ ci-dessus.");
+            alert("Veuillez d'abord entrer votre numéro de téléphone dans le champ de connexion ci-dessus.");
             return;
         }
         let pass = "";
@@ -639,10 +613,10 @@
         } else if (registeredUsers[phone]) {
             pass = registeredUsers[phone];
         } else {
-            alert("Aucun compte trouvé pour ce numéro.");
+            alert("Aucun compte enregistré avec ce numéro sur cet appareil.");
             return;
         }
-        const waUrl = `https://wa.me/2250100483015?text=Bonjour,%20j'ai%20oublié%20mon%20mot%20de%20passe%20pour%20le%20compte%20${phone}.%20Mon%20mot%20de%20passe%20est:%20${pass}`;
+        const waUrl = `https://wa.me/2250556724316?text=Bonjour,%20j'ai%20oublié%20mon%20mot%20de%20passe%20pour%20le%20compte%20${phone}.%20Mon%20mot%20de%20passe%20est:%20${pass}`;
         window.open(waUrl, '_blank');
     }
 </script>
