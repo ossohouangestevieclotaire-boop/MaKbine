@@ -589,7 +589,6 @@
             created_at: new Date().toISOString()
         };
 
-        // Sauvegarde locale immédiate pour affichage garanti
         let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
         localTransactions.unshift(newTx);
         localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
@@ -597,7 +596,6 @@
         try {
             await sendTelegramNotification(tx.destPhone, tx.total, tx.packageName);
 
-            // Tentative d'enregistrement sur Supabase en arrière-plan
             await _supabase
                 .from('transactions')
                 .insert([
@@ -626,7 +624,6 @@
 
         let allTransactions = [];
 
-        // Charger depuis Supabase
         try {
             let query = _supabase.from('transactions').select('*').order('created_at', { ascending: false });
             if (!isAdmin) {
@@ -640,13 +637,11 @@
             console.error("Supabase inaccessible:", err);
         }
 
-        // Fusionner avec le stockage local de secours
         let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
         if (!isAdmin) {
             localTransactions = localTransactions.filter(t => t.user_phone === userPhone);
         }
 
-        // Éviter les doublons basés sur l'ID ou les similaires
         localTransactions.forEach(localItem => {
             const exists = allTransactions.some(t => t.dest_phone === localItem.dest_phone && t.total === localItem.total && Math.abs(new Date(t.created_at) - new Date(localItem.created_at)) < 60000);
             if (!exists) {
@@ -654,7 +649,6 @@
             }
         });
 
-        // Trier par date décroissante
         allTransactions.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
         if (allTransactions.length === 0) {
@@ -674,11 +668,18 @@
                 adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${item.id}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
             }
 
+            let formattedDate = '';
+            if (item.created_at) {
+                const dateObj = new Date(item.created_at);
+                formattedDate = dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' à ' + dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            }
+
             div.innerHTML = `
                 <div>
                     <strong>${item.service}</strong><br>
                     <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
-                    <small style="color:var(--text-muted);">${item.package_name || ''}</small>
+                    <small style="color:var(--text-muted);">${item.package_name || ''}</small><br>
+                    <small style="color:var(--accent);">${formattedDate}</small>
                 </div>
                 <div style="text-align:right;">
                     <span class="${statusClass}">${item.status}</span>
@@ -692,7 +693,6 @@
     async function adminValidate(id, phone, packageName, total) {
         if (!confirm(`Valider la commande pour ${phone} (${packageName}) ?`)) return;
 
-        // Validation locale si c'est un ID local
         if (String(id).startsWith('local_')) {
             let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
             localTransactions = localTransactions.map(t => {
