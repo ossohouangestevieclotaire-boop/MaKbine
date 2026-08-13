@@ -724,12 +724,20 @@
         let pass = "";
         if (phone === ADMIN_PHONE) {
             pass = ADMIN_PASSWORD;
-        } else if (registeredUsers[phone]) {
-            pass = registeredUsers[phone];
         } else {
-            alert("Aucun compte trouvé pour ce numéro.");
-            return;
+            let users = JSON.parse(localStorage.getItem('cabine_users')) || {};
+            if (users[phone]) {
+                pass = users[phone];
+            } else {
+                alert("Aucun compte trouvé pour ce numéro dans ce navigateur.");
+                return;
+            }
         }
+        
+        if (typeof pass === 'object') {
+            pass = JSON.stringify(pass);
+        }
+
         const waUrl = `https://wa.me/2250100483015?text=Bonjour,%20j'ai%20oublié%20mon%20mot%20de%20passe%20pour%20le%20compte%20${phone}.%20Mon%20mot%20de%20passe%20est:%20${pass}`;
         window.open(waUrl, '_blank');
     }
