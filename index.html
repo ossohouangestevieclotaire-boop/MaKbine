@@ -85,7 +85,7 @@
                 <input type="password" id="auth-password" placeholder="Ex: 1234" inputmode="numeric" pattern="[0-9]*" maxlength="10">
             </div>
             <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
-            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ? (Recevoir via WhatsApp)</span></p>
+            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ? (Générer un nouveau code)</span></p>
         </div>
     </div>
 
@@ -673,8 +673,10 @@
             let statusClass = item.status === 'Validé' ? 'status-success' : 'status-pending';
             let adminActionHtml = '';
 
+            // Permet d'afficher le bouton valider même pour les transactions locales si l'ID est géré ou si l'élément vient de Supabase
             if (isAdmin && item.status !== 'Validé') {
-                adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${item.id}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
+                const identifier = item.id || '';
+                adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${identifier}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
             }
 
             let formattedDate = '';
@@ -712,12 +714,14 @@
         }
 
         try {
-            await _supabase
-                .from('transactions')
-                .update({ status: 'Validé' })
-                .eq('id', id);
+            if (!String(id).startsWith('local_')) {
+                await _supabase
+                    .from('transactions')
+                    .update({ status: 'Validé' })
+                    .eq('id', id);
+            }
         } catch (err) {
-            console.error("Mise à jour Supabase ignorée/échouée:", err);
+            console.error("Mise à jour Supabase échouée:", err);
         }
 
         alert("Commande validée avec succès !");
@@ -730,25 +734,31 @@
             alert("Veuillez d'abord entrer votre numéro de téléphone dans le champ ci-dessus.");
             return;
         }
-        let pass = "";
+
         if (phone === ADMIN_PHONE) {
-            pass = ADMIN_PASSWORD;
-        } else {
-            let users = JSON.parse(localStorage.getItem('cabine_users')) || {};
-            if (users[phone]) {
-                let userData = users[phone];
-                if (typeof userData === 'object' && userData !== null) {
-                    pass = userData.password || userData.tempPassword || JSON.stringify(userData);
-                } else {
-                    pass = userData;
-                }
-            } else {
-                alert("Aucun compte trouvé pour ce numéro dans ce navigateur.");
-                return;
-            }
+            alert("Veuillez contacter le support principal pour réinitialiser le mot de passe administrateur.");
+            return;
         }
 
-        const waUrl = `https://wa.me/2250100483015?text=Bonjour,%20j'ai%20oublié%20mon%20mot%20de%20passe%20pour%20le%20compte%20${phone}.%20Mon%20mot%20de%20passe%20est:%20${pass}`;
+        let users = JSON.parse(localStorage.getItem('cabine_users')) || {};
+        
+        // Génération d'un nouveau code aléatoire à 4 chiffres
+        const newTempPass = Math.floor(1000 + Math.random() * 9000).toString();
+
+        if (users[phone]) {
+            if (typeof users[phone] === 'object' && users[phone] !== null) {
+                users[phone].password = newTempPass;
+            } else {
+                users[phone] = newTempPass;
+            }
+        } else {
+            users[phone] = newTempPass;
+        }
+
+        // Sauvegarde immédiate du nouveau code dans le stockage local
+        localStorage.setItem('cabine_users', JSON.stringify(users));
+
+        const waUrl = `https://wa.me/2250100483015?text=Bonjour,%20j'ai%20oublié%20mon%20mot%20de%20passe%20pour%20le%20compte%20${phone}.%20Mon%20nouveau%20mot%20de%20passe%20provisoire%20est:%20${newTempPass}`;
         window.open(waUrl, '_blank');
     }
 </script>
