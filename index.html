@@ -727,7 +727,6 @@
                     </div>
                 `;
             } else {
-                // Statut En attente avec affichage du décompte et information de remboursement automatique
                 div.innerHTML = `
                     <div>
                         <strong>${item.service}</strong><br>
@@ -767,7 +766,6 @@
 
                 if (remainingSecs <= 0) {
                     el.textContent = "00:00";
-                    // Le délai des 10 minutes est dépassé : passage automatique au statut Remboursé
                     const txId = el.getAttribute('data-id');
                     markAsRefunded(txId, createdAtStr);
                     needsRefresh = true;
@@ -788,7 +786,6 @@
     }
 
     function markAsRefunded(id, createdAtStr) {
-        // Mise à jour locale du statut en "Remboursé"
         let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
         let updated = false;
         localTransactions = localTransactions.map(t => {
@@ -802,7 +799,6 @@
             localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
         }
 
-        // Mise à jour Supabase si ce n'est pas un ID purement local
         if (id && !String(id).startsWith('local_')) {
             _supabase
                 .from('transactions')
@@ -818,35 +814,61 @@
         if (!confirm(`Valider la commande pour ${phone} (${packageName}) ?`)) return;
 
         const validationTimestamp = new Date().toISOString();
+        let success = false;
 
-        if (String(id).startsWith('local_')) {
-            let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-            localTransactions = localTransactions.map(t => {
-                if (t.id === id) {
-                    t.status = 'Validé';
-                    t.validated_at = validationTimestamp;
-                }
-                return t;
-            });
+        let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+        let updatedLocal = false;
+        localTransactions = localTransactions.map(t => {
+            if (t.id === id || (!id && t.dest_phone === phone && t.total === total && t.status === 'En attente')) {
+                t.status = 'Validé';
+                t.validated_at = validationTimestamp;
+                updatedLocal = true;
+            }
+            return t;
+        });
+        if (updatedLocal) {
             localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
+            success = true;
         }
 
-        try {
-            if (!String(id).startsWith('local_')) {
-                await _supabase
+        if (id && !String(id).startsWith('local_')) {
+            try {
+                const { error } = await _supabase
                     .from('transactions')
                     .update({ 
                         status: 'Validé',
                         validated_at: validationTimestamp 
                     })
                     .eq('id', id);
+
+                if (error) {
+                    console.error("Erreur Supabase lors de la validation:", error);
+                } else {
+                    success = true;
+                }
+            } catch (err) {
+                console.error("Exception réseau Supabase:", err);
             }
-        } catch (err) {
-            console.error("Mise à jour Supabase échouée:", err);
+        } else {
+            try {
+                await _supabase
+                    .from('transactions')
+                    .update({ status: 'Validé', validated_at: validationTimestamp })
+                    .eq('dest_phone', phone)
+                    .eq('total', total)
+                    .eq('status', 'En attente');
+                success = true;
+            } catch (e) {
+                console.error("Mise à jour Supabase par critères ignorée ou échouée:", e);
+            }
         }
 
-        alert("Commande validée avec succès !");
-        loadHistory();
+        if (success) {
+            alert("Commande validée avec succès !");
+            loadHistory();
+        } else {
+            alert("Erreur lors de la validation. Vérifiez la console.");
+        }
     }
 
     function forgotPassword() {
