@@ -177,11 +177,6 @@
     const ADMIN_PHONE = "0556724316";
     const ADMIN_PASSWORD = "0556724316"; 
 
-    const MAKBINE_CONFIG = {
-      token: "a68ythu2stdmjesyisxh43aw28hns3",
-      version: "3.0"
-    };
-
     let currentMode = 'login';
     let currentService = "";
     let userPhone = "";
@@ -205,13 +200,13 @@
           { label: "1,5 Go (+1,5 Go bonus) - 7 Jours - 1000F", value: 1000 },
           { label: "2,5 Go (+2,5 Go bonus) - 7 Jours - 1500F", value: 1500 },
           { label: "6 Go - 10 Jour - 1500F", value: 1500 },
-          { label: "3 Go (+3 Go bonus) - 30 Jours - 2000F", value: 2000 }
+          { label: "3 Go (+3 Go bonus) - 30 Jours - 2000F", value: 2000 },
           { label: "10 Go - 15 Jour - 2500F", value: 2500 }
         ],
         appel: [
           { label: "12 minutes Tous Réseaux - 1 Jour - 150F", value: 150 },
           { label: "20 minutes Tous Réseaux - 1 Jour - 200F", value: 200 },
-          { label: "35 minutes + 5 Numéros FAF - 3 Jours - 300F", value: 300 }
+          { label: "35 minutes + 5 Numéros FAF - 3 Jours - 300F", value: 300 },
           { label: "120 minutes Tous Réseaux + appel illimité NP - 5 Jour - 500F", value: 500 },
           { label: "140 minutes Tous Réseaux + appel illimité NP - 10 Jour - 1000F", value: 1000 },
           { label: "210 minutes Tous Réseaux + appel illimité NP - 15 Jour - 1500F", value: 1500 },
@@ -353,19 +348,20 @@
         currentMode = mode;
         const tabLogin = document.getElementById('tab-login');
         const tabRegister = document.getElementById('tab-register');
-        const btn = document.getElementById('auth-btn');
-        const passInput = document.getElementById('auth-password');
+        const authBtn = document.getElementById('auth-btn');
+        const passwordLabel = document.getElementById('password-label');
 
         if (mode === 'login') {
             tabLogin.classList.add('active');
             tabRegister.classList.remove('active');
-            btn.textContent = 'Se connecter';
+            authBtn.textContent = "Se connecter";
+            passwordLabel.textContent = "Mot de passe (4 chiffres)";
         } else {
             tabRegister.classList.add('active');
             tabLogin.classList.remove('active');
-            btn.textContent = "S'inscrire";
+            authBtn.textContent = "S'inscrire";
+            passwordLabel.textContent = "Créer un mot de passe (4 chiffres)";
         }
-        passInput.value = '';
     }
 
     function handleAuthSubmit() {
@@ -373,58 +369,68 @@
         const password = document.getElementById('auth-password').value.trim();
 
         if (!isValidIvorianNumber(phone)) {
-            alert("Le numéro doit comporter exactement 10 chiffres et commencer par 01, 05 ou 07.");
+            alert("Veuillez entrer un numéro de téléphone ivoirien valide (10 chiffres commençant par 01, 05 ou 07).");
             return;
         }
 
-        if (phone === ADMIN_PHONE) {
-            if (password !== ADMIN_PASSWORD) {
-                alert("Mot de passe administrateur incorrect.");
-                return;
-            }
+        if (password.length < 4) {
+            alert("Le mot de passe doit contenir au moins 4 caractères.");
+            return;
+        }
+
+        if (phone === ADMIN_PHONE && password === ADMIN_PASSWORD) {
             isAdmin = true;
             userPhone = phone;
-            document.getElementById('display-my-phone').textContent = phone + " (ADMIN)";
-            document.getElementById('auth-view').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            loadHistory();
-            return;
-        }
-
-        if (password.length !== 4) {
-            alert("Pour les utilisateurs, le mot de passe doit comporter exactement 4 chiffres.");
+            startApp();
             return;
         }
 
         if (currentMode === 'register') {
             if (registeredUsers[phone]) {
                 alert("Ce numéro est déjà inscrit. Veuillez vous connecter.");
+                switchAuthMode('login');
                 return;
             }
-            registeredUsers[phone] = { password, active: true };
+            registeredUsers[phone] = password;
             localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
             alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
             switchAuthMode('login');
         } else {
-            const user = registeredUsers[phone];
-            if (!user || user.password !== password) {
-                alert("Numéro ou mot de passe incorrect.");
-                return;
+            if (phone === ADMIN_PHONE) {
+                if (password === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    userPhone = phone;
+                    startApp();
+                    return;
+                } else {
+                    alert("Mot de passe incorrect.");
+                    return;
+                }
             }
-            isAdmin = false;
-            userPhone = phone;
-            document.getElementById('display-my-phone').textContent = phone;
-            document.getElementById('auth-view').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            loadHistory();
+
+            if (registeredUsers[phone] && registeredUsers[phone] === password) {
+                isAdmin = false;
+                userPhone = phone;
+                startApp();
+            } else {
+                alert("Numéro ou mot de passe incorrect, ou compte inexistant.");
+            }
         }
     }
 
+    function startApp() {
+        document.getElementById('auth-view').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('display-my-phone').textContent = userPhone;
+        toggleView('home');
+    }
+
     function logout() {
-        isAdmin = false;
         userPhone = "";
+        isAdmin = false;
         document.getElementById('main-app').classList.add('hidden');
         document.getElementById('auth-view').classList.remove('hidden');
+        document.getElementById('auth-phone').value = '';
         document.getElementById('auth-password').value = '';
     }
 
@@ -434,10 +440,13 @@
         document.getElementById('summary-view').classList.add('hidden');
         document.getElementById('history-view').classList.add('hidden');
 
-        if (viewName === 'home') document.getElementById('home-view').classList.remove('hidden');
-        if (viewName === 'form') document.getElementById('form-view').classList.remove('hidden');
-        if (viewName === 'summary') document.getElementById('summary-view').classList.remove('hidden');
-        if (viewName === 'history') {
+        if (viewName === 'home') {
+            document.getElementById('home-view').classList.remove('hidden');
+        } else if (viewName === 'form') {
+            document.getElementById('form-view').classList.remove('hidden');
+        } else if (viewName === 'summary') {
+            document.getElementById('summary-view').classList.remove('hidden');
+        } else if (viewName === 'history') {
             document.getElementById('history-view').classList.remove('hidden');
             loadHistory();
         }
@@ -453,17 +462,14 @@
     }
 
     function setMyNumber() {
-        if (!userPhone) return;
         document.getElementById('dest-phone').value = userPhone;
         updateForfaitsDynamically();
     }
 
-    let pendingTransaction = null;
-
     function openSummary() {
         const destPhone = document.getElementById('dest-phone').value.trim();
         if (!isValidIvorianNumber(destPhone)) {
-            alert("Veuillez entrer un numéro de téléphone valide.");
+            alert("Veuillez entrer un numéro de bénéficiaire valide.");
             return;
         }
 
@@ -476,107 +482,72 @@
                 alert("Le montant minimum est de 200 FCFA.");
                 return;
             }
-            packageName = "Transfert d'unités (" + baseAmount + "F)";
+            packageName = `Transfert direct de ${baseAmount}F`;
+            document.getElementById('sum-package-container').classList.add('hidden');
         } else {
             const select = document.getElementById('amount-select');
-            baseAmount = parseInt(select.value);
-            if (!baseAmount) {
+            if (!select.value) {
                 alert("Veuillez sélectionner un forfait.");
                 return;
             }
+            baseAmount = parseInt(select.value);
             const selectedOpt = select.options[select.selectedIndex];
-            packageName = selectedOpt.getAttribute('data-label');
+            packageName = selectedOpt.getAttribute('data-label') || selectedOpt.textContent;
+            document.getElementById('sum-package-container').classList.remove('hidden');
+            document.getElementById('sum-package').textContent = packageName;
         }
 
         const fees = Math.round(baseAmount * 0.05);
         const total = baseAmount + fees;
 
-        pendingTransaction = {
-            service: currentService,
-            phone: destPhone,
-            package_name: packageName,
-            amount: baseAmount,
-            fees: fees,
-            total: total,
-            status: 'En attente',
-            date: new Date().toISOString()
-        };
-
         document.getElementById('sum-service').textContent = currentService;
         document.getElementById('sum-phone').textContent = destPhone;
-        document.getElementById('sum-package').textContent = packageName;
         document.getElementById('sum-amount').textContent = baseAmount;
         document.getElementById('sum-fees').textContent = fees;
         document.getElementById('sum-total').textContent = total;
 
+        window.currentTransactionDetails = {
+            baseAmount,
+            fees,
+            total,
+            packageName,
+            destPhone
+        };
+
         toggleView('summary');
     }
 
-    async function sendTelegramNotification(phone, total, packageName) {
-        try {
-            await fetch('/api/transacter', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    phone: phone, 
-                    total: total,
-                    packageName: packageName || "Transfert d'unités",
-                    token: MAKBINE_CONFIG.token
-                })
-            });
-        } catch (error) {
-            console.error("Erreur Telegram:", error);
-        }
-    }
-
     async function lancerPaiementEtRedirection() {
-        if (!pendingTransaction) return;
+        const tx = window.currentTransactionDetails;
+        if (!tx) return;
 
-        const payBtn = document.getElementById('pay-btn');
-        payBtn.textContent = "Traitement en cours...";
-        payBtn.disabled = true;
-
+        // Enregistrement de la commande dans Supabase avec le statut "En attente"
         try {
-            // Insérer directement dans Supabase pour récupérer un ID unique propre
-            const { data, error } = await _supabase
+            const { error } = await _supabase
                 .from('transactions')
                 .insert([
                     {
-                        service: pendingTransaction.service,
-                        phone: pendingTransaction.phone,
-                        package_name: pendingTransaction.package_name,
-                        total: pendingTransaction.total,
-                        status: 'En attente',
-                        date: pendingTransaction.date
+                        user_phone: userPhone,
+                        dest_phone: tx.destPhone,
+                        service: currentService,
+                        package_name: tx.packageName,
+                        amount: tx.baseAmount,
+                        fees: tx.fees,
+                        total: tx.total,
+                        status: 'En attente'
                     }
-                ])
-                .select();
+                ]);
 
             if (error) {
-                console.error("Erreur Supabase insertion:", error);
-                // Solution de secours locale si Supabase échoue
-                let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-                localHistory.unshift(pendingTransaction);
-                localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
-            } else if (data && data[0]) {
-                // Sauvegarde locale avec l'ID Supabase pour cohérence
-                let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-                localHistory.unshift(data[0]);
-                localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
+                console.error("Erreur Supabase:", error);
             }
-
-            sendTelegramNotification(
-                pendingTransaction.phone, 
-                pendingTransaction.total, 
-                pendingTransaction.package_name
-            );
-
         } catch (err) {
-            console.error("Erreur inattendue:", err);
+            console.error("Erreur réseau:", err);
         }
 
-        // Redirection Wave avec verrouillage strict du montant
-        window.location.href = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${pendingTransaction.total}&lock_amount=true`;
+        // Redirection vers le lien Wave (Générez ou mettez votre lien Wave ici)
+        const waveUrl = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${tx.total}`;
+        window.location.href = waveUrl;
     }
 
     async function loadHistory() {
@@ -584,125 +555,100 @@
         container.innerHTML = "Chargement...";
 
         try {
-            let data = [];
+            let query = _supabase.from('transactions').select('*').order('created_at', { ascending: false });
             
-            // Charger depuis Supabase pour tout le monde afin d'avoir les données en temps réel
-            const { data: remoteData, error } = await _supabase.from('transactions').select('*').order('date', { ascending: false });
-            
-            if (!error && remoteData) {
-                data = remoteData;
-            } else {
-                // Si Supabase ne répond pas, on utilise le localStorage
-                data = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+            if (!isAdmin) {
+                query = query.eq('user_phone', userPhone);
             }
 
-            // Si ce n'est pas l'admin, on filtre uniquement les commandes du numéro connecté
-            if (!isAdmin) {
-                data = data.filter(tx => tx.phone === userPhone);
-            }
+            const { data, error } = await query;
+
+            if (error) throw error;
 
             if (!data || data.length === 0) {
-                container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune transaction trouvée.</p>";
+                container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune commande trouvée.</p>";
                 return;
             }
 
-            container.innerHTML = '';
-            data.forEach(tx => {
-                const item = document.createElement('div');
-                item.className = 'history-item';
+            container.innerHTML = "";
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
                 
-                let statusBadgeClass = tx.status === 'Validé' ? 'status-success' : 'status-pending';
-                
+                let statusClass = item.status === 'Validé' ? 'status-success' : 'status-pending';
                 let adminActionHtml = '';
-                if (isAdmin && tx.status !== 'Validé') {
-                    // On passe l'ID ou l'objet complet sérialisé pour identifier la ligne de façon unique
-                    const txId = tx.id ? `'${tx.id}'` : `'local_${tx.date}_${tx.phone}'`;
-                    adminActionHtml = `<br><button class="btn-validate" onclick="validerTransactionAdmin(${txId}, ${JSON.stringify(tx.phone)}, ${JSON.stringify(tx.date)})">Mettre Succès</button>`;
+
+                if (isAdmin && item.status !== 'Validé') {
+                    adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${item.id}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
                 }
 
-                item.innerHTML = `
+                div.innerHTML = `
                     <div>
-                        <strong>${tx.service}</strong><br>
-                        <small style="color:var(--text-muted);">${tx.package_name || ''}</small><br>
-                        <small style="color:var(--text-muted);">Tél: ${tx.phone} - ${new Date(tx.date).toLocaleDateString()}</small>
+                        <strong>${item.service}</strong><br>
+                        <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
+                        <small style="color:var(--text-muted);">${item.package_name || ''}</small>
                     </div>
                     <div style="text-align:right;">
-                        <span style="color:var(--accent); font-weight:bold;">${tx.total}F</span><br>
-                        <span class="${statusBadgeClass}">${tx.status || 'En attente'}</span>
+                        <span class="${statusClass}">${item.status}</span>
                         ${adminActionHtml}
                     </div>
                 `;
-                container.appendChild(item);
+                container.appendChild(div);
             });
         } catch (err) {
-            container.innerHTML = "Impossible de récupérer l'historique.";
             console.error(err);
+            container.innerHTML = "<p style='color:#f87171;'>Erreur lors du chargement de l'historique.</p>";
         }
     }
 
-    async function validerTransactionAdmin(id, phone, date) {
-        // 1. Mise à jour dans Supabase si l'ID est un UUID valide
-        if (id && !id.toString().startsWith('local_')) {
+    async function adminValidate(id, phone, packageName, total) {
+        if (!confirm(`Valider la commande pour ${phone} (${packageName}) ?`)) return;
+
+        try {
+            // 1. Mettre à jour le statut dans Supabase
             const { error } = await _supabase
                 .from('transactions')
                 .update({ status: 'Validé' })
                 .eq('id', id);
 
-            if (error) {
-                console.error("Erreur Supabase:", error);
-            }
+            if (error) throw error;
+
+            // 2. Déclencher l'API MaKbine
+            const response = await fetch('https://api.makbine.com/v3/transacter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token: MAKBINE_CONFIG.token,
+                    phone: phone,
+                    total: total,
+                    packageName: packageName
+                })
+            });
+
+            alert("Commande validée et exécutée avec succès !");
+            loadHistory();
+        } catch (err) {
+            alert("Erreur lors de la validation : " + err.message);
         }
-
-        // 2. Mise à jour par critères (Date + Téléphone) pour forcer la mise à jour même si l'ID diffère
-        const { error: errorFallback } = await _supabase
-            .from('transactions')
-            .update({ status: 'Validé' })
-            .eq('phone', phone)
-            .eq('date', date);
-
-        if (errorFallback) {
-            console.error("Erreur fallback Supabase:", errorFallback);
-        }
-
-        // 3. Mise à jour locale pour synchroniser immédiatement
-        let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
-        localHistory = localHistory.map(tx => {
-            if (tx.phone === phone && tx.date === date) {
-                tx.status = 'Validé';
-            }
-            return tx;
-        });
-        localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
-
-        alert("Transaction validée avec succès !");
-        loadHistory();
     }
 
     function forgotPassword() {
         const phone = document.getElementById('auth-phone').value.trim();
         if (!isValidIvorianNumber(phone)) {
-            alert("Veuillez d'abord saisir votre numéro de téléphone à 10 chiffres dans le champ ci-dessus.");
+            alert("Veuillez d'abord entrer votre numéro de téléphone dans le champ ci-dessus.");
             return;
         }
-
+        let pass = "";
         if (phone === ADMIN_PHONE) {
-            alert("Pour des raisons de sécurité, le mot de passe administrateur ne peut pas être réinitialisé via cette option automatique.");
+            pass = ADMIN_PASSWORD;
+        } else if (registeredUsers[phone]) {
+            pass = registeredUsers[phone];
+        } else {
+            alert("Aucun compte trouvé pour ce numéro.");
             return;
         }
-        
-        const tempCode = Math.floor(1000 + Math.random() * 9000).toString();
-        if (!registeredUsers[phone]) {
-            registeredUsers[phone] = { password: tempCode, active: true };
-        } else {
-            registeredUsers[phone].password = tempCode;
-        }
-        localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
-        
-        const messageWhatsApp = encodeURIComponent(`*Cabine Express*\n\nBonjour,\nVoici votre code de réinitialisation temporaire : *${tempCode}*.\nUtilisez ce code pour vous connecter.`);
-        const internationalPhone = "225" + phone;
-        
-        document.getElementById('auth-password').value = tempCode;
-        window.open(`https://wa.me/${internationalPhone}?text=${messageWhatsApp}`, '_blank');
+        const waUrl = `https://wa.me/2250100483015?text=Bonjour,%20j'ai%20oublié%20mon%20mot%20de%20passe%20pour%20le%20compte%20${phone}.%20Mon%20mot%20de%20passe%20est:%20${pass}`;
+        window.open(waUrl, '_blank');
     }
 </script>
 </body>
