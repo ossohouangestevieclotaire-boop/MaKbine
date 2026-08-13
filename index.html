@@ -85,7 +85,7 @@
                 <input type="password" id="auth-password" placeholder="Ex: 1234" inputmode="numeric" pattern="[0-9]*" maxlength="10">
             </div>
             <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
-            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ? (Récupérer via WhatsApp)</span></p>
+            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ? (Recevoir via WhatsApp)</span></p>
         </div>
     </div>
 
@@ -105,7 +105,7 @@
                 <div class="service-card" onclick="selectService('Transfert d\'unités')"><div>📱</div><span>Transfert d'unités</span></div>
                 <div class="service-card" onclick="selectService('Souscription Internet')"><div>🌐</div><span>Souscription Internet</span></div>
                 <div class="service-card" onclick="selectService('Souscription Appel')"><div>📞</div><span>Souscription Appel</span></div>
-                <div class="service-card" onclick="selectService('Souscription Mix')"><div>⚡</div><span>Souscription Mix(Appel ET Internet)</span></div>
+                <div class="service-card" onclick="selectService('Souscription Mix')"><div>⚡</div><span>Souscription Mix</span></div>
             </div>
         </div>
 
@@ -167,19 +167,22 @@
     </div>
 </div>
 
-<a href="https://wa.me/2250556724316?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
+<!-- Bulle WhatsApp mise à jour avec le numéro officiel 0100483015 -->
+<a href="https://wa.me/2250100483015?text=Bonjour,%20besoin%20d'aide%20sur%20Cabine%20Express" class="support-bubble" target="_blank">💬</a>
 
 <script>
     const SUPABASE_URL = 'https://vxaqlbaqfpxitbdimeqj.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_otC4yztme4tqkL9BA8FM5Q_APYQrtGg';
-    const _supabase = supabase.Client ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Administrateur officiel
     const ADMIN_PHONE = "0556724316";
     const ADMIN_PASSWORD = "0556724316"; 
 
-    // Configuration Telegram (Bot)
-    const TELEGRAM_BOT_TOKEN = "7729864205:AAEU6L8rS4c9TfX_E34x-9_8y2J4_vG1x5g"; // Remplacez par votre token si besoin
-    const TELEGRAM_CHAT_ID = "6825412580"; // Remplacez par votre chat ID si besoin
+    const MAKBINE_CONFIG = {
+      token: "a68ythu2stdmjesyisxh43aw28hns3",
+      version: "3.0"
+    };
 
     let currentMode = 'login';
     let currentService = "";
@@ -190,23 +193,22 @@
     const catalogForfaits = {
       MOOV: {
         internet: [
-          { label: "150 Mo - 1 Jour - 150F", value: 150 },
-          { label: "220 Mo - 1 Jour - 200F", value: 200 },
-          { label: "400 Mo - 1 Jour - 300F", value: 300 },
-          { label: "1 Go + 1 Heure - 2 Jour - 500F", value: 500 },
-          { label: "1,5 Go - 10 Jours - 1000F", value: 1000 },
-          { label: "3 Go - 30 Jours - 2000F", value: 2000 }
+          { label: "150 Mo (+150 Mo bonus) - 1 Jour - 150F", value: 150 },
+          { label: "220 Mo (+220 Mo bonus) - 1 Jour - 200F", value: 200 },
+          { label: "400 Mo (+400 Mo bonus) - 1 Jour - 300F", value: 300 },
+          { label: "750 Mo (+750 Mo bonus) - 7 Jours - 500F", value: 500 },
+          { label: "1 Go (+1 Go bonus) - 7 Jours - 750F", value: 750 },
+          { label: "1,5 Go (+1,5 Go bonus) - 7 Jours - 1000F", value: 1000 },
+          { label: "2,5 Go (+2,5 Go bonus) - 7 Jours - 1500F", value: 1500 },
+          { label: "3 Go (+3 Go bonus) - 30 Jours - 2000F", value: 2000 }
         ],
         appel: [
-          { label: "MOOV FOLIE 12 minutes - 1 Jour - 150F", value: 150 },
-          { label: "MOOV FOLIE 20 minutes - 1 Jour - 200F", value: 200 },
-          { label: "MOOV FOLIE 35 minutes - 2 Jours - 300F", value: 300 },
-          { label: "MOOV FOLIE 120 minutes - 5 Jours - 500F", value: 500 }
+          { label: "12 minutes Tous Réseaux - 1 Jour - 150F", value: 150 },
+          { label: "20 minutes Tous Réseaux - 1 Jour - 200F", value: 200 },
+          { label: "35 minutes + 5 Numéros FAF - 3 Jours - 300F", value: 300 }
         ],
         mix: [
-            { label: "Izy Mix Plus 10 min + 15 Mo - 1 JOUR - 150F", value: 150 },
-            { label: "Izy Mix Plus 30 min + 100 Mo - 2 JOUR - 300F", value: 300 },
-            { label: "Izy Mix Plus 55 min + 300 Mo - 5 JOUR - 500F", value: 500 }
+          { label: "12 Go + 200 min + Illimité 5 FAF - 30 Jours - 2500F", value: 2500 }
         ]
       },
       MTN: {
@@ -216,27 +218,55 @@
           { label: "MTN Internet - 5 Go - 30 Jours - 2500F", value: 2500 }
         ],
         appel: [
-          { label: "MTN Kouman - 30 min - 24 Heures - 300F", value: 300 }
+          { label: "MTN Kouman - 30 min vers tous - 24 Heures - 300F", value: 300 }
         ],
         mix: [
-          { label: "MTN Yello Maxi - 3 Go + Appels - 7 Jours - 2000F", value: 2000 }
+          { label: "MTN Yello Maxi - 3 Go + Appels Illimités - 7 Jours - 2000F", value: 2000 }
         ]
       },
       ORANGE: {
         internet: [
-          { label: "Pass Internet 220 Mo - 2 jours - 200F", value: 200 },
-          { label: "Pass Internet 900 Mo - 1 jour - 300F", value: 300 },
-          { label: "Pass Internet 1,5 Go - 5 jours - 1000F", value: 1000 },
-          { label: "Pass Internet 5 Go - 30 Jours - 2500F", value: 2500 }
+          { label: "Pass Internet 100 Mo - 24 Heures - 100F", value: 100 },
+          { label: "Pass Internet 300 Mo - 24 Heures - 300F", value: 300 },
+          { label: "Pass Internet 1 Go - 24 Heures - 600F", value: 600 },
+          { label: "Pass Max It 1.5 Go - 3 Jrs - 500F", value: 500 },
+          { label: "Pass Internet 1.5 Go - 7 Jours - 1000F", value: 1000 },
+          { label: "Pass Max It 4 Go - 7 Jrs - 1000F", value: 1000 },
+          { label: "Pass Special 2 Go - 2 Jours - 500F", value: 500 },
+          { label: "Pass 10 Go à tout prix - 7 Jours - 2500F", value: 2500 },
+          { label: "Pass Internet 5 Go - 30 Jours - 2500F", value: 2500 },
+          { label: "Pass 10 Go à tout prix - 30 Jours - 5000F", value: 5000 },
+          { label: "Pass Vacances 12 Go - 30 Jours - 12000F", value: 12000 },
+          { label: "Pass Social Illimité 24H (FB, WA) - 500F", value: 500 },
+          { label: "Pass Social Illimité + TikTok 24H - 800F", value: 800 },
+          { label: "Pass Social 300 (450Mo Facebook) - 3 Jours - 300F", value: 300 },
+          { label: "Pass Social 500 (1Go Facebook, etc.) - 7 Jours - 500F", value: 500 },
+          { label: "Pass Social TikTok (1Go + TikTok & WhatsApp) - 7 Jours - 300F", value: 300 }
         ],
         appel: [
-          { label: "Pass Appel 17 min - 1 jour - 200F", value: 200 },
-          { label: "Pass Appel Illimité 1 Jour - 500F", value: 500 }
+          { label: "Pass Appel 30 min Tous Réseaux - 24H - 300F", value: 300 },
+          { label: "Pass Appel Illimité 1 Jour - 500F", value: 500 },
+          { label: "Pass Max It 100 min - 7 Jours - 1000F", value: 1000 },
+          { label: "Pass Appel Illimité 30 Jours - 15000F", value: 15000 }
         ],
         mix: [
-          { label: "KDO Max Mix - 1 Jour - 200F", value: 200 },
-          { label: "Pass Mix - 500f 5 Jours - 500F", value: 500 },
-          { label: "Pass Mix - 1000f Semaine - 1000F", value: 1000 }
+          { label: "KDO Max Mix (Internet + Appels) - 1 Jour - 200F", value: 200 },
+          { label: "Pass Mix - 300f 2 Jours (30 min TR) - 300F", value: 300 },
+          { label: "Pass Mix - 400f 3 jours (50 min TR + 100Mo) - 400F", value: 400 },
+          { label: "Pass Mix 3 jours Veedz TV - 600F", value: 600 },
+          { label: "KDO Max Mix (Internet + Appels) - 7 Jours - 1000F", value: 1000 },
+          { label: "Pass Mix - 500f 5 Jours (55min + 300SMS) - 500F", value: 500 },
+          { label: "Pass Mix - 700f 5 Jours (60min + 1.5Go) - 700F", value: 700 },
+          { label: "Pass Mix - 1000f Semaine (100min + 1Go + Illimité) - 1000F", value: 1000 },
+          { label: "Pass Mix - 1500f Semaine (200min + 1.5Go) - 1500F", value: 1500 },
+          { label: "Pass Mix 7 jours Veedz TV 700F - 700F", value: 700 },
+          { label: "Pass Mix 7 jours Veedz TV 1200F - 1200F", value: 1200 },
+          { label: "Orange Max 3 Go + Appels - 7 Jours - 2000F", value: 2000 },
+          { label: "Pass Mix - 3000f Mois (250min + 2.5Go) - 3000F", value: 3000 },
+          { label: "Pass Mix Hospicash - 3500f Mois - 3500F", value: 3500 },
+          { label: "Pass Mix - 5000f Mois (400min + 5Go) - 5000F", value: 5000 },
+          { label: "Pass Mix - 10000f Mois (500min + 10Go) - 10000F", value: 10000 },
+          { label: "Pass Mix - 20000f Mois (1200min + 20Go) - 20000F", value: 20000 }
         ]
       }
     };
@@ -312,20 +342,19 @@
         currentMode = mode;
         const tabLogin = document.getElementById('tab-login');
         const tabRegister = document.getElementById('tab-register');
-        const authBtn = document.getElementById('auth-btn');
-        const passwordLabel = document.getElementById('password-label');
+        const btn = document.getElementById('auth-btn');
+        const passInput = document.getElementById('auth-password');
 
         if (mode === 'login') {
             tabLogin.classList.add('active');
             tabRegister.classList.remove('active');
-            authBtn.textContent = "Se connecter";
-            passwordLabel.textContent = "Mot de passe (4 chiffres)";
+            btn.textContent = 'Se connecter';
         } else {
             tabRegister.classList.add('active');
             tabLogin.classList.remove('active');
-            authBtn.textContent = "S'inscrire";
-            passwordLabel.textContent = "Créer un mot de passe (4 chiffres)";
+            btn.textContent = "S'inscrire";
         }
+        passInput.value = '';
     }
 
     function handleAuthSubmit() {
@@ -333,57 +362,58 @@
         const password = document.getElementById('auth-password').value.trim();
 
         if (!isValidIvorianNumber(phone)) {
-            alert("Veuillez entrer un numéro de téléphone ivoirien valide (10 chiffres commençant par 01, 05 ou 07).");
+            alert("Le numéro doit comporter exactement 10 chiffres et commencer par 01, 05 ou 07.");
             return;
         }
 
-        if (password.length < 4) {
-            alert("Le mot de passe doit contenir au moins 4 caractères.");
-            return;
-        }
-
-        // Vérification Administrateur
-        if (phone === ADMIN_PHONE && password === ADMIN_PASSWORD) {
+        if (phone === ADMIN_PHONE) {
+            if (password !== ADMIN_PASSWORD) {
+                alert("Mot de passe administrateur incorrect.");
+                return;
+            }
             isAdmin = true;
             userPhone = phone;
-            startApp();
+            document.getElementById('display-my-phone').textContent = phone + " (ADMIN)";
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            loadHistory();
+            return;
+        }
+
+        if (password.length !== 4) {
+            alert("Pour les utilisateurs, le mot de passe doit comporter exactement 4 chiffres.");
             return;
         }
 
         if (currentMode === 'register') {
             if (registeredUsers[phone]) {
                 alert("Ce numéro est déjà inscrit. Veuillez vous connecter.");
-                switchAuthMode('login');
                 return;
             }
-            registeredUsers[phone] = password;
+            registeredUsers[phone] = { password, active: true };
             localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
             alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
             switchAuthMode('login');
         } else {
-            if (registeredUsers[phone] && registeredUsers[phone] === password) {
-                isAdmin = false;
-                userPhone = phone;
-                startApp();
-            } else {
-                alert("Numéro ou mot de passe incorrect, ou compte inexistant. Veuillez vous inscrire si vous n'avez pas de compte.");
+            const user = registeredUsers[phone];
+            if (!user || user.password !== password) {
+                alert("Numéro ou mot de passe incorrect.");
+                return;
             }
+            isAdmin = false;
+            userPhone = phone;
+            document.getElementById('display-my-phone').textContent = phone;
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            loadHistory();
         }
     }
 
-    function startApp() {
-        document.getElementById('auth-view').classList.add('hidden');
-        document.getElementById('main-app').classList.remove('hidden');
-        document.getElementById('display-my-phone').textContent = userPhone;
-        toggleView('home');
-    }
-
     function logout() {
-        userPhone = "";
         isAdmin = false;
+        userPhone = "";
         document.getElementById('main-app').classList.add('hidden');
         document.getElementById('auth-view').classList.remove('hidden');
-        document.getElementById('auth-phone').value = '';
         document.getElementById('auth-password').value = '';
     }
 
@@ -393,13 +423,10 @@
         document.getElementById('summary-view').classList.add('hidden');
         document.getElementById('history-view').classList.add('hidden');
 
-        if (viewName === 'home') {
-            document.getElementById('home-view').classList.remove('hidden');
-        } else if (viewName === 'form') {
-            document.getElementById('form-view').classList.remove('hidden');
-        } else if (viewName === 'summary') {
-            document.getElementById('summary-view').classList.remove('hidden');
-        } else if (viewName === 'history') {
+        if (viewName === 'home') document.getElementById('home-view').classList.remove('hidden');
+        if (viewName === 'form') document.getElementById('form-view').classList.remove('hidden');
+        if (viewName === 'summary') document.getElementById('summary-view').classList.remove('hidden');
+        if (viewName === 'history') {
             document.getElementById('history-view').classList.remove('hidden');
             loadHistory();
         }
@@ -415,14 +442,17 @@
     }
 
     function setMyNumber() {
+        if (!userPhone) return;
         document.getElementById('dest-phone').value = userPhone;
         updateForfaitsDynamically();
     }
 
+    let pendingTransaction = null;
+
     function openSummary() {
         const destPhone = document.getElementById('dest-phone').value.trim();
         if (!isValidIvorianNumber(destPhone)) {
-            alert("Veuillez entrer un numéro de bénéficiaire valide.");
+            alert("Veuillez entrer un numéro de téléphone valide.");
             return;
         }
 
@@ -435,101 +465,96 @@
                 alert("Le montant minimum est de 200 FCFA.");
                 return;
             }
-            packageName = `Transfert direct de ${baseAmount}F`;
-            document.getElementById('sum-package-container').classList.add('hidden');
+            packageName = "Transfert d'unités (" + baseAmount + "F)";
         } else {
             const select = document.getElementById('amount-select');
-            if (!select.value) {
+            baseAmount = parseInt(select.value);
+            if (!baseAmount) {
                 alert("Veuillez sélectionner un forfait.");
                 return;
             }
-            baseAmount = parseInt(select.value);
             const selectedOpt = select.options[select.selectedIndex];
-            packageName = selectedOpt.getAttribute('data-label') || selectedOpt.textContent;
-            document.getElementById('sum-package-container').classList.remove('hidden');
-            document.getElementById('sum-package').textContent = packageName;
+            packageName = selectedOpt.getAttribute('data-label');
         }
 
         const fees = Math.round(baseAmount * 0.05);
         const total = baseAmount + fees;
 
+        pendingTransaction = {
+            service: currentService,
+            phone: destPhone,
+            package_name: packageName,
+            amount: baseAmount,
+            fees: fees,
+            total: total,
+            status: 'En attente',
+            date: new Date().toISOString()
+        };
+
         document.getElementById('sum-service').textContent = currentService;
         document.getElementById('sum-phone').textContent = destPhone;
+        document.getElementById('sum-package').textContent = packageName;
         document.getElementById('sum-amount').textContent = baseAmount;
         document.getElementById('sum-fees').textContent = fees;
         document.getElementById('sum-total').textContent = total;
 
-        window.currentTransactionDetails = {
-            baseAmount,
-            fees,
-            total,
-            packageName,
-            destPhone
-        };
-
         toggleView('summary');
     }
 
-    async function envoyerNotificationTelegram(tx) {
-        if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
-        const message = `🚨 *Nouvelle Commande Cabine Express* 🚨\n\n` +
-                        `👤 *Client:* ${userPhone}\n` +
-                        `📱 *Bénéficiaire:* ${tx.destPhone}\n` +
-                        `⚡ *Service:* ${currentService}\n` +
-                        `📦 *Forfait:* ${tx.packageName}\n` +
-                        `💰 *Total à payer:* ${tx.total} FCFA\n` +
-                        `🕒 *Statut:* En attente`;
-        
+    async function sendTelegramNotification(phone, total, packageName) {
         try {
-            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            await fetch('https://api.telegram.org/bot' + MAKBINE_CONFIG.token + '/sendMessage', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: TELEGRAM_CHAT_ID,
-                    text: message,
-                    parse_mode: 'Markdown'
+                body: JSON.stringify({ 
+                    chat_id: "0100483015", // Intégration correcte du chat ID configuré
+                    text: `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📦 Forfait : ${packageName}\n💰 Total : ${total} FCFA`
                 })
             });
-        } catch (e) {
-            console.error("Erreur envoi Telegram:", e);
+        } catch (error) {
+            console.error("Erreur Telegram:", error);
         }
     }
 
     async function lancerPaiementEtRedirection() {
-        const tx = window.currentTransactionDetails;
-        if (!tx) return;
+        if (!pendingTransaction) return;
+
+        const payBtn = document.getElementById('pay-btn');
+        payBtn.textContent = "Traitement en cours...";
+        payBtn.disabled = true;
+
+        let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+        localHistory.unshift(pendingTransaction);
+        localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
 
         try {
-            // Insertion dans Supabase
-            const { error } = await _supabase
+            _supabase
                 .from('transactions')
                 .insert([
                     {
-                        user_phone: userPhone,
-                        dest_phone: tx.destPhone,
-                        service: currentService,
-                        package_name: tx.packageName,
-                        amount: tx.baseAmount,
-                        fees: tx.fees,
-                        total: tx.total,
-                        status: 'En attente'
+                        service: pendingTransaction.service,
+                        phone: pendingTransaction.phone,
+                        package_name: pendingTransaction.package_name,
+                        total: pendingTransaction.total,
+                        status: 'En attente',
+                        date: pendingTransaction.date
                     }
-                ]);
+                ])
+                .then(({ error }) => {
+                    if (error) console.error("Erreur Supabase:", error);
+                });
 
-            if (error) {
-                console.error("Erreur Supabase:", error);
-            }
-
-            // Envoi de la notification sur Telegram
-            await envoyerNotificationTelegram(tx);
+            sendTelegramNotification(
+                pendingTransaction.phone, 
+                pendingTransaction.total, 
+                pendingTransaction.package_name
+            );
 
         } catch (err) {
-            console.error("Erreur générale lors de la commande:", err);
+            console.error("Erreur inattendue:", err);
         }
 
-        // Redirection Wave
-        const waveUrl = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${tx.total}`;
-        window.location.href = waveUrl;
+        window.location.href = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${pendingTransaction.total}&lock_amount=true`;
     }
 
     async function loadHistory() {
@@ -537,87 +562,110 @@
         container.innerHTML = "Chargement...";
 
         try {
-            let query = _supabase.from('transactions').select('*').order('created_at', { ascending: false });
+            let data = [];
             
-            if (!isAdmin) {
-                query = query.eq('user_phone', userPhone);
+            if (isAdmin) {
+                const { data: remoteData, error } = await _supabase.from('transactions').select('*').order('date', { ascending: false });
+                if (!error && remoteData && remoteData.length > 0) {
+                    data = remoteData;
+                } else {
+                    data = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+                }
+            } else {
+                let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+                data = localHistory.filter(tx => tx.phone === userPhone);
             }
 
-            const { data, error } = await query;
-
-            if (error) throw error;
-
             if (!data || data.length === 0) {
-                container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune commande trouvée.</p>";
+                container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune transaction trouvée.</p>";
                 return;
             }
 
-            container.innerHTML = "";
-            data.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'history-item';
+            container.innerHTML = '';
+            data.forEach(tx => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
                 
-                let statusClass = item.status === 'Validé' ? 'status-success' : 'status-pending';
+                let statusBadgeClass = tx.status === 'Validé' ? 'status-success' : 'status-pending';
+                
                 let adminActionHtml = '';
-
-                if (isAdmin && item.status !== 'Validé') {
-                    adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${item.id}', '${item.dest_phone}', '${item.package_name || 'Forfait'}', ${item.total})">Valider</button>`;
+                if (isAdmin && tx.status !== 'Validé') {
+                    const identifier = tx.id ? `'${tx.id}'` : JSON.stringify(tx);
+                    adminActionHtml = `<br><button class="btn-validate" onclick="validerTransactionAdmin(${identifier})">Mettre Succès</button>`;
                 }
 
-                div.innerHTML = `
+                item.innerHTML = `
                     <div>
-                        <strong>${item.service || 'Service'}</strong><br>
-                        <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
-                        <small style="color:var(--text-muted);">${item.package_name || ''}</small>
+                        <strong>${tx.service}</strong><br>
+                        <small style="color:var(--text-muted);">${tx.package_name || ''}</small><br>
+                        <small style="color:var(--text-muted);">Tél: ${tx.phone} - ${new Date(tx.date).toLocaleDateString()}</small>
                     </div>
                     <div style="text-align:right;">
-                        <span class="${statusClass}">${item.status || 'En attente'}</span>
+                        <span style="color:var(--accent); font-weight:bold;">${tx.total}F</span><br>
+                        <span class="${statusBadgeClass}">${tx.status || 'En attente'}</span>
                         ${adminActionHtml}
                     </div>
                 `;
-                container.appendChild(div);
+                container.appendChild(item);
             });
         } catch (err) {
-            console.error("Erreur chargement historique:", err);
-            container.innerHTML = `<p style='color:#f87171; text-align:center; font-size:12px;'>Erreur: ${err.message || "Impossible de charger l'historique."}</p>`;
+            container.innerHTML = "Impossible de récupérer l'historique.";
+            console.error(err);
         }
     }
 
-    async function adminValidate(id, phone, packageName, total) {
-        if (!confirm(`Valider la commande pour ${phone} (${packageName}) ?`)) return;
-
-        try {
+    async function validerTransactionAdmin(identifier) {
+        if (typeof identifier === 'string') {
             const { error } = await _supabase
                 .from('transactions')
                 .update({ status: 'Validé' })
-                .eq('id', id);
+                .eq('id', identifier);
 
-            if (error) throw error;
-
-            alert("Commande validée avec succès !");
-            loadHistory();
-        } catch (err) {
-            alert("Erreur lors de la validation : " + err.message);
+            if (error) {
+                alert("Erreur lors de la mise à jour Supabase.");
+                console.error(error);
+                return;
+            }
         }
+        
+        let localHistory = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+        localHistory = localHistory.map(tx => {
+            if (typeof identifier === 'object' && tx.date === identifier.date && tx.phone === identifier.phone) {
+                tx.status = 'Validé';
+            }
+            return tx;
+        });
+        localStorage.setItem('cabine_transactions', JSON.stringify(localHistory));
+
+        alert("Transaction validée avec succès !");
+        loadHistory();
     }
 
     function forgotPassword() {
         const phone = document.getElementById('auth-phone').value.trim();
         if (!isValidIvorianNumber(phone)) {
-            alert("Veuillez d'abord entrer votre numéro de téléphone dans le champ de connexion ci-dessus.");
+            alert("Veuillez d'abord saisir votre numéro de téléphone à 10 chiffres dans le champ ci-dessus.");
             return;
         }
-        let pass = "";
+
         if (phone === ADMIN_PHONE) {
-            pass = ADMIN_PASSWORD;
-        } else if (registeredUsers[phone]) {
-            pass = registeredUsers[phone];
-        } else {
-            alert("Aucun compte enregistré avec ce numéro sur cet appareil.");
+            alert("Pour des raisons de sécurité, le mot de passe administrateur ne peut pas être réinitialisé via cette option automatique.");
             return;
         }
-        const waUrl = `https://wa.me/2250556724316?text=Bonjour,%20j'ai%20oublié%20mon%20mot%20de%20passe%20pour%20le%20compte%20${phone}.%20Mon%20mot%20de%20passe%20est:%20${pass}`;
-        window.open(waUrl, '_blank');
+        
+        const tempCode = Math.floor(1000 + Math.random() * 9000).toString();
+        if (!registeredUsers[phone]) {
+            registeredUsers[phone] = { password: tempCode, active: true };
+        } else {
+            registeredUsers[phone].password = tempCode;
+        }
+        localStorage.setItem('cabine_users', JSON.stringify(registeredUsers));
+        
+        const messageWhatsApp = encodeURIComponent(`*Cabine Express*\n\nBonjour,\nVoici votre code de réinitialisation temporaire : *${tempCode}*.\nUtilisez ce code pour vous connecter.`);
+        const internationalPhone = "225" + phone;
+        
+        document.getElementById('auth-password').value = tempCode;
+        window.open(`https://wa.me/${internationalPhone}?text=${messageWhatsApp}`, '_blank');
     }
 </script>
 </body>
