@@ -816,10 +816,29 @@
         if (!confirm(`Valider la commande pour ${phone} (${packageName}) ?`)) return;
 
         const validationTimestamp = new Date().toISOString();
-        let updatedLocal = false;
 
-        // 1. Mettre à jour le localStorage en ciblant par ID ou par critères stricts
+        // 1. Mettre à jour Supabase en priorité avec l'ID réel
+        if (id && !String(id).startsWith('local_')) {
+            try {
+                const { error } = await _supabase
+                    .from('transactions')
+                    .update({ 
+                        status: 'Validé',
+                        validated_at: validationTimestamp 
+                    })
+                    .eq('id', id);
+
+                if (error) {
+                    console.error("Erreur Supabase:", error);
+                }
+            } catch (err) {
+                console.error("Erreur réseau Supabase:", err);
+            }
+        }
+
+        // 2. Mettre à jour le localStorage pour refléter instantanément le changement
         let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
+        let updatedLocal = false;
         
         localTransactions = localTransactions.map(t => {
             const isSameId = t.id && id && String(t.id) === String(id);
@@ -851,36 +870,6 @@
         }
         
         localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
-
-        // 2. Mettre à jour Supabase en arrière-plan
-        if (id && !String(id).startsWith('local_')) {
-            try {
-                await _supabase
-                    .from('transactions')
-                    .update({ 
-                        status: 'Validé',
-                        validated_at: validationTimestamp 
-                    })
-                    .eq('id', id);
-            } catch (err) {
-                console.error("Erreur Supabase ID direct:", err);
-            }
-        } else {
-            try {
-                let query = _supabase
-                    .from('transactions')
-                    .update({ status: 'Validé', validated_at: validationTimestamp })
-                    .eq('dest_phone', phone)
-                    .eq('total', total);
-                
-                if (createdAt) {
-                    query = query.eq('created_at', createdAt);
-                }
-                await query;
-            } catch (e) {
-                console.error("Erreur Supabase par critères:", e);
-            }
-        }
 
         alert("Commande validée avec succès !");
         loadHistory();
