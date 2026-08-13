@@ -174,8 +174,8 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_otC4yztme4tqkL9BA8FM5Q_APYQrtGg';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const ADMIN_PHONE = "0100483015"; // Mis à jour avec votre numéro
-    const ADMIN_PASSWORD = "3015";     // Mettez le mot de passe admin de votre choix
+    const ADMIN_PHONE = "0100483015";
+    const ADMIN_PASSWORD = "3015"; 
 
     let currentMode = 'login';
     let currentService = "";
@@ -290,6 +290,7 @@
           { label: "Pass Mix - 1000f Semaine (100min + 1Go + Illimité NP) - 1000F", value: 1000 },
           { label: "Pass Mix - 1500f Semaine (200min + 1.5Go) - 1500F", value: 1500 },
           { label: "Pass Mix - 3000f Mois (250min + 2.5Go) - 3000F", value: 3000 },
+          { label: "Pass Mix Hospicash - 3500f Mois - 3500F", value: 3500 },
           { label: "Pass Mix - 5000f Mois (400min + 5Go) - 5000F", value: 5000 },
           { label: "Pass Mix - 10000f Mois (500min + 10Go) - 10000F", value: 10000 },
           { label: "Pass Mix - 20000f Mois (1200min + 20Go) - 20000F", value: 20000 }
@@ -586,25 +587,25 @@
                 let adminActionHtml = '';
 
                 if (isAdmin && item.status !== 'Validé') {
-                    adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${item.id}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
+                    adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${item.id}', '${item.dest_phone}', '${item.package_name || 'Forfait'}', ${item.total})">Valider</button>`;
                 }
 
                 div.innerHTML = `
                     <div>
-                        <strong>${item.service}</strong><br>
+                        <strong>${item.service || 'Service'}</strong><br>
                         <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
                         <small style="color:var(--text-muted);">${item.package_name || ''}</small>
                     </div>
                     <div style="text-align:right;">
-                        <span class="${statusClass}">${item.status}</span>
+                        <span class="${statusClass}">${item.status || 'En attente'}</span>
                         ${adminActionHtml}
                     </div>
                 `;
                 container.appendChild(div);
             });
         } catch (err) {
-            console.error(err);
-            container.innerHTML = "<p style='color:#f87171;'>Erreur lors du chargement de l'historique.</p>";
+            console.error("Erreur chargement historique:", err);
+            container.innerHTML = `<p style='color:#f87171; text-align:center; font-size:12px;'>Erreur: ${err.message || "Impossible de charger l'historique."}</p>`;
         }
     }
 
