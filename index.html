@@ -73,6 +73,10 @@
         .badge-orange { background: #f97316; color: white; }
         
         .payment-info-box { background: var(--card-bg); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; font-size: 14px; color: #4ade80; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        
+        /* Nouveau style pour le guide sur la page d'authentification */
+        .auth-guide-box { background: #0f172a; border: 1px solid var(--border); padding: 12px 15px; border-radius: 12px; font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: 15px; }
+        .auth-guide-box strong { color: var(--text-main); }
     </style>
 </head>
 <body>
@@ -96,6 +100,15 @@
             </div>
             <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
             <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ?</span></p>
+        </div>
+
+        <!-- Espace procédure et consignes d'attente -->
+        <div class="auth-guide-box">
+            <strong>📖 Procédure d'utilisation :</strong><br>
+            1. Connectez-vous et choisissez votre service.<br>
+            2. Entrez le numéro bénéficiaire et sélectionnez votre forfait.<br>
+            3. Procédez au paiement via Wave. Votre commande passera en attente.<br>
+            <span style="color: var(--accent); display:block; margin-top:6px;">⚠️ Veuillez patienter exactement <strong>5 minutes</strong> avant de contacter le service client en cas de retard.</span>
         </div>
     </div>
 
@@ -199,7 +212,7 @@
     let userPhone = "";
     let isAdmin = false;
     let registeredUsers = JSON.parse(localStorage.getItem('cabine_users')) || {};
-    let selectedPackageData = null; // Variable pour stocker le forfait sélectionné
+    let selectedPackageData = null;
 
     const catalogForfaits = {
       MOOV: {
@@ -401,7 +414,6 @@
                 return;
             }
 
-            // Génération dynamique des cartes interactives
             list.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = 'package-card';
@@ -413,7 +425,6 @@
                     <div class="package-price">${item.value}F</div>
                 `;
                 
-                // Événement de sélection directe par carte
                 card.onclick = () => {
                     document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
                     card.classList.add('selected');
@@ -743,10 +754,30 @@
                 adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${identifier}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
             }
 
-            let formattedDate = '';
+            // Gestion de l'affichage des heures et du calcul de la durée de traitement
+            let timeInfoHtml = '';
             if (item.created_at) {
-                const dateObj = new Date(item.created_at);
-                formattedDate = dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' à ' + dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                const createdDate = new Date(item.created_at);
+                const timeCreatedStr = createdDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const dateStr = createdDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+
+                if (item.status === 'Validé' && item.updated_at) {
+                    const updatedDate = new Date(item.updated_at);
+                    const timeUpdatedStr = updatedDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    
+                    // Calcul de la durée en secondes
+                    const diffSec = Math.max(0, Math.floor((updatedDate - createdDate) / 1000));
+                    let durationText = `${diffSec} seconde${diffSec > 1 ? 's' : ''}`;
+                    if (diffSec >= 60) {
+                        const mins = Math.floor(diffSec / 60);
+                        const secs = diffSec % 60;
+                        durationText = `${mins} min ${secs}s`;
+                    }
+
+                    timeInfoHtml = `<small style="color:var(--text-muted);">${dateStr} | ⏳ ${timeCreatedStr} ➔ Succès ${timeUpdatedStr} (Traitement : ${durationText})</small>`;
+                } else {
+                    timeInfoHtml = `<small style="color:var(--accent);">Créée à : ${dateStr} à ${timeCreatedStr}</small>`;
+                }
             }
 
             div.innerHTML = `
@@ -754,7 +785,7 @@
                     <strong>${item.service}</strong><br>
                     <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
                     <small style="color:var(--text-muted);">${item.package_name || ''}</small><br>
-                    <small style="color:var(--accent);">${formattedDate}</small>
+                    ${timeInfoHtml}
                 </div>
                 <div style="text-align:right;">
                     <span class="${statusClass}">${item.status}</span>
@@ -768,10 +799,15 @@
     async function adminValidate(id, phone, packageName, total) {
         if (!confirm(`Valider la commande pour ${phone} (${packageName}) ?`)) return;
 
+        const nowIso = new Date().toISOString();
+
         if (String(id).startsWith('local_')) {
             let localTransactions = JSON.parse(localStorage.getItem('cabine_transactions')) || [];
             localTransactions = localTransactions.map(t => {
-                if (t.id === id) t.status = 'Validé';
+                if (t.id === id) {
+                    t.status = 'Validé';
+                    t.updated_at = nowIso;
+                }
                 return t;
             });
             localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
@@ -781,7 +817,7 @@
             if (!String(id).startsWith('local_')) {
                 await _supabase
                     .from('transactions')
-                    .update({ status: 'Validé' })
+                    .update({ status: 'Validé', updated_at: nowIso })
                     .eq('id', id);
             }
         } catch (err) {
