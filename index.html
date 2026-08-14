@@ -809,10 +809,17 @@
 
         try {
             if (!String(id).startsWith('local_')) {
-                await _supabase
+                let { error } = await _supabase
                     .from('transactions')
                     .update({ status: 'Validé', updated_at: nowIso })
                     .eq('id', id);
+
+                if (error) {
+                    await _supabase
+                        .from('transactions')
+                        .update({ status: 'Validé' })
+                        .eq('id', id);
+                }
             }
         } catch (err) {
             console.error("Mise à jour Supabase échouée:", err);
