@@ -77,15 +77,15 @@
         </div>
         <div class="form-section">
             <div class="form-group">
-                <label>Numéro de téléphone (10 chiffres)</label>
-                <input type="tel" id="auth-phone" placeholder="Ex: 0700000000" maxlength="10">
+                <label>Numéro de téléphone</label>
+                <input type="tel" id="auth-phone" placeholder="Ex: 0556724316" maxlength="10">
             </div>
             <div class="form-group">
-                <label id="password-label">Mot de passe (4 chiffres)</label>
-                <input type="password" id="auth-password" placeholder="Ex: 1234" inputmode="numeric" pattern="[0-9]*" maxlength="4">
+                <label id="password-label">Mot de passe</label>
+                <input type="password" id="auth-password" placeholder="Ex: 1234" inputmode="text">
             </div>
             <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
-            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ? (Générer un nouveau code)</span></p>
+            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ?</span></p>
         </div>
     </div>
 
@@ -383,12 +383,12 @@
             tabLogin.classList.add('active');
             tabRegister.classList.remove('active');
             authBtn.textContent = "Se connecter";
-            passwordLabel.textContent = "Mot de passe (4 chiffres)";
+            passwordLabel.textContent = "Mot de passe";
         } else {
             tabRegister.classList.add('active');
             tabLogin.classList.remove('active');
             authBtn.textContent = "S'inscrire";
-            passwordLabel.textContent = "Créer un mot de passe (4 chiffres)";
+            passwordLabel.textContent = "Créer un mot de passe (4 chiffres obligatoires)";
         }
     }
 
@@ -396,20 +396,25 @@
         const phone = document.getElementById('auth-phone').value.trim();
         const password = document.getElementById('auth-password').value.trim();
 
+        if (phone === ADMIN_PHONE) {
+            if (password === ADMIN_PASSWORD) {
+                isAdmin = true;
+                userPhone = phone;
+                startApp();
+                return;
+            } else {
+                alert("Mot de passe administrateur incorrect.");
+                return;
+            }
+        }
+
         if (!isValidIvorianNumber(phone)) {
             alert("Veuillez entrer un numéro de téléphone ivoirien valide (10 chiffres commençant par 01, 05 ou 07).");
             return;
         }
 
         if (!/^\d{4}$/.test(password)) {
-            alert("Le mot de passe doit comporter exactement 4 chiffres.");
-            return;
-        }
-
-        if (phone === ADMIN_PHONE && password === ADMIN_PASSWORD) {
-            isAdmin = true;
-            userPhone = phone;
-            startApp();
+            alert("Pour les utilisateurs, le mot de passe doit comporter exactement 4 chiffres.");
             return;
         }
 
@@ -424,18 +429,6 @@
             alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
             switchAuthMode('login');
         } else {
-            if (phone === ADMIN_PHONE) {
-                if (password === ADMIN_PASSWORD) {
-                    isAdmin = true;
-                    userPhone = phone;
-                    startApp();
-                    return;
-                } else {
-                    alert("Mot de passe incorrect.");
-                    return;
-                }
-            }
-
             let userRecord = registeredUsers[phone];
             let actualPassword = "";
             
@@ -749,7 +742,7 @@
         }
 
         if (phone === ADMIN_PHONE) {
-            alert("Veuillez contacter le support principal pour réinitialiser le mot de passe administrateur.");
+            alert("Veu contacter le support principal pour réinitialiser le mot de passe administrateur.");
             return;
         }
 
