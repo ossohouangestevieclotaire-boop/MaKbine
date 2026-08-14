@@ -36,7 +36,6 @@
         .input-row { display: flex; gap: 8px; align-items: center; }
         input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 14px; box-sizing: border-box; }
         
-        /* Conteneur et Style des Cartes de Forfaits Interactives */
         .packages-grid { display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
         .package-card { background: var(--card-bg); border: 1px solid var(--border); padding: 12px 15px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: space-between; align-items: center; }
         .package-card:hover { border-color: var(--accent); transform: translateY(-1px); }
@@ -74,7 +73,6 @@
         
         .payment-info-box { background: var(--card-bg); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; font-size: 14px; color: #4ade80; font-weight: bold; display: flex; align-items: center; gap: 8px; }
         
-        /* Nouveau style pour le guide sur la page d'authentification */
         .auth-guide-box { background: #0f172a; border: 1px solid var(--border); padding: 12px 15px; border-radius: 12px; font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: 15px; }
         .auth-guide-box strong { color: var(--text-main); }
     </style>
@@ -102,7 +100,6 @@
             <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ?</span></p>
         </div>
 
-        <!-- Espace procédure et consignes d'attente -->
         <div class="auth-guide-box">
             <strong>📖 Procédure d'utilisation :</strong><br>
             1. Connectez-vous et choisissez votre service.<br>
@@ -148,7 +145,6 @@
                 
                 <div class="form-group" id="container-amount-select">
                     <label>Choisir le forfait adapté</label>
-                    <!-- Conteneur de cartes interactives à la place du select -->
                     <div id="packages-cards-container" class="packages-grid"></div>
                 </div>
 
@@ -754,7 +750,6 @@
                 adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${identifier}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
             }
 
-            // Gestion de l'affichage des heures et du calcul de la durée de traitement
             let timeInfoHtml = '';
             if (item.created_at) {
                 const createdDate = new Date(item.created_at);
@@ -765,7 +760,6 @@
                     const updatedDate = new Date(item.updated_at);
                     const timeUpdatedStr = updatedDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                     
-                    // Calcul de la durée en secondes
                     const diffSec = Math.max(0, Math.floor((updatedDate - createdDate) / 1000));
                     let durationText = `${diffSec} seconde${diffSec > 1 ? 's' : ''}`;
                     if (diffSec >= 60) {
