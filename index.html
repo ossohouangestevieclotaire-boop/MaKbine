@@ -613,10 +613,10 @@
         toggleView('summary');
     }
 
-    async function sendTelegramNotification(phone, total, packageName) {
+    async function sendTelegramNotification(phone, baseAmount, total, packageName) {
         try {
             const telegramUrl = `https://api.telegram.org/bot${MAKBINE_CONFIG.token}/sendMessage`;
-            const message = `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📦 Forfait : ${packageName}\n💰 Total : ${total} FCFA`;
+            const message = `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📦 Forfait : ${packageName}\n💵 Montant Forfait : ${baseAmount} FCFA\n💰 Total Payé par Client : ${total} FCFA`;
             
             const response = await fetch(telegramUrl, {
                 method: 'POST',
@@ -644,7 +644,7 @@
         payBtn.textContent = "Traitement en cours...";
         payBtn.disabled = true;
 
-        const detectedOp = getOperator(tx.destPhone); // Détection automatique de l'opérateur (ORANGE, MTN, MOOV)
+        const detectedOp = getOperator(tx.destPhone); 
 
         const newTx = {
             id: 'local_' + Date.now(),
@@ -652,10 +652,10 @@
             dest_phone: tx.destPhone,
             service: currentService,
             package_name: tx.packageName,
-            amount: tx.baseAmount,
+            amount: tx.baseAmount, // Montant net du forfait (ex: 1000)
             fees: tx.fees,
-            total: tx.total,
-            operator: detectedOp, // Ajouté dans le localStorage
+            total: tx.total,       // Total avec frais (ex: 1050)
+            operator: detectedOp,
             status: 'En attente',
             created_at: new Date().toISOString()
         };
@@ -665,7 +665,8 @@
         localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
 
         try {
-            await sendTelegramNotification(tx.destPhone, tx.total, tx.packageName);
+            // Notification Telegram transmettant le montant du forfait et le total
+            await sendTelegramNotification(tx.destPhone, tx.baseAmount, tx.total, tx.packageName);
 
             await _supabase
                 .from('transactions')
@@ -675,10 +676,10 @@
                         dest_phone: tx.destPhone,
                         service: currentService,
                         package_name: tx.packageName,
-                        amount: tx.baseAmount,
+                        amount: tx.baseAmount, // On envoie uniquement le prix du forfait pour MacroDroid
                         fees: tx.fees,
                         total: tx.total,
-                        operator: detectedOp, // 👈 ENVOI DE L'OPÉRATEUR À SUPABASE
+                        operator: detectedOp,
                         status: 'En attente'
                     }
                 ]);
