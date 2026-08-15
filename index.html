@@ -75,6 +75,9 @@
         
         .auth-guide-box { background: #0f172a; border: 1px solid var(--border); padding: 12px 15px; border-radius: 12px; font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: 15px; }
         .auth-guide-box strong { color: var(--text-main); }
+
+        .success-card { text-align: center; background: #0f172a; border: 1px solid #22c55e; padding: 25px 15px; border-radius: 16px; margin-top: 10px; }
+        .success-icon { font-size: 48px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -104,8 +107,8 @@
             <strong>📖 Procédure d'utilisation :</strong><br>
             1. Connectez-vous et choisissez votre service.<br>
             2. Entrez le numéro bénéficiaire et sélectionnez votre forfait.<br>
-            3. Procédez au paiement via Wave. Votre commande passera en attente.<br>
-            <span style="color: var(--accent); display:block; margin-top:6px;">⚠️ s'il vous plait En cas de retard, veuillez patienter un delai de  <strong>5 minutes</strong> avant de contacter notre service client en cas de retard.</span>
+            3. Procédez au paiement via Wave.<br>
+            <span style="color: var(--accent); display:block; margin-top:6px;">⚡ Votre forfait sera activé automatiquement à distance après confirmation du paiement.</span>
         </div>
     </div>
 
@@ -156,7 +159,7 @@
                 <div class="form-group">
                     <label>Moyen de paiement</label>
                     <div class="payment-info-box">
-                        <span>Wave </span>
+                        <span>Wave</span>
                     </div>
                 </div>
                 <button class="btn-main" onclick="openSummary()">Continuer</button>
@@ -176,6 +179,21 @@
                 <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA</p>
             </div>
             <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtRedirection()">Payer avec Wave</button>
+        </div>
+
+        <!-- CONFIRMATION DE COMMANDE CLIENT -->
+        <div id="success-view" class="hidden">
+            <div class="success-card">
+                <div class="success-icon">✅</div>
+                <h3 style="color: #22c55e; margin: 5px 0;">Paiement reçu !</h3>
+                <p style="font-size: 14px; color: var(--text-main); margin: 15px 0;">
+                    Votre demande d'activation pour le numéro <strong id="succ-phone" style="color:var(--accent);"></strong> est enregistrée.
+                </p>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                    Traitement automatique en cours (délai : ~1 à 2 minutes). Vous pouvez suivre l'état dans l'historique.
+                </p>
+                <button class="btn-main" style="margin-top: 15px;" onclick="toggleView('history')">Voir mes commandes</button>
+            </div>
         </div>
 
         <!-- HISTORIQUE / ESPACE ADMIN -->
@@ -410,7 +428,7 @@
                 return;
             }
 
-            list.forEach((item, index) => {
+            list.forEach((item) => {
                 const card = document.createElement('div');
                 card.className = 'package-card';
                 card.innerHTML = `
@@ -537,6 +555,7 @@
         document.getElementById('form-view').classList.add('hidden');
         document.getElementById('summary-view').classList.add('hidden');
         document.getElementById('history-view').classList.add('hidden');
+        document.getElementById('success-view').classList.add('hidden');
 
         if (viewName === 'home') {
             document.getElementById('home-view').classList.remove('hidden');
@@ -544,6 +563,8 @@
             document.getElementById('form-view').classList.remove('hidden');
         } else if (viewName === 'summary') {
             document.getElementById('summary-view').classList.remove('hidden');
+        } else if (viewName === 'success') {
+            document.getElementById('success-view').classList.remove('hidden');
         } else if (viewName === 'history') {
             document.getElementById('history-view').classList.remove('hidden');
             loadHistory();
@@ -618,7 +639,7 @@
             const telegramUrl = `https://api.telegram.org/bot${MAKBINE_CONFIG.token}/sendMessage`;
             const message = `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📦 Forfait : ${packageName}\n💵 Montant Forfait : ${baseAmount} FCFA\n💰 Total Payé par Client : ${total} FCFA`;
             
-            const response = await fetch(telegramUrl, {
+            await fetch(telegramUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -627,10 +648,6 @@
                     parse_mode: 'Markdown'
                 })
             });
-            const data = await response.json();
-            if (!data.ok) {
-                console.error("Erreur Telegram API:", data);
-            }
         } catch (error) {
             console.error("Erreur Telegram Réseau:", error);
         }
@@ -652,9 +669,9 @@
             dest_phone: tx.destPhone,
             service: currentService,
             package_name: tx.packageName,
-            amount: tx.baseAmount, // Montant net du forfait (ex: 1000)
+            amount: tx.baseAmount,
             fees: tx.fees,
-            total: tx.total,       // Total avec frais (ex: 1050)
+            total: tx.total,
             operator: detectedOp,
             status: 'En attente',
             created_at: new Date().toISOString()
@@ -665,7 +682,6 @@
         localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
 
         try {
-            // Notification Telegram transmettant le montant du forfait et le total
             await sendTelegramNotification(tx.destPhone, tx.baseAmount, tx.total, tx.packageName);
 
             await _supabase
@@ -676,7 +692,7 @@
                         dest_phone: tx.destPhone,
                         service: currentService,
                         package_name: tx.packageName,
-                        amount: tx.baseAmount, // On envoie uniquement le prix du forfait pour MacroDroid
+                        amount: tx.baseAmount,
                         fees: tx.fees,
                         total: tx.total,
                         operator: detectedOp,
@@ -687,8 +703,17 @@
             console.error("Erreur réseau / Supabase:", err);
         }
 
+        // Affichage de l'écran de succès côté client
+        document.getElementById('succ-phone').textContent = tx.destPhone;
+        toggleView('success');
+
+        // Réinitialisation du bouton
+        payBtn.textContent = "Payer avec Wave";
+        payBtn.disabled = false;
+
+        // Redirection vers l'application Wave du client
         const waveUrl = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${tx.total}`;
-        window.location.href = waveUrl;
+        window.open(waveUrl, '_blank');
     }
 
     function setupRealtimeListener() {
