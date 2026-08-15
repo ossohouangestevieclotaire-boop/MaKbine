@@ -644,6 +644,8 @@
         payBtn.textContent = "Traitement en cours...";
         payBtn.disabled = true;
 
+        const detectedOp = getOperator(tx.destPhone); // Détection automatique de l'opérateur (ORANGE, MTN, MOOV)
+
         const newTx = {
             id: 'local_' + Date.now(),
             user_phone: userPhone,
@@ -653,6 +655,7 @@
             amount: tx.baseAmount,
             fees: tx.fees,
             total: tx.total,
+            operator: detectedOp, // Ajouté dans le localStorage
             status: 'En attente',
             created_at: new Date().toISOString()
         };
@@ -675,6 +678,7 @@
                         amount: tx.baseAmount,
                         fees: tx.fees,
                         total: tx.total,
+                        operator: detectedOp, // 👈 ENVOI DE L'OPÉRATEUR À SUPABASE
                         status: 'En attente'
                     }
                 ]);
@@ -837,7 +841,7 @@
         }
 
         if (phone === ADMIN_PHONE) {
-            alert("Veu contacter le support principal pour réinitialiser le mot de passe administrateur.");
+            alert("Veuillez contacter le support principal pour réinitialiser le mot de passe administrateur.");
             return;
         }
 
