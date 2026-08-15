@@ -711,7 +711,7 @@
         payBtn.textContent = "Payer avec Wave";
         payBtn.disabled = false;
 
-        // Redirection vers l'application Wave du client
+        // Redirection vers l'application Wave du client avec le montant dynamique exact
         const waveUrl = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${tx.total}`;
         window.open(waveUrl, '_blank');
     }
