@@ -3,227 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cabine Express - Réservation de Forfaits</title>
-    <!-- Intégration du client Supabase (CDN) -->
+    <title>Cabine Express - Achat de Forfaits</title>
+    <!-- Tailwind CSS pour un design moderne et rapide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SDK JavaScript Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-color: #1e293b;
-            --border-color: #cbd5e1;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            background-color: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            width: 100%;
-            max-width: 450px;
-        }
-
-        h1 {
-            text-align: center;
-            color: var(--primary-color);
-            margin-bottom: 24px;
-            font-size: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 14px;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .loader {
-            display: none;
-            text-align: center;
-            margin-top: 15px;
-            font-size: 14px;
-            color: var(--primary-color);
-        }
-    </style>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
 
-    <div class="container">
-        <h1>Cabine Express</h1>
-        <form id="orderForm">
-            <div class="form-group">
-                <label for="userPhone">Votre Numéro de Téléphone (Client)</label>
-                <input type="tel" id="userPhone" placeholder="Ex: 0700000000" required>
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl p-6 space-y-6">
+        <div class="text-center">
+            <h1 class="text-2xl font-bold text-gray-800">Cabine Express</h1>
+            <p class="text-sm text-gray-500">Commandez vos forfaits en toute simplicité</p>
+        </div>
+
+        <form id="orderForm" class="space-y-4">
+            <!-- Numéro du client -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Votre numéro de téléphone</label>
+                <input type="tel" id="user_phone" required placeholder="Ex: 0700000000" 
+                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
             </div>
 
-            <div class="form-group">
-                <label for="destPhone">Numéro Destinataire</label>
-                <input type="tel" id="destPhone" placeholder="Ex: 0500000000" required>
-            </div>
-
-            <div class="form-group">
-                <label for="serviceName">Opérateur / Service</label>
-                <select id="serviceName" required>
-                    <option value="" disabled selected>Choisissez un opérateur</option>
-                    <option value="Orange">Orange</option>
+            <!-- Opérateur -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Opérateur</label>
+                <select id="service" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="">Sélectionnez un opérateur</option>
                     <option value="MTN">MTN</option>
-                    <option value="Moov">Moov</option>
+                    <option value="ORANGE">Orange</option>
+                    <option value="MOOV">Moov</option>
                 </select>
             </div>
 
-            <div class="form-group">
-                <label for="packageName">Forfait</label>
-                <select id="packageName" required>
-                    <option value="" disabled selected>Sélectionnez d'abord un opérateur</option>
-                    <!-- Les forfaits pourront être chargés dynamiquement selon l'opérateur -->
-                    <option value="Pass Internet 1Go">Pass Internet 1Go</option>
-                    <option value="Pass Internet 5Go">Pass Internet 5Go</option>
-                    <option value="Appels Illimités">Appels Illimités</option>
-                </select>
+            <!-- Nom du forfait -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nom du forfait / Offre</label>
+                <input type="text" id="package_name" required placeholder="Ex: Pass 5Go Yelou" 
+                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
             </div>
 
-            <div class="form-group">
-                <label for="totalAmount">Montant Total (FCFA)</label>
-                <input type="number" id="totalAmount" placeholder="Ex: 1000" required>
+            <!-- Numéro destinataire -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Numéro du destinataire (si différent)</label>
+                <input type="tel" id="dest_phone" placeholder="Ex: 0500000000" 
+                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
             </div>
 
-            <button type="submit" id="submitBtn">Valider la Commande</button>
-            <div class="loader" id="loader">Traitement en cours...</div>
+            <!-- Montant -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Montant (FCFA)</label>
+                <input type="number" id="total" required placeholder="Ex: 1000" 
+                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+
+            <!-- Bouton de validation -->
+            <button type="submit" id="submitBtn" 
+                class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+                Valider la commande
+            </button>
         </form>
+
+        <!-- Zone de message d'état -->
+        <div id="responseMessage" class="hidden text-center text-sm p-3 rounded-lg"></div>
     </div>
 
+    <!-- Script d'initialisation et d'envoi -->
     <script>
-        // Configuration de Supabase (Remplacez par vos propres clés ou variables d'environnement)
-        const SUPABASE_URL = 'VOTRE_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'VOTRE_SUPABASE_ANON_KEY';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Remplacez ces valeurs par vos véritables identifiants Supabase
+        const SUPABASE_URL = 'VOTRE_URL_SUPABASE';
+        const SUPABASE_ANON_KEY = 'VOTRE_CLE_ANON_SUPABASE';
+
+        // Initialisation du client Supabase
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const orderForm = document.getElementById('orderForm');
-        const loader = document.getElementById('loader');
         const submitBtn = document.getElementById('submitBtn');
+        const responseMessage = document.getElementById('responseMessage');
 
-        orderForm.addEventListener('submit async', async (e) => {
-            // Empêche le rechargement classique de la page
-        });
+        orderForm.addEventListener('submit async', async (e) => {}); // placeholder structure block
 
-        orderForm.addEventListener('submit', async function(e) {
+        orderForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Récupération des valeurs du formulaire
-            const userPhone = document.getElementById('userPhone').value;
-            const destPhone = document.getElementById('destPhone').value;
-            const serviceName = document.getElementById('serviceName').value;
-            const packageName = document.getElementById('packageName').value;
-            const totalAmount = parseFloat(document.getElementById('totalAmount').value);
-
-            // Désactiver le bouton et afficher le loader
             submitBtn.disabled = true;
-            loader.style.display = 'block';
+            submitBtn.textContent = 'En cours...';
+            responseMessage.classList.add('hidden');
+
+            const user_phone = document.getElementById('user_phone').value;
+            const service = document.getElementById('service').value;
+            const package_name = document.getElementById('package_name').value;
+            const dest_phone = document.getElementById('dest_phone').value || user_phone;
+            const total = parseFloat(document.getElementById('total').value);
 
             try {
-                // 1. Insertion de la commande dans Supabase
-                const { data, error } = await supabase
-                    .from('transactions')
+                // Insertion des données dans la table Supabase (ex: 'orders')
+                const { data, error } = await supabaseClient
+                    .from('orders')
                     .insert([
                         { 
-                            user_phone: userPhone, 
-                            dest_phone: destPhone, 
-                            service: serviceName, 
-                            package_name: packageName, 
-                            total: totalAmount, 
+                            user_phone, 
+                            service, 
+                            package_name, 
+                            dest_phone, 
+                            total, 
                             status: 'En attente' 
                         }
                     ]);
 
-                if (error) {
-                    console.error("Erreur lors de l'enregistrement:", error);
-                    alert("Une erreur est survenue lors de l'enregistrement de la commande.");
-                } else {
-                    // 2. Appel direct de l'API Vercel pour envoyer l'alerte Telegram
-                    try {
-                        await fetch('/api/webhook', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                type: 'INSERT',
-                                record: {
-                                    user_phone: userPhone,
-                                    dest_phone: destPhone,
-                                    service: serviceName,
-                                    package_name: packageName,
-                                    total: totalAmount
-                                }
-                            })
-                        });
-                        console.log("Alerte Telegram envoyée avec succès !");
-                    } catch (err) {
-                        console.error("Erreur d'envoi de l'alerte Telegram:", err);
-                    }
+                if (error) throw error;
 
-                    alert("Commande passée avec succès !");
-                    orderForm.reset();
+                // Appel optionnel de votre endpoint Vercel pour notifier Telegram (si configuré)
+                try {
+                    await fetch('/api/webhook', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            type: 'INSERT',
+                            record: { user_phone, service, package_name, dest_phone, total, status: 'En attente' }
+                        })
+                    });
+                } catch (webhookErr) {
+                    console.warn('Alerte webhook non transmise, mais commande enregistrée.', webhookErr);
                 }
+
+                responseMessage.textContent = 'Commande enregistrée avec succès !';
+                responseMessage.className = 'text-center text-sm p-3 rounded-lg bg-green-100 text-green-700 block';
+                orderForm.reset();
+
             } catch (err) {
-                console.error("Erreur générale:", err);
-                alert("Une erreur inattendue est survenue.");
+                console.error('Erreur:', err.message);
+                responseMessage.textContent = 'Erreur lors de l’enregistrement : ' + err.message;
+                responseMessage.className = 'text-center text-sm p-3 rounded-lg bg-red-100 text-red-700 block';
             } finally {
-                // Réactiver le bouton et masquer le loader
                 submitBtn.disabled = false;
-                loader.style.display = 'none';
+                submitBtn.textContent = 'Valider la commande';
             }
         });
     </script>
