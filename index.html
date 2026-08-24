@@ -83,122 +83,122 @@
 <div class="app-container">
     <!-- PAGE AUTHENTIFICATION -->
     <div id="auth-view">
-        <h2 style="text-align:center; color:var(--accent); margin-bottom: 5px;">Cabine Express[cite: 3]</h2>
+        <h2 style="text-align:center; color:var(--accent); margin-bottom: 5px;">Cabine Express</h2>
         <div class="tabs" style="margin-top: 15px;">
-            <div id="tab-login" class="tab active" onclick="switchAuthMode('login')">Connexion[cite: 3]</div>
-            <div id="tab-register" class="tab" onclick="switchAuthMode('register')">Inscription[cite: 3]</div>
+            <div id="tab-login" class="tab active" onclick="switchAuthMode('login')">Connexion</div>
+            <div id="tab-register" class="tab" onclick="switchAuthMode('register')">Inscription</div>
         </div>
         <div class="form-section">
             <div class="form-group">
-                <label>Numéro de téléphone[cite: 3]</label>
+                <label>Numéro de téléphone</label>
                 <input type="tel" id="auth-phone" placeholder="Ex: 0705010000" maxlength="10">
             </div>
             <div class="form-group">
-                <label id="password-label">Mot de passe[cite: 3]</label>
+                <label id="password-label">Mot de passe</label>
                 <input type="password" id="auth-password" placeholder="Ex: 1234" inputmode="text">
             </div>
-            <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter[cite: 3]</button>
-            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ?[cite: 3]</span></p>
+            <button id="auth-btn" class="btn-main" onclick="handleAuthSubmit()">Se connecter</button>
+            <p style="text-align:center; font-size:12px; margin-top:15px;"><span onclick="forgotPassword()" style="color:var(--accent); cursor:pointer;">Mot de passe oublié ?</span></p>
         </div>
 
         <div class="auth-guide-box">
-            <strong>📖 Procédure d'utilisation :[cite: 3]</strong><br>
+            <strong>📖 Procédure d'utilisation :</strong><br>
             1. Connectez-vous et choisissez votre service.<br>
             2. Entrez le numéro bénéficiaire et sélectionnez votre forfait.<br>
             3. Procédez au paiement via Wave.<br>
-            <span style="color: var(--accent); display:block; margin-top:6px;">⚡ Votre forfait sera activé automatiquement à distance après confirmation du paiement.[cite: 3]</span>
+            <span style="color: var(--accent); display:block; margin-top:6px;">⚡ Votre forfait sera activé automatiquement à distance après confirmation du paiement.</span>
         </div>
     </div>
 
     <!-- APPLICATION CLIENT -->
     <div id="main-app" class="hidden">
         <div class="header">
-            <h2 id="app-header-title">Cabine Express[cite: 3]</h2>
-            <div class="user-badge" onclick="toggleView('history')">📜 Commandes[cite: 3]</div>
+            <h2 id="app-header-title">Cabine Express</h2>
+            <div class="user-badge" onclick="toggleView('history')">📜 Commandes</div>
         </div>
         <div class="active-account">
             Compte : <span id="display-my-phone"></span>
-            <span onclick="logout()" style="font-size:11px; color:#f87171; cursor:pointer;">Quitter[cite: 3]</span>
+            <span onclick="logout()" style="font-size:11px; color:#f87171; cursor:pointer;">Quitter</span>
         </div>
 
         <div id="home-view">
             <div class="grid-services">
-                <div class="service-card" onclick="selectService('Transfert d\'unités')"><div>📱</div><span>Transfert d'unités[cite: 3]</span></div>
-                <div class="service-card" onclick="selectService('Souscription Internet')"><div>🌐</div><span>Souscription Internet[cite: 3]</span></div>
-                <div class="service-card" onclick="selectService('Souscription Appel')"><div>📞</div><span>Souscription Appel[cite: 3]</span></div>
-                <div class="service-card" onclick="selectService('Souscription Mix')"><div>⚡</div><span>Souscription Mix(Appel ET Internet)[cite: 3]</span></div>
+                <div class="service-card" onclick="selectService('Transfert d\'unités')"><div>📱</div><span>Transfert d'unités</span></div>
+                <div class="service-card" onclick="selectService('Souscription Internet')"><div>🌐</div><span>Souscription Internet</span></div>
+                <div class="service-card" onclick="selectService('Souscription Appel')"><div>📞</div><span>Souscription Appel</span></div>
+                <div class="service-card" onclick="selectService('Souscription Mix')"><div>⚡</div><span>Souscription Mix (Appel ET Internet)</span></div>
             </div>
         </div>
 
         <!-- FORMULAIRE -->
         <div id="form-view" class="hidden">
-            <span class="back-link" onclick="toggleView('home')">← Retour[cite: 3]</span>
+            <span class="back-link" onclick="toggleView('home')">← Retour</span>
             <h3 id="form-title" style="color: var(--accent); margin-top: 0;"></h3>
             <div class="form-section">
                 <div class="form-group">
-                    <label>Numéro du bénéficiaire[cite: 3]</label>
+                    <label>Numéro du bénéficiaire</label>
                     <div class="input-row">
                         <input type="tel" id="dest-phone" placeholder="Ex: 0700000000" maxlength="10" oninput="onPhoneInputChanged()">
                         <button class="btn-action" onclick="pickContact()">📇 Contacts</button>
-                        <button class="btn-action" onclick="setMyNumber()">Pour moi[cite: 3]</button>
+                        <button class="btn-action" onclick="setMyNumber()">Pour moi</button>
                     </div>
                     <div id="operator-container"></div>
                 </div>
                 
                 <div class="form-group" id="container-amount-select">
-                    <label>Choisir le forfait adapté[cite: 3]</label>
+                    <label>Choisir le forfait adapté</label>
                     <div id="packages-cards-container" class="packages-grid"></div>
                 </div>
 
                 <div class="form-group hidden" id="container-amount-input">
-                    <label>Montant en FCFA (Minimum 100 FCFA)[cite: 3]</label>
+                    <label>Montant en FCFA (Minimum 100 FCFA)</label>
                     <input type="number" id="amount-input" placeholder="Ex: 100" min="100">
                 </div>
 
                 <div class="form-group">
-                    <label>Moyen de paiement[cite: 3]</label>
+                    <label>Moyen de paiement</label>
                     <div class="payment-info-box">
-                        <span>Wave[cite: 3]</span>
+                        <span>Wave</span>
                     </div>
                 </div>
-                <button class="btn-main" onclick="openSummary()">Continuer[cite: 3]</button>
+                <button class="btn-main" onclick="openSummary()">Continuer</button>
             </div>
         </div>
 
         <!-- RÉCAPITULATIF -->
         <div id="summary-view" class="hidden">
-            <span class="back-link" onclick="toggleView('form')">← Modifier[cite: 3]</span>
-            <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif[cite: 3]</h3>
+            <span class="back-link" onclick="toggleView('form')">← Modifier</span>
+            <h3 style="color: var(--accent); margin-top: 0;">Récapitulatif</h3>
             <div class="form-section" style="line-height: 1.8; font-size: 14px;">
                 <p><strong>Service :</strong> <span id="sum-service"></span></p>
                 <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
                 <p id="sum-package-container"><strong>Forfait :</strong> <span id="sum-package" style="color:var(--accent);"></span></p>
-                <p><strong>Montant de base :</strong> <span id="sum-amount"></span> FCFA[cite: 3]</p>
-                <p><strong>Frais (5%) :</strong> <span id="sum-fees"></span> FCFA[cite: 3]</p>
-                <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA[cite: 3]</p>
+                <p><strong>Montant de base :</strong> <span id="sum-amount"></span> FCFA</p>
+                <p><strong>Frais (5%) :</strong> <span id="sum-fees"></span> FCFA</p>
+                <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA</p>
             </div>
-            <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtRedirection()">Payer avec Wave[cite: 3]</button>
+            <button id="pay-btn" class="btn-main" onclick="lancerPaiementEtRedirection()">Payer avec Wave</button>
         </div>
 
         <!-- CONFIRMATION DE COMMANDE CLIENT -->
         <div id="success-view" class="hidden">
             <div class="success-card">
                 <div class="success-icon">✅</div>
-                <h3 style="color: #22c55e; margin: 5px 0;">Paiement reçu ![cite: 3]</h3>
+                <h3 style="color: #22c55e; margin: 5px 0;">Paiement reçu !</h3>
                 <p style="font-size: 14px; color: var(--text-main); margin: 15px 0;">
-                    Votre demande d'activation pour le numéro <strong id="succ-phone" style="color:var(--accent);"></strong> est enregistrée.[cite: 3]
+                    Votre demande d'activation pour le numéro <strong id="succ-phone" style="color:var(--accent);"></strong> est enregistrée.
                 </p>
                 <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
-                    Traitement automatique en cours (délai : ~1 à 2 minutes). Vous pouvez suivre l'état dans l'historique.[cite: 3]
+                    Traitement automatique en cours (délai : ~1 à 2 minutes). Vous pouvez suivre l'état dans l'historique.
                 </p>
-                <button class="btn-main" style="margin-top: 15px;" onclick="toggleView('history')">Voir mes commandes[cite: 3]</button>
+                <button class="btn-main" style="margin-top: 15px;" onclick="toggleView('history')">Voir mes commandes</button>
             </div>
         </div>
 
         <!-- HISTORIQUE / ESPACE ADMIN -->
         <div id="history-view" class="hidden">
-            <span class="back-link" onclick="toggleView('home')">← Retour[cite: 3]</span>
-            <h3 id="history-title" style="color: var(--accent); margin-top: 0;">Gestion des commandes[cite: 3]</h3>
+            <span class="back-link" onclick="toggleView('home')">← Retour</span>
+            <h3 id="history-title" style="color: var(--accent); margin-top: 0;">Gestion des commandes</h3>
             <div class="history-list" id="history-container"></div>
         </div>
     </div>
@@ -381,9 +381,7 @@
         return null;
     }
 
-    // Fonction pickContact mise à jour avec compatibilité totale
     async function pickContact() {
-        // 1. Si l'API native Contact Picker fonctionne
         if ('contacts' in navigator && 'select' in navigator.contacts) {
             try {
                 const contacts = await navigator.contacts.select(['tel'], { multiple: false });
@@ -401,7 +399,6 @@
             }
         }
 
-        // 2. Solution de secours universelle : Utilisation d'un input fichier VCF caché
         let inputFichier = document.getElementById('vcf-upload-input');
         if (!inputFichier) {
             inputFichier = document.createElement('input');
