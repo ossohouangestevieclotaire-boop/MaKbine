@@ -3,7 +3,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Méthode non autorisée' });
   }
 
-  const { phone, total, packageName, service, userPhone } = req.body;
+  // 1. Récupérer aussi packageName depuis le corps de la requête
+  const { phone, total, packageName } = req.body;
 
   if (!phone || !total) {
     return res.status(400).json({ success: false, error: 'Paramètres manquants' });
@@ -12,8 +13,9 @@ export default async function handler(req, res) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
-  const forfaitTexte = packageName || service || "Transfert d'unités";
-  const message = `🚨 *Nouvelle Commande Cabine Express*\n\n👤 Client : ${userPhone || 'Inconnu'}\n📱 Bénéficiaire : ${phone}\n📦 Forfait/Service : ${forfaitTexte}\n💰 Total Payé : ${total} FCFA`;
+  // 2. Intégrer le forfait dans le message (avec une valeur par défaut si absent)
+  const forfaitTexte = packageName || "Transfert d'unités";
+  const message = `🔔 Nouvelle transaction MaKbine !\n📱 Téléphone : ${phone}\n🎁 Forfait : ${forfaitTexte}\n💰 Total : ${total} FCFA`;
 
   try {
     const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -23,8 +25,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         chat_id: chatId,
-        text: message,
-        parse_mode: 'Markdown'
+        text: message
       })
     });
 
@@ -38,5 +39,3 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("Erreur Telegram:", error);
     return res.status(500).json({ success: false, error: 'Erreur de communication avec Telegram' });
-  }
-}
