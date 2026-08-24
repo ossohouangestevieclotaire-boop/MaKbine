@@ -634,6 +634,25 @@
         toggleView('summary');
     }
 
+    async function sendTelegramNotification(phone, baseAmount, total, packageName) {
+        try {
+            const telegramUrl = `https://api.telegram.org/bot${MAKBINE_CONFIG.token}/sendMessage`;
+            const message = `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📦 Forfait : ${packageName}\n💵 Montant Forfait : ${baseAmount} FCFA\n💰 Total Payé par Client : ${total} FCFA`;
+            
+            await fetch(telegramUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    chat_id: MAKBINE_CONFIG.chatId,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (error) {
+            console.error("Erreur Telegram Réseau:", error);
+        }
+    }
+
     async function lancerPaiementEtRedirection() {
         const tx = window.currentTransactionDetails;
         if (!tx) return;
@@ -663,8 +682,9 @@
         localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
 
         try {
-            // 1. Insertion de la commande dans Supabase
-            const { data, error } = await _supabase
+            await sendTelegramNotification(tx.destPhone, tx.baseAmount, tx.total, tx.packageName);
+
+            await _supabase
                 .from('transactions')
                 .insert([
                     {
@@ -679,34 +699,6 @@
                         status: 'En attente'
                     }
                 ]);
-
-            if (error) {
-                console.error("Erreur lors de l'enregistrement:", error);
-                alert("Une erreur est survenue lors de l'enregistrement de la commande.");
-            } else {
-                // 2. Appel à l'API Vercel pour déclencher l'alerte Telegram côté serveur
-                try {
-                    await fetch('/api/webhook', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            type: 'INSERT',
-                            record: {
-                                user_phone: userPhone,
-                                dest_phone: tx.destPhone,
-                                service: currentService,
-                                package_name: tx.packageName,
-                                total: tx.total
-                            }
-                        })
-                    });
-                    console.log("Alerte Telegram envoyée avec succès !");
-                } catch (webhookErr) {
-                    console.error("Erreur d'envoi de l'alerte:", webhookErr);
-                }
-            }
         } catch (err) {
             console.error("Erreur réseau / Supabase:", err);
         }
