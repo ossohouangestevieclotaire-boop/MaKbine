@@ -33,7 +33,7 @@
         .form-section { background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 14px; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
-        .input-row { display: flex; gap: 8px; align-items: center; }
+        .input-row { display: flex; gap: 6px; align-items: center; }
         input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 14px; box-sizing: border-box; }
         
         .packages-grid { display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
@@ -45,8 +45,8 @@
         .package-duration { font-size: 11px; color: var(--text-muted); }
         .package-price { font-size: 15px; font-weight: 700; color: var(--accent); white-space: nowrap; background: rgba(249, 115, 22, 0.15); padding: 6px 10px; border-radius: 8px; }
 
-        .btn-self { background: #334155; border: none; color: var(--accent); padding: 10px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
-        .btn-self:hover { background: #475569; }
+        .btn-action { background: #334155; border: none; color: var(--accent); padding: 10px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-action:hover { background: #475569; }
 
         .btn-main { width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; }
         .btn-main:hover { opacity: 0.9; }
@@ -72,10 +72,8 @@
         .badge-orange { background: #f97316; color: white; }
         
         .payment-info-box { background: var(--card-bg); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; font-size: 14px; color: #4ade80; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        
         .auth-guide-box { background: #0f172a; border: 1px solid var(--border); padding: 12px 15px; border-radius: 12px; font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: 15px; }
         .auth-guide-box strong { color: var(--text-main); }
-
         .success-card { text-align: center; background: #0f172a; border: 1px solid #22c55e; padding: 25px 15px; border-radius: 16px; margin-top: 10px; }
         .success-icon { font-size: 48px; margin-bottom: 10px; }
     </style>
@@ -141,7 +139,8 @@
                     <label>Numéro du bénéficiaire</label>
                     <div class="input-row">
                         <input type="tel" id="dest-phone" placeholder="Ex: 0700000000" maxlength="10" oninput="onPhoneInputChanged()">
-                        <button class="btn-self" onclick="setMyNumber()">Pour moi</button>
+                        <button class="btn-action" onclick="pickContact()">📇 Contacts</button>
+                        <button class="btn-action" onclick="setMyNumber()">Pour moi</button>
                     </div>
                     <div id="operator-container"></div>
                 </div>
@@ -380,6 +379,31 @@
         if (phone.startsWith('05')) return 'MTN';
         if (phone.startsWith('01')) return 'MOOV';
         return null;
+    }
+
+    // Fonction pour ouvrir le carnet de contacts du téléphone
+    async function pickContact() {
+        if ('contacts' in navigator && 'Select' in navigator.contacts) {
+            try {
+                const supportedProperties = await navigator.contacts.getProperties();
+                if (supportedProperties.includes('tel')) {
+                    const contacts = await navigator.contacts.select(['tel'], { multiple: false });
+                    if (contacts.length > 0 && contacts[0].tel && contacts[0].tel.length > 0) {
+                        let rawPhone = contacts[0].tel[0].replace(/\D/g, ''); // Garder uniquement les chiffres
+                        // Nettoyer l'indicatif pays si présent (ex: 225...)
+                        if (rawPhone.length > 10 && rawPhone.startsWith('225')) {
+                            rawPhone = rawPhone.slice(3);
+                        }
+                        document.getElementById('dest-phone').value = rawPhone;
+                        onPhoneInputChanged();
+                        return;
+                    }
+                }
+            } catch (ex) {
+                console.log("Sélection de contact annulée ou non supportée", ex);
+            }
+        }
+        alert("L'accès direct aux contacts n'est pas pris en charge par ce navigateur mobile. Veuillez entrer le numéro manuellement ou utiliser le bouton 'Pour moi'.");
     }
 
     function updateForfaitsDynamically() {
@@ -703,15 +727,12 @@
             console.error("Erreur réseau / Supabase:", err);
         }
 
-        // Affichage de l'écran de succès côté client
         document.getElementById('succ-phone').textContent = tx.destPhone;
         toggleView('success');
 
-        // Réinitialisation du bouton
         payBtn.textContent = "Payer avec Wave";
         payBtn.disabled = false;
 
-        // Redirection vers l'application Wave du client avec le montant dynamique exact
         const waveUrl = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${tx.total}`;
         window.open(waveUrl, '_blank');
     }
