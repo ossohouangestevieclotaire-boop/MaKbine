@@ -13,9 +13,22 @@ export default async function handler(req, res) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
-  // 2. Intégrer le forfait dans le message (avec une valeur par défaut si absent)
+  // 2. Détection du réseau à partir du numéro de téléphone
+  function detecterReseau(numero) {
+    const n = numero.replace(/\s+/g, ''); // enlève les espaces éventuels
+    const prefixe = n.substring(0, 2);
+
+    if (prefixe === '05') return 'MTN';
+    if (prefixe === '07') return 'Orange';
+    if (prefixe === '01') return 'Moov';
+    return 'Inconnu';
+  }
+
+  const reseauDetecte = detecterReseau(phone);
+
+  // 3. Intégrer le forfait dans le message (avec une valeur par défaut si absent)
   const forfaitTexte = packageName || "Transfert d'unités";
-  const message = `🔔 Nouvelle transaction MaKbine !\n📱 Téléphone : ${phone}\n🎁 Forfait : ${forfaitTexte}\n💰 Total : ${total} FCFA`;
+  const message = `🚨 Nouvelle transaction MaKbine !\n📱 Téléphone : ${phone}\n📶 Réseau : ${reseauDetecte}\n📦 Forfait : ${forfaitTexte}\n💰 Total : ${total} FCFA`;
 
   try {
     const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -39,3 +52,5 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("Erreur Telegram:", error);
     return res.status(500).json({ success: false, error: 'Erreur de communication avec Telegram' });
+  }
+}
