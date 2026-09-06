@@ -44,6 +44,7 @@
         .package-card:hover { border-color: var(--accent); transform: translateY(-1px); }
         .package-card.selected { border-color: var(--accent); background: rgba(249, 115, 22, 0.1); }
         .package-info { display: flex; flex-direction: column; gap: 3px; padding-right: 10px; }
+        .package-code { font-size: 10px; font-family: monospace; background: #334155; color: var(--accent); padding: 2px 6px; border-radius: 4px; width: fit-content; margin-bottom: 2px; }
         .package-name { font-size: 13px; font-weight: 600; color: var(--text-main); line-height: 1.3; }
         .package-duration { font-size: 11px; color: var(--text-muted); }
         .package-price { font-size: 15px; font-weight: 700; color: var(--accent); white-space: nowrap; background: rgba(249, 115, 22, 0.15); padding: 6px 10px; border-radius: 8px; }
@@ -239,142 +240,142 @@
     const catalogForfaits = {
       MOOV: {
         internet: [
-          { label: "150 Mo (100% mardi,jeudi,vendredi)", duration: "1 Jour", value: 150 },
-          { label: "220 Mo (100% mardi,jeudi,vendredi)", duration: "1 Jour", value: 200 },
-          { label: "400 Mo (100% mardi,jeudi,vendredi)", duration: "1 Jour", value: 300 },
-          { label: "ILLIMITE - 1 heure de forfait", duration: "1 Heure", value: 300 },
-          { label: "OFFRES SPECIALES 1 Go FORFAIT TIK TOK", duration: "03 Jours", value: 300 },
-          { label: "1 Go + 1 Heure", duration: "2 Jours", value: 500 },
-          { label: "ILLIMITE - 1 heure de forfait", duration: "2 Heures", value: 500 },
-          { label: "750 Mo (100% mardi,jeudi,vendredi)", duration: "7 Jours", value: 750 },
-          { label: "1,5 Go (100% mardi,jeudi,vendredi)", duration: "10 Jours", value: 1000 },
-          { label: "2,5 Go (100% mardi,jeudi,vendredi)", duration: "15 Jours", value: 1500 },
-          { label: "6 Go", duration: "10 Jours", value: 1500 },
-          { label: "3 Go (100% mardi,jeudi,vendredi)", duration: "30 Jours", value: 2000 },
-          { label: "7,4 Go (100% mardi,jeudi,vendredi)", duration: "30 Jours", value: 4900 },            
-          { label: "20 Go (100% mardi,jeudi,vendredi)", duration: "30 Jours", value: 9900 },
-          { label: "33 Go (100% mardi,jeudi,vendredi)", duration: "30 Jours", value: 14900 },
-          { label: "45 Go (100% mardi,jeudi,vendredi)", duration: "30 Jours", value: 19900 },
-          { label: "10 Go", duration: "15 Jours", value: 2500 }
+          { code: "MOOV_NET_01", label: "150 Mo (100% mardi,jeudi,vendredi)", duration: "1 Jour", value: 150 },
+          { code: "MOOV_NET_02", label: "220 Mo (100% mardi,jeudi,vendredi)", duration: "1 Jour", value: 200 },
+          { code: "MOOV_NET_03", label: "400 Mo (100% mardi,jeudi,vendredi)", duration: "1 Jour", value: 300 },
+          { code: "MOOV_NET_04", label: "ILLIMITE - 1 heure de forfait", duration: "1 Heure", value: 300 },
+          { code: "MOOV_NET_05", label: "OFFRES SPECIALES 1 Go FORFAIT TIK TOK", duration: "03 Jours", value: 300 },
+          { code: "MOOV_NET_06", label: "1 Go + 1 Heure", duration: "2 Jours", value: 500 },
+          { code: "MOOV_NET_07", label: "ILLIMITE - 1 heure de forfait", duration: "2 Heures", value: 500 },
+          { code: "MOOV_NET_08", label: "750 Mo (100% mardi,jeudi,vendredi)", duration: "7 Jours", value: 750 },
+          { code: "MOOV_NET_09", label: "1,5 Go (100% mardi,jeudi,vendredi)", duration: "10 Jours", value: 1000 },
+          { code: "MOOV_NET_10", label: "2,5 Go (100% mardi,jeudi,vendredi)", duration: "15 Jours", value: 1500 },
+          { code: "MOOV_NET_11", label: "6 Go", duration: "10 Jours", value: 1500 },
+          { code: "MOOV_NET_12", label: "3 Go (100% mardi,jeudi,vendredi)", duration: "30 Jours", value: 2000 },
+          { code: "MOOV_NET_13", label: "7,4 Go (100% mardi,jeudi,vendredi)", duration: "30 Jours", value: 4900 },            
+          { code: "MOOV_NET_14", label: "20 Go (100% mardi,jeudi,vendredi)", duration: "30 Jours", value: 9900 },
+          { code: "MOOV_NET_15", label: "33 Go (100% mardi,jeudi,vendredi)", duration: "30 Jours", value: 14900 },
+          { code: "MOOV_NET_16", label: "45 Go (100% mardi,jeudi,vendredi)", duration: "30 Jours", value: 19900 },
+          { code: "MOOV_NET_17", label: "10 Go", duration: "15 Jours", value: 2500 }
         ],
         appel: [
-          { label: "MOOV FOLIE 12 minutes", duration: "1 Jour", value: 150 },
-          { label: "MOOV FOLIE 20 minutes", duration: "1 Jour", value: 200 },
-          { label: "MOOV FOLIE 35 minutes", duration: "2 Jours", value: 300 },
-          { label: "Illimité", duration: "1 Jour", value: 500 },
-          { label: "MOOV FOLIE 120 minutes", duration: "5 Jours", value: 500 },
-          { label: "MOOV FOLIE 140 minutes", duration: "10 Jours", value: 1000 },
-          { label: "MOOV FOLIE 210 minutes", duration: "15 Jours", value: 1500 },
-          { label: "MOOV FOLIE 350 minutes", duration: "30 Jours", value: 2500 },
-          { label: "MOOV FOLIE 700 minutes", duration: "30 Jours", value: 5000 }  
+          { code: "MOOV_APP_01", label: "MOOV FOLIE 12 minutes", duration: "1 Jour", value: 150 },
+          { code: "MOOV_APP_02", label: "MOOV FOLIE 20 minutes", duration: "1 Jour", value: 200 },
+          { code: "MOOV_APP_03", label: "MOOV FOLIE 35 minutes", duration: "2 Jours", value: 300 },
+          { code: "MOOV_APP_04", label: "Illimité", duration: "1 Jour", value: 500 },
+          { code: "MOOV_APP_05", label: "MOOV FOLIE 120 minutes", duration: "5 Jours", value: 500 },
+          { code: "MOOV_APP_06", label: "MOOV FOLIE 140 minutes", duration: "10 Jours", value: 1000 },
+          { code: "MOOV_APP_07", label: "MOOV FOLIE 210 minutes", duration: "15 Jours", value: 1500 },
+          { code: "MOOV_APP_08", label: "MOOV FOLIE 350 minutes", duration: "30 Jours", value: 2500 },
+          { code: "MOOV_APP_09", label: "MOOV FOLIE 700 minutes", duration: "30 Jours", value: 5000 }  
         ],
         mix: [
-            { label: "Izy Mix Plus 10 min TR + 15 Mo + 30 SMS", duration: "1 Jour", value: 150 },
-            { label: "Izy Mix Plus 17 min TR + 25 Mo + 50 SMS", duration: "2 Jours", value: 200 },
-            { label: "OFFRES SPECIALES 30 min + 2 Go FORFAIT NUIT", duration: "23h à 05h", value: 200 },
-            { label: "Izy Mix Plus 30 min TR + 100 Mo + 100 SMS + Illimité 5 NP", duration: "2 Jours", value: 300 },
-            { label: "Izy Mix Plus 55 min TR + 300 Mo + 250 SMS + Illimité 5 NP", duration: "5 Jours", value: 500 },
-            { label: "Izy Mix Plus 70 min TR + 700 Mo + 350 SMS + Illimité 5 NP", duration: "7 Jours", value: 700 },
-            { label: "Izy Mix Plus 100 min TR + 1 Go + 500 SMS + Illimité 5 NP", duration: "10 Jours", value: 1000 },
-            { label: "Izy Mix Plus 200 min TR + 1,5 Go + 500 SMS + Illimité 5 NP", duration: "15 Jours", value: 1500 },
-            { label: "Izy Mix Plus 250 min TR + 2,5 Go + 500 SMS + Illimité 5 NP", duration: "30 Jours", value: 2500 },
-            { label: "Izy Mix Plus 500 min TR + 5 Go + 500 SMS + Illimité 5 NP", duration: "30 Jours", value: 5000 },
-            { label: "Izy Mix Plus 830 min TR + 10 Go + 500 SMS + Illimité 5 NP", duration: "30 Jours", value: 10000 },
-            { label: "Izy Mix Plus 1660 min TR + 20 Go + 1000 SMS + Illimité 5 NP", duration: "30 Jours", value: 20000 },
-            { label: "MOOV FOLIE 30 min TR + 2 Go", duration: "21h à 07h", value: 200 },
-            { label: "MOOV FOLIE 20 min TR + 150 Mo", duration: "1 Jour", value: 200 },
-            { label: "20 min TR + 150 Mo", duration: "1 Jour", value: 200 },
-            { label: "MOOV FOLIE 35 min TR + 400 Mo", duration: "1 Jour", value: 300 },
-            { label: "MOOV FOLIE 60 min TR + 1 Go", duration: "2 Jours", value: 500 },
-            { label: "MOOV FOLIE 1 h TR + 1,5 Go", duration: "5 Jours", value: 700 },
-            { label: "MOOV FOLIE 20 Go + 200 min + 200 sms (folie 20 ans)", duration: "2 Jours", value: 1000 },
-            { label: "MOOV FOLIE 120 min TR + 2,5 Go", duration: "7 Jours", value: 1000 },
-            { label: "MOOV FOLIE 180 min TR + 5 Go", duration: "10 Jours", value: 1500 }
+            { code: "MOOV_MIX_01", label: "Izy Mix Plus 10 min TR + 15 Mo + 30 SMS", duration: "1 Jour", value: 150 },
+            { code: "MOOV_MIX_02", label: "Izy Mix Plus 17 min TR + 25 Mo + 50 SMS", duration: "2 Jours", value: 200 },
+            { code: "MOOV_MIX_03", label: "OFFRES SPECIALES 30 min + 2 Go FORFAIT NUIT", duration: "23h à 05h", value: 200 },
+            { code: "MOOV_MIX_04", label: "Izy Mix Plus 30 min TR + 100 Mo + 100 SMS + Illimité 5 NP", duration: "2 Jours", value: 300 },
+            { code: "MOOV_MIX_05", label: "Izy Mix Plus 55 min TR + 300 Mo + 250 SMS + Illimité 5 NP", duration: "5 Jours", value: 500 },
+            { code: "MOOV_MIX_06", label: "Izy Mix Plus 70 min TR + 700 Mo + 350 SMS + Illimité 5 NP", duration: "7 Jours", value: 700 },
+            { code: "MOOV_MIX_07", label: "Izy Mix Plus 100 min TR + 1 Go + 500 SMS + Illimité 5 NP", duration: "10 Jours", value: 1000 },
+            { code: "MOOV_MIX_08", label: "Izy Mix Plus 200 min TR + 1,5 Go + 500 SMS + Illimité 5 NP", duration: "15 Jours", value: 1500 },
+            { code: "MOOV_MIX_09", label: "Izy Mix Plus 250 min TR + 2,5 Go + 500 SMS + Illimité 5 NP", duration: "30 Jours", value: 2500 },
+            { code: "MOOV_MIX_10", label: "Izy Mix Plus 500 min TR + 5 Go + 500 SMS + Illimité 5 NP", duration: "30 Jours", value: 5000 },
+            { code: "MOOV_MIX_11", label: "Izy Mix Plus 830 min TR + 10 Go + 500 SMS + Illimité 5 NP", duration: "30 Jours", value: 10000 },
+            { code: "MOOV_MIX_12", label: "Izy Mix Plus 1660 min TR + 20 Go + 1000 SMS + Illimité 5 NP", duration: "30 Jours", value: 20000 },
+            { code: "MOOV_MIX_13", label: "MOOV FOLIE 30 min TR + 2 Go", duration: "21h à 07h", value: 200 },
+            { code: "MOOV_MIX_14", label: "MOOV FOLIE 20 min TR + 150 Mo", duration: "1 Jour", value: 200 },
+            { code: "MOOV_MIX_15", label: "20 min TR + 150 Mo", duration: "1 Jour", value: 200 },
+            { code: "MOOV_MIX_16", label: "MOOV FOLIE 35 min TR + 400 Mo", duration: "1 Jour", value: 300 },
+            { code: "MOOV_MIX_17", label: "MOOV FOLIE 60 min TR + 1 Go", duration: "2 Jours", value: 500 },
+            { code: "MOOV_MIX_18", label: "MOOV FOLIE 1 h TR + 1,5 Go", duration: "5 Jours", value: 700 },
+            { code: "MOOV_MIX_19", label: "MOOV FOLIE 20 Go + 200 min + 200 sms (folie 20 ans)", duration: "2 Jours", value: 1000 },
+            { code: "MOOV_MIX_20", label: "MOOV FOLIE 120 min TR + 2,5 Go", duration: "7 Jours", value: 1000 },
+            { code: "MOOV_MIX_21", label: "MOOV FOLIE 180 min TR + 5 Go", duration: "10 Jours", value: 1500 }
         ]
       },
       MTN: {
         internet: [
-          { label: "PACK Internet - 220 Mo (100% les mardi et vendredi)", duration: "2 Jours", value: 200 },
-          { label: "MTN C'Chic - 650 Mo", duration: "1 Jour", value: 200 },
-          { label: "MTN C'Chic - 900 Mo", duration: "1 Jour", value: 300 },
-          { label: "PACK Internet 400 Mo (100% les mardi et vendredi)", duration: "2 Jours", value: 300 },
-          { label: "PACK Internet - 450 Mo (100% les mardi et vendredi)", duration: "3 Jours", value: 400 },
-          { label: "PACK Internet - 750 Mo (100% les mardi et vendredi)", duration: "3 Jours", value: 500 },
-          { label: "PACK Internet - 1,5 Go (100% les mardi et vendredi)", duration: "5 Jours", value: 1000 },
-          { label: "PACK Internet - 2,5 Go (100% les mardi et vendredi)", duration: "10 Jours", value: 1500 },
-          { label: "PACK Internet - 3 Go (100% les mardi et vendredi)", duration: "30 Jours", value: 2000 },
-          { label: "PACK Internet - 3,7 Go (100% les mardi et vendredi)", duration: "30 Jours", value: 2500 },
-          { label: "PACK Internet - 7,4 Go (100% les mardi et vendredi)", duration: "30 Jours", value: 5000 },
-          { label: "PACK Internet - 20 Go + whatsapp et facebook gratuit", duration: "30 Jours", value: 10000 }
+          { code: "MTN_NET_01", label: "PACK Internet - 220 Mo (100% les mardi et vendredi)", duration: "2 Jours", value: 200 },
+          { code: "MTN_NET_02", label: "MTN C'Chic - 650 Mo", duration: "1 Jour", value: 200 },
+          { code: "MTN_NET_03", label: "MTN C'Chic - 900 Mo", duration: "1 Jour", value: 300 },
+          { code: "MTN_NET_04", label: "PACK Internet 400 Mo (100% les mardi et vendredi)", duration: "2 Jours", value: 300 },
+          { code: "MTN_NET_05", label: "PACK Internet - 450 Mo (100% les mardi et vendredi)", duration: "3 Jours", value: 400 },
+          { code: "MTN_NET_06", label: "PACK Internet - 750 Mo (100% les mardi et vendredi)", duration: "3 Jours", value: 500 },
+          { code: "MTN_NET_07", label: "PACK Internet - 1,5 Go (100% les mardi et vendredi)", duration: "5 Jours", value: 1000 },
+          { code: "MTN_NET_08", label: "PACK Internet - 2,5 Go (100% les mardi et vendredi)", duration: "10 Jours", value: 1500 },
+          { code: "MTN_NET_09", label: "PACK Internet - 3 Go (100% les mardi et vendredi)", duration: "30 Jours", value: 2000 },
+          { code: "MTN_NET_10", label: "PACK Internet - 3,7 Go (100% les mardi et vendredi)", duration: "30 Jours", value: 2500 },
+          { code: "MTN_NET_11", label: "PACK Internet - 7,4 Go (100% les mardi et vendredi)", duration: "30 Jours", value: 5000 },
+          { code: "MTN_NET_12", label: "PACK Internet - 20 Go + whatsapp et facebook gratuit", duration: "30 Jours", value: 10000 }
         ],
         appel: [
-          { label: "PACK APPEL - 20 min vers tous", duration: "2 Jours", value: 200 },
-          { label: "PACK APPEL - 35 min vers tous", duration: "2 Jours", value: 300 },
-          { label: "PACK APPEL - 120 min vers tous", duration: "5 Jours", value: 500 },
-          { label: "PACK APPEL - 140 min vers tous", duration: "10 Jours", value: 1000 },
-          { label: "PACK APPEL - 210 min vers tous", duration: "15 Jours", value: 1500 },
-          { label: "PACK APPEL - 280 min vers tous", duration: "15 Jours", value: 2000 },
-          { label: "PACK APPEL - 400 min vers tous", duration: "30 Jours", value: 3000 },
-          { label: "PACK APPEL - 700 min vers tous", duration: "30 Jours", value: 3000 }
+          { code: "MTN_APP_01", label: "PACK APPEL - 20 min vers tous", duration: "2 Jours", value: 200 },
+          { code: "MTN_APP_02", label: "PACK APPEL - 35 min vers tous", duration: "2 Jours", value: 300 },
+          { code: "MTN_APP_03", label: "PACK APPEL - 120 min vers tous", duration: "5 Jours", value: 500 },
+          { code: "MTN_APP_04", label: "PACK APPEL - 140 min vers tous", duration: "10 Jours", value: 1000 },
+          { code: "MTN_APP_05", label: "PACK APPEL - 210 min vers tous", duration: "15 Jours", value: 1500 },
+          { code: "MTN_APP_06", label: "PACK APPEL - 280 min vers tous", duration: "15 Jours", value: 2000 },
+          { code: "MTN_APP_07", label: "PACK APPEL - 400 min vers tous", duration: "30 Jours", value: 3000 },
+          { code: "MTN_APP_08", label: "PACK APPEL - 700 min vers tous", duration: "30 Jours", value: 3000 }
         ],
         mix: [
-          { label: "Pack Free Plus - 17 min + 25 Mo + 25 sms", duration: "1 Jour", value: 200 },
-          { label: "Pack Free Plus - 30 min + 100 Mo + 100 sms", duration: "2 Jours", value: 300 },
-          { label: "MTN C'Chic - 1 Go + (Bonus 1Go = 2Go Mercredi et samedi) + 60 min", duration: "2 Jours", value: 500 },
-          { label: "MTN C'Chic - 1,5 Go + 25 sms", duration: "3 Jours", value: 500 },
-          { label: "Pack Free Plus - 55 min + 300 Mo + 100 sms + appel illimité vers fnf", duration: "5 Jours", value: 500 },
-          { label: "Pack Free Plus - 70 min + 700 Mo + 100 sms + appel illimité vers fnf", duration: "5 Jours", value: 700 },
-          { label: "MTN C'Chic - 1,5 Go + 60 min tr + facebook et whatsapp illimité", duration: "5 Jours", value: 700 },
-          { label: "MTN C'Chic - 4 Go + facebook et whatsapp illimité de 23h a 7h", duration: "7 Jours", value: 1000 },
-          { label: "Pack Free Plus - 100 min + 1 Go + 100 sms + appel illimité vers fnf", duration: "10 Jours", value: 1000 },
-          { label: "MTN C'Chic - 5 Go + facebook et whatsapp illimité de 23h a 7h", duration: "7 Jours", value: 1500 },
-          { label: "Pack Free Plus - 200 min + 1,5 Go + 150 sms + appel illimité vers fnf", duration: "15 Jours", value: 1500 },
-          { label: "MTN C'Chic - 7,5 Go + facebook et whatsapp illimité", duration: "10 Jours", value: 2500 },
-          { label: "Pack Free Plus - 250 min + 2,5 Go + 250 sms + appel illimité vers fnf", duration: "30 Jours", value: 2500 },
-          { label: "Pack Free Plus - 500 min + 5 Go + 500 sms + appel illimité vers fnf", duration: "30 Jours", value: 5000 },
-          { label: "Pack Free Plus - 830 min + 10 Go + 500 sms + appel illimité vers fnf", duration: "30 Jours", value: 10000 }
+          { code: "MTN_MIX_01", label: "Pack Free Plus - 17 min + 25 Mo + 25 sms", duration: "1 Jour", value: 200 },
+          { code: "MTN_MIX_02", label: "Pack Free Plus - 30 min + 100 Mo + 100 sms", duration: "2 Jours", value: 300 },
+          { code: "MTN_MIX_03", label: "MTN C'Chic - 1 Go + (Bonus 1Go = 2Go Mercredi et samedi) + 60 min", duration: "2 Jours", value: 500 },
+          { code: "MTN_MIX_04", label: "MTN C'Chic - 1,5 Go + 25 sms", duration: "3 Jours", value: 500 },
+          { code: "MTN_MIX_05", label: "Pack Free Plus - 55 min + 300 Mo + 100 sms + appel illimité vers fnf", duration: "5 Jours", value: 500 },
+          { code: "MTN_MIX_06", label: "Pack Free Plus - 70 min + 700 Mo + 100 sms + appel illimité vers fnf", duration: "5 Jours", value: 700 },
+          { code: "MTN_MIX_07", label: "MTN C'Chic - 1,5 Go + 60 min tr + facebook et whatsapp illimité", duration: "5 Jours", value: 700 },
+          { code: "MTN_MIX_08", label: "MTN C'Chic - 4 Go + facebook et whatsapp illimité de 23h a 7h", duration: "7 Jours", value: 1000 },
+          { code: "MTN_MIX_09", label: "Pack Free Plus - 100 min + 1 Go + 100 sms + appel illimité vers fnf", duration: "10 Jours", value: 1000 },
+          { code: "MTN_MIX_10", label: "MTN C'Chic - 5 Go + facebook et whatsapp illimité de 23h a 7h", duration: "7 Jours", value: 1500 },
+          { code: "MTN_MIX_11", label: "Pack Free Plus - 200 min + 1,5 Go + 150 sms + appel illimité vers fnf", duration: "15 Jours", value: 1500 },
+          { code: "MTN_MIX_12", label: "MTN C'Chic - 7,5 Go + facebook et whatsapp illimité", duration: "10 Jours", value: 2500 },
+          { code: "MTN_MIX_13", label: "Pack Free Plus - 250 min + 2,5 Go + 250 sms + appel illimité vers fnf", duration: "30 Jours", value: 2500 },
+          { code: "MTN_MIX_14", label: "Pack Free Plus - 500 min + 5 Go + 500 sms + appel illimité vers fnf", duration: "30 Jours", value: 5000 },
+          { code: "MTN_MIX_15", label: "Pack Free Plus - 830 min + 10 Go + 500 sms + appel illimité vers fnf", duration: "30 Jours", value: 10000 }
         ]
       },
       ORANGE: {
         internet: [
-          { label: "Pass Internet 220 Mo", duration: "2 Jours", value: 200 },
-          { label: "Pass Internet 900 Mo", duration: "1 Jour", value: 300 },
-          { label: "Pass Internet 400 Mo", duration: "2 Jours", value: 300 },
-          { label: "Pass Internet 340 Mo + life tv", duration: "3 Jours", value: 400 },
-          { label: "Pass Internet 340 Mo + musique waw illimité", duration: "3 Jours", value: 400 },
-          { label: "Pass Internet 1,5 Go", duration: "5 Jours", value: 1000 },
-          { label: "Pass Speciaux 1.5 Go", duration: "3 Jours", value: 500 },
-          { label: "Pass Speciaux 4 Go", duration: "7 Jours", value: 1000 },
-          { label: "Pass Internet semaine 1.5 Go + 7info orange", duration: "7 Jours", value: 1200 },
-          { label: "Pass Internet 2.5 Go + 150 Mo spotify", duration: "7 Jours", value: 1500 },
-          { label: "Pass Max It 4 Go", duration: "7 Jours", value: 1000 },
-          { label: "Pass 10 Go tout usage + acces a max it TV", duration: "7 Jours", value: 2500 },
-          { label: "Pass Internet 5 Go", duration: "30 Jours", value: 2500 },
-          { label: "Pass Internet semaine 10 Go tout usage + acces a max it", duration: "7 Jours", value: 2500 },
-          { label: "Pass 10 Go tout usage + acces a max it tv", duration: "30 Jours", value: 5000 },
-          { label: "Pass Social Illimité 24H (FB, WA, etc)", duration: "1 Jour", value: 500 },
-          { label: "Pass Social Illimité + TikTok etc", duration: "1 Jour", value: 800 },
-          { label: "Pass Social 450 Mo (Facebook whatsapp, youtube)", duration: "3 Jours", value: 300 },
-          { label: "Pass Social 1 Go (Facebook, tik tok whatsapp etc.)", duration: "7 Jours", value: 500 },
-          { label: "Pass Social 1 Go (TikTok & WhatsApp, youtube etc)", duration: "7 Jours", value: 300 }
+          { code: "ORANGE_NET_01", label: "Pass Internet 220 Mo", duration: "2 Jours", value: 200 },
+          { code: "ORANGE_NET_02", label: "Pass Internet 900 Mo", duration: "1 Jour", value: 300 },
+          { code: "ORANGE_NET_03", label: "Pass Internet 400 Mo", duration: "2 Jours", value: 300 },
+          { code: "ORANGE_NET_04", label: "Pass Internet 340 Mo + life tv", duration: "3 Jours", value: 400 },
+          { code: "ORANGE_NET_05", label: "Pass Internet 340 Mo + musique waw illimité", duration: "3 Jours", value: 400 },
+          { code: "ORANGE_NET_06", label: "Pass Internet 1,5 Go", duration: "5 Jours", value: 1000 },
+          { code: "ORANGE_NET_07", label: "Pass Speciaux 1.5 Go", duration: "3 Jours", value: 500 },
+          { code: "ORANGE_NET_08", label: "Pass Speciaux 4 Go", duration: "7 Jours", value: 1000 },
+          { code: "ORANGE_NET_09", label: "Pass Internet semaine 1.5 Go + 7info orange", duration: "7 Jours", value: 1200 },
+          { code: "ORANGE_NET_10", label: "Pass Internet 2.5 Go + 150 Mo spotify", duration: "7 Jours", value: 1500 },
+          { code: "ORANGE_NET_11", label: "Pass Max It 4 Go", duration: "7 Jours", value: 1000 },
+          { code: "ORANGE_NET_12", label: "Pass 10 Go tout usage + acces a max it TV", duration: "7 Jours", value: 2500 },
+          { code: "ORANGE_NET_13", label: "Pass Internet 5 Go", duration: "30 Jours", value: 2500 },
+          { code: "ORANGE_NET_14", label: "Pass Internet semaine 10 Go tout usage + acces a max it", duration: "7 Jours", value: 2500 },
+          { code: "ORANGE_NET_15", label: "Pass 10 Go tout usage + acces a max it tv", duration: "30 Jours", value: 5000 },
+          { code: "ORANGE_NET_16", label: "Pass Social Illimité 24H (FB, WA, etc)", duration: "1 Jour", value: 500 },
+          { code: "ORANGE_NET_17", label: "Pass Social Illimité + TikTok etc", duration: "1 Jour", value: 800 },
+          { code: "ORANGE_NET_18", label: "Pass Social 450 Mo (Facebook whatsapp, youtube)", duration: "3 Jours", value: 300 },
+          { code: "ORANGE_NET_19", label: "Pass Social 1 Go (Facebook, tik tok whatsapp etc.)", duration: "7 Jours", value: 500 },
+          { code: "ORANGE_NET_20", label: "Pass Social 1 Go (TikTok & WhatsApp, youtube etc)", duration: "7 Jours", value: 300 }
         ],
         appel: [
-          { label: "Pass Appel 17 min Tous Réseaux", duration: "1 Jour", value: 200 },
-          { label: "Pass Appel Illimité vers orange et jusqua 100min vers autres reseau", duration: "1 Jour", value: 500 },
-          { label: "Pass Speciaux 100 min TR", duration: "7 Jours", value: 1000 }
+          { code: "ORANGE_APP_01", label: "Pass Appel 17 min Tous Réseaux", duration: "1 Jour", value: 200 },
+          { code: "ORANGE_APP_02", label: "Pass Appel Illimité vers orange et jusqua 100min vers autres reseau", duration: "1 Jour", value: 500 },
+          { code: "ORANGE_APP_03", label: "Pass Speciaux 100 min TR", duration: "7 Jours", value: 1000 }
         ],
         mix: [
-          { label: "KDO Max Mix (50min + 250 Mo)", duration: "1 Jour", value: 200 },
-          { label: "Pass Mix - (30 min TR)", duration: "2 Jours", value: 300 },
-          { label: "Pass Mix - (50 min TR + 100Mo)", duration: "3 Jours", value: 400 },
-          { label: "Pass Mix - (55min + 300SMS + 300Mo)", duration: "5 Jours", value: 500 },
-          { label: "Pass Mix - (60min + 1.5Go)", duration: "5 Jours", value: 700 },
-          { label: "Pass Mix - Semaine (100min + 1Go + Illimité NP)", duration: "7 Jours", value: 1000 },
-          { label: "Pass Mix - Semaine (200min + 1.5Go)", duration: "7 Jours", value: 1500 },
-          { label: "Pass Mix - Mois (250min + 2.5Go)", duration: "30 Jours", value: 3000 },
-          { label: "Pass Mix - Mois (400min + 5Go)", duration: "30 Jours", value: 5000 },
-          { label: "Pass Mix - Mois (500min + 10Go)", duration: "30 Jours", value: 10000 },
-          { label: "Pass Mix - Mois (1200min + 20Go)", duration: "30 Jours", value: 20000 }
+          { code: "ORANGE_MIX_01", label: "KDO Max Mix (50min + 250 Mo)", duration: "1 Jour", value: 200 },
+          { code: "ORANGE_MIX_02", label: "Pass Mix - (30 min TR)", duration: "2 Jours", value: 300 },
+          { code: "ORANGE_MIX_03", label: "Pass Mix - (50 min TR + 100Mo)", duration: "3 Jours", value: 400 },
+          { code: "ORANGE_MIX_04", label: "Pass Mix - (55min + 300SMS + 300Mo)", duration: "5 Jours", value: 500 },
+          { code: "ORANGE_MIX_05", label: "Pass Mix - (60min + 1.5Go)", duration: "5 Jours", value: 700 },
+          { code: "ORANGE_MIX_06", label: "Pass Mix - Semaine (100min + 1Go + Illimité NP)", duration: "7 Jours", value: 1000 },
+          { code: "ORANGE_MIX_07", label: "Pass Mix - Semaine (200min + 1.5Go)", duration: "7 Jours", value: 1500 },
+          { code: "ORANGE_MIX_08", label: "Pass Mix - Mois (250min + 2.5Go)", duration: "30 Jours", value: 3000 },
+          { code: "ORANGE_MIX_09", label: "Pass Mix - Mois (400min + 5Go)", duration: "30 Jours", value: 5000 },
+          { code: "ORANGE_MIX_10", label: "Pass Mix - Mois (500min + 10Go)", duration: "30 Jours", value: 10000 },
+          { code: "ORANGE_MIX_11", label: "Pass Mix - Mois (1200min + 20Go)", duration: "30 Jours", value: 20000 }
         ]
       }
     };
@@ -492,6 +493,7 @@
                 card.className = 'package-card';
                 card.innerHTML = `
                     <div class="package-info">
+                        <div class="package-code">${item.code}</div>
                         <span class="package-name">${item.label}</span>
                         <span class="package-duration">⏱️ ${item.duration}</span>
                     </div>
@@ -502,7 +504,8 @@
                     document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
                     card.classList.add('selected');
                     selectedPackageData = {
-                        label: `${item.label} - ${item.duration} - ${item.value}F`,
+                        code: item.code,
+                        label: `${item.code} - ${item.label} - ${item.duration} - ${item.value}F`,
                         value: item.value
                     };
                 };
