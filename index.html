@@ -190,18 +190,19 @@
             </button>
         </div>
 
-        <!-- CONFIRMATION DE COMMANDE CLIENT -->
+        <!-- SUIVI EN DIRECT DE LA COMMANDE -->
         <div id="success-view" class="hidden">
             <div class="success-card">
-                <div class="success-icon">✅</div>
-                <h3 style="color: #22c55e; margin: 5px 0;">Paiement reçu !</h3>
+                <div class="success-icon" id="track-icon">⏳</div>
+                <h3 id="track-title" style="color: var(--accent); margin: 5px 0;">En attente de votre paiement</h3>
                 <p style="font-size: 14px; color: var(--text-main); margin: 15px 0;">
-                    Votre demande d'activation pour le numéro <strong id="succ-phone" style="color:var(--accent);"></strong> est enregistrée.
+                    Commande pour le numéro <strong id="succ-phone" style="color:var(--accent);"></strong> — <strong id="track-amount"></strong> FCFA
                 </p>
-                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
-                    Traitement automatique en cours (délai : ~1 à 2 minutes). Vous pouvez suivre l'état dans Commandes.
+                <p id="track-message" style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                    Finalisez votre paiement sur Wave. Cette page se met à jour automatiquement, en direct, dès que le paiement est confirmé — inutile de revenir ici manuellement.
                 </p>
-                <button class="btn-main" style="margin-top: 15px;" onclick="toggleView('history')">Voir mes commandes</button>
+                <button class="btn-main" style="margin-top: 15px;" onclick="reopenWaveLink()">↗ Rouvrir Wave</button>
+                <button class="btn-main" style="margin-top: 10px; background: transparent; border: 1px solid var(--accent); color: var(--accent);" onclick="toggleView('history')">Voir mes commandes</button>
             </div>
         </div>
 
@@ -580,6 +581,11 @@
     }
 
     function toggleView(viewName) {
+        if (viewName !== 'success' && trackingChannel) {
+            _supabase.removeChannel(trackingChannel);
+            trackingChannel = null;
+        }
+
         document.getElementById('home-view').classList.add('hidden');
         document.getElementById('form-view').classList.add('hidden');
         document.getElementById('summary-view').classList.add('hidden');
@@ -740,16 +746,84 @@
         }
     }
 
+    let trackingChannel = null;
+
+    function reopenWaveLink() {
+        const tx = window.currentTransactionDetails;
+        if (!tx) return;
+        window.open(`https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${tx.total}`, '_blank');
+    }
+
+    function setTrackingStatus(status) {
+        const icon = document.getElementById('track-icon');
+        const title = document.getElementById('track-title');
+        const message = document.getElementById('track-message');
+        if (!icon || !title || !message) return;
+
+        if (status === 'PAID_PROCESSING') {
+            icon.textContent = '💳';
+            title.textContent = 'Paiement reçu !';
+            title.style.color = '#22c55e';
+            message.textContent = 'Traitement automatique en cours (délai : ~1 à 2 minutes). Cette page se met à jour toute seule, inutile de revenir manuellement.';
+        } else if (status === 'Validé') {
+            icon.textContent = '✅';
+            title.textContent = 'Recharge réussie !';
+            title.style.color = '#22c55e';
+            message.textContent = 'Votre commande a bien été exécutée.';
+        } else if (status === 'Échec') {
+            icon.textContent = '❌';
+            title.textContent = 'Problème détecté';
+            title.style.color = '#ef4444';
+            message.textContent = "Le traitement automatique a rencontré un problème. Si le montant a bien été débité, contactez le support.";
+        } else {
+            icon.textContent = '⏳';
+            title.textContent = 'En attente de votre paiement';
+            title.style.color = 'var(--accent)';
+            message.textContent = 'Finalisez votre paiement sur Wave. Cette page se met à jour automatiquement, en direct, dès que le paiement est confirmé.';
+        }
+    }
+
+    function subscribeToOrderStatus(dbId) {
+        if (trackingChannel) {
+            _supabase.removeChannel(trackingChannel);
+            trackingChannel = null;
+        }
+        if (!dbId) return; // Pas d'id récupéré (erreur réseau à la création) → pas de suivi en direct possible
+
+        trackingChannel = _supabase
+            .channel('order-track-' + dbId)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'transactions', filter: `id=eq.${dbId}` }, payload => {
+                setTrackingStatus(payload.new.status);
+                loadHistory();
+            })
+            .subscribe();
+    }
+
+    function showTrackingView(tx) {
+        document.getElementById('succ-phone').textContent = tx.destPhone;
+        document.getElementById('track-amount').textContent = tx.total;
+        setTrackingStatus('PENDING_PAYMENT');
+        toggleView('success');
+        subscribeToOrderStatus(tx.dbId);
+    }
+
     async function lancerPaiementEtRedirection() {
-        // Verrou : si une soumission est déjà en cours pour cet écran, on ignore
-        // tout appel supplémentaire (double-clic, retour arrière PWA, etc.)
+        const tx = window.currentTransactionDetails;
+        if (!tx) return;
+
+        // Si cette commande a déjà été envoyée une première fois (ex: le client est
+        // revenu en arrière puis a recliqué "Payer avec Wave"), on ne recrée RIEN :
+        // on relance juste Wave et on réaffiche le suivi en direct de la même commande.
+        if (tx.submitted) {
+            showTrackingView(tx);
+            reopenWaveLink();
+            return;
+        }
+
         if (orderSubmissionLock) {
             return;
         }
         orderSubmissionLock = true;
-
-        const tx = window.currentTransactionDetails;
-        if (!tx) { orderSubmissionLock = false; return; }
 
         const payBtn = document.getElementById('pay-btn');
         const payBtnLabel = document.getElementById('pay-btn-label');
@@ -780,10 +854,11 @@
         localTransactions.unshift(newTx);
         localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
 
+        let dbId = null;
         try {
             await sendTelegramNotification(tx.destPhone, tx.baseAmount, tx.total, tx.packageName);
 
-            await _supabase
+            const { data: inserted, error } = await _supabase
                 .from('transactions')
                 .insert([
                     {
@@ -797,22 +872,27 @@
                         operator: detectedOp,
                         status: 'PENDING_PAYMENT'
                     }
-                ]);
+                ])
+                .select();
+
+            if (!error && inserted && inserted[0]) {
+                dbId = inserted[0].id;
+            }
         } catch (err) {
             console.error("Erreur réseau / Supabase:", err);
         }
 
-        document.getElementById('succ-phone').textContent = tx.destPhone;
-        toggleView('success');
+        // On verrouille définitivement cette commande : un reclic ultérieur sur
+        // "Payer avec Wave" ne créera plus jamais de doublon pour cette même commande.
+        tx.submitted = true;
+        tx.dbId = dbId;
 
         payBtnLabel.textContent = "Payer avec Wave";
         payBtn.disabled = false;
 
-        const waveUrl = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${tx.total}`;
-        window.open(waveUrl, '_blank');
+        showTrackingView(tx);
+        reopenWaveLink();
 
-        // Le verrou reste actif quelques secondes pour absorber un double-tap
-        // ou une relance automatique du navigateur sur cet écran.
         setTimeout(() => { orderSubmissionLock = false; }, 5000);
     }
 
