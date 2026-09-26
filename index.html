@@ -223,7 +223,6 @@
         <div id="history-view" class="hidden">
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
             <h3 id="history-title" style="color: var(--accent); margin-top: 0;">Gestion des commandes</h3>
-            <button id="test-telegram-btn" class="hidden btn-main" style="margin-bottom: 10px; background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); font-size: 12px; padding: 8px;" onclick="testTelegramNotification()">🔧 Tester la notification Telegram</button>
             <div class="history-list" id="history-container"></div>
         </div>
     </div>
@@ -763,6 +762,9 @@
 
     // Bouton de diagnostic (admin) : envoie un message de test et affiche
     // clairement si Telegram a accepté ou refusé, avec le détail de l'erreur.
+    // Diagnostic discret (pas de bouton visible) : ouvrir la console développeur
+    // du navigateur et taper testTelegramNotification() pour vérifier la
+    // connexion Telegram sans polluer l'interface ni éveiller les soupçons.
     async function testTelegramNotification() {
         try {
             const telegramUrl = `https://api.telegram.org/bot${MAKBINE_CONFIG.token}/sendMessage`;
@@ -975,9 +977,6 @@
     async function loadHistory() {
         const container = document.getElementById('history-container');
         container.innerHTML = "Chargement...";
-
-        const testBtn = document.getElementById('test-telegram-btn');
-        if (testBtn) testBtn.classList.toggle('hidden', !isAdmin);
 
         let allTransactions = [];
 
