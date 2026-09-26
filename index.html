@@ -168,7 +168,7 @@
                         <span>Wave</span>
                     </div>
                 </div>
-                <button class="btn-main" onclick="openSummary()">Continuer</button>
+                <button id="continue-btn" class="btn-main" onclick="openSummary()">Continuer</button>
             </div>
         </div>
 
@@ -181,7 +181,7 @@
                 <p><strong>Bénéficiaire :</strong> <span id="sum-phone"></span></p>
                 <p id="sum-package-container"><strong>Forfait :</strong> <span id="sum-package" style="color:var(--accent);"></span></p>
                 <p><strong>Montant de base :</strong> <span id="sum-amount"></span> FCFA</p>
-                <p><strong>Frais (5%) :</strong> <span id="sum-fees"></span> FCFA</p>
+                <p><strong>Frais de service :</strong> <span id="sum-fees"></span> FCFA</p>
                 <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA</p>
             </div>
             <button id="pay-btn" class="btn-wave" onclick="lancerPaiementEtRedirection()">
@@ -236,6 +236,11 @@
     let isAdmin = false;
     let registeredUsers = JSON.parse(localStorage.getItem('cabine_users')) || {};
     let selectedPackageData = null;
+
+    // Empêche l'envoi de la même commande deux fois (double-clic, relance PWA, etc.)
+    let orderSubmissionLock = false;
+    // Affichage (admin uniquement) des commandes créées mais pas encore payées
+    let showPendingPayments = false;
 
     const catalogForfaits = {
       MOOV: {
@@ -609,7 +614,7 @@
         updateForfaitsDynamically();
     }
 
-    function openSummary() {
+    async function openSummary() {
         const destPhone = document.getElementById('dest-phone').value.trim();
         if (!isValidIvorianNumber(destPhone)) {
             alert("Veuillez entrer un numéro de bénéficiaire valide.");
@@ -642,8 +647,14 @@
             document.getElementById('sum-package').textContent = packageName;
         }
 
-        const fees = Math.round(baseAmount * 0.05);
-        const total = baseAmount + fees;
+        const baseFees = Math.round(baseAmount * 0.05);
+
+        const continueBtn = document.getElementById('continue-btn');
+        if (continueBtn) { continueBtn.disabled = true; continueBtn.textContent = "Vérification..."; }
+
+        const { total, fees } = await computeUniqueTotal(baseAmount, baseFees);
+
+        if (continueBtn) { continueBtn.disabled = false; continueBtn.textContent = "Continuer"; }
 
         document.getElementById('sum-service').textContent = currentService;
         document.getElementById('sum-phone').textContent = destPhone;
@@ -660,6 +671,53 @@
         };
 
         toggleView('summary');
+    }
+
+    // Rend le montant à payer unique parmi les commandes en attente de paiement récentes,
+    // pour que MacroDroid ne puisse plus jamais confondre deux commandes ayant le même prix.
+    // L'ajustement reste DANS une fourchette de frais de service crédible (entre 4% et 6%
+    // de la base), en essayant d'abord la valeur la plus proche de 5% : le client ne voit
+    // jamais un montant "en plus" collé au total, seulement des frais qui varient de
+    // quelques francs, comme n'importe quel arrondi de frais de service.
+    async function computeUniqueTotal(baseAmount, baseFees) {
+        const rawTotal = baseAmount + baseFees;
+
+        const minFees = Math.max(0, Math.round(baseAmount * 0.04));
+        const maxFees = Math.round(baseAmount * 0.06);
+
+        // Ordre d'essai : baseFees (5% pile), puis on s'écarte progressivement
+        // (+1, -1, +2, -2, ...) sans jamais sortir de [minFees, maxFees].
+        const candidateFees = [baseFees];
+        const span = Math.max(maxFees - baseFees, baseFees - minFees) + 1;
+        for (let d = 1; d <= span; d++) {
+            if (baseFees + d <= maxFees) candidateFees.push(baseFees + d);
+            if (baseFees - d >= minFees) candidateFees.push(baseFees - d);
+        }
+
+        try {
+            const since = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+            const { data, error } = await _supabase
+                .from('transactions')
+                .select('total')
+                .eq('status', 'PENDING_PAYMENT')
+                .gte('created_at', since);
+
+            if (!error && data) {
+                const usedTotals = new Set(data.map(r => r.total));
+                for (const feeCandidate of candidateFees) {
+                    const candidateTotal = baseAmount + feeCandidate;
+                    if (!usedTotals.has(candidateTotal)) {
+                        return { total: candidateTotal, fees: feeCandidate };
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Vérification unicité du montant échouée, poursuite avec le montant de base:", err);
+        }
+
+        // Repli : vérification impossible ou aucune place libre trouvée dans la fourchette
+        // (extrêmement rare) → on garde le montant de base tel quel.
+        return { total: rawTotal, fees: baseFees };
     }
 
     async function sendTelegramNotification(phone, baseAmount, total, packageName) {
@@ -683,8 +741,15 @@
     }
 
     async function lancerPaiementEtRedirection() {
+        // Verrou : si une soumission est déjà en cours pour cet écran, on ignore
+        // tout appel supplémentaire (double-clic, retour arrière PWA, etc.)
+        if (orderSubmissionLock) {
+            return;
+        }
+        orderSubmissionLock = true;
+
         const tx = window.currentTransactionDetails;
-        if (!tx) return;
+        if (!tx) { orderSubmissionLock = false; return; }
 
         const payBtn = document.getElementById('pay-btn');
         const payBtnLabel = document.getElementById('pay-btn-label');
@@ -693,6 +758,10 @@
 
         const detectedOp = getOperator(tx.destPhone); 
 
+        // IMPORTANT : le statut de création est PENDING_PAYMENT (et non plus "En attente").
+        // Une commande dans cet état n'est pas encore payée par le client : elle reste
+        // invisible dans "Commandes" tant que MacroDroid ne l'a pas fait passer à un
+        // statut ultérieur (après détection réelle du paiement Wave).
         const newTx = {
             id: 'local_' + Date.now(),
             user_phone: userPhone,
@@ -703,7 +772,7 @@
             fees: tx.fees,
             total: tx.total,
             operator: detectedOp,
-            status: 'En attente',
+            status: 'PENDING_PAYMENT',
             created_at: new Date().toISOString()
         };
 
@@ -726,7 +795,7 @@
                         fees: tx.fees,
                         total: tx.total,
                         operator: detectedOp,
-                        status: 'En attente'
+                        status: 'PENDING_PAYMENT'
                     }
                 ]);
         } catch (err) {
@@ -741,6 +810,10 @@
 
         const waveUrl = `https://pay.wave.com/m/M_ci_kZppYMsU3b4R/c/ci/?amount=${tx.total}`;
         window.open(waveUrl, '_blank');
+
+        // Le verrou reste actif quelques secondes pour absorber un double-tap
+        // ou une relance automatique du navigateur sur cet écran.
+        setTimeout(() => { orderSubmissionLock = false; }, 5000);
     }
 
     function setupRealtimeListener() {
@@ -748,8 +821,12 @@
             .channel('public:transactions')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'transactions' }, payload => {
                 const updated = payload.new;
-                if (updated.user_phone === userPhone && updated.status === 'Validé') {
+                if (updated.user_phone !== userPhone) return;
+
+                if (updated.status === 'Validé') {
                     alert(`🎉 Bonne nouvelle ! Votre commande pour ${updated.dest_phone} (${updated.package_name || updated.service}) vient d'être validée avec SUCCÈS !`);
+                    loadHistory();
+                } else if (updated.status === 'PAID_PROCESSING') {
                     loadHistory();
                 }
             })
@@ -789,62 +866,101 @@
 
         allTransactions.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
-        if (allTransactions.length === 0) {
+        // Une commande créée mais pas encore payée (PENDING_PAYMENT, ou "En attente"
+        // pour les anciennes lignes créées avant ce correctif) ne doit apparaître
+        // nulle part tant que le paiement Wave n'a pas été détecté.
+        const isUnpaid = (item) => item.status === 'PENDING_PAYMENT' || item.status === 'En attente';
+
+        const paidTransactions = allTransactions.filter(item => !isUnpaid(item));
+        const unpaidTransactions = allTransactions.filter(isUnpaid);
+
+        if (paidTransactions.length === 0 && unpaidTransactions.length === 0) {
             container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune commande trouvée.</p>";
             return;
         }
 
         container.innerHTML = "";
-        allTransactions.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'history-item';
-            
-            let statusClass = item.status === 'Validé' ? 'status-success' : 'status-pending';
-            let adminActionHtml = '';
 
-            if (isAdmin && item.status !== 'Validé') {
-                const identifier = item.id || '';
-                adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${identifier}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
+        if (paidTransactions.length === 0) {
+            container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Aucune commande payée pour le moment.</p>";
+        } else {
+            paidTransactions.forEach(item => container.appendChild(buildHistoryItemNode(item)));
+        }
+
+        // Repli admin uniquement : les commandes en attente de paiement restent
+        // consultables (pour rattraper manuellement un cas bloqué) mais sont
+        // masquées par défaut pour ne pas polluer la vue avec des commandes
+        // impayées.
+        if (isAdmin && unpaidTransactions.length > 0) {
+            const toggleDiv = document.createElement('div');
+            toggleDiv.style.textAlign = 'center';
+            toggleDiv.style.marginTop = '10px';
+            toggleDiv.innerHTML = `<span style="color:var(--text-muted); font-size:12px; cursor:pointer; text-decoration:underline;" onclick="showPendingPayments = !showPendingPayments; loadHistory();">
+                ${showPendingPayments ? 'Masquer' : 'Afficher'} les ${unpaidTransactions.length} commande(s) en attente de paiement
+            </span>`;
+            container.appendChild(toggleDiv);
+
+            if (showPendingPayments) {
+                unpaidTransactions.forEach(item => container.appendChild(buildHistoryItemNode(item)));
             }
+        }
+    }
 
-            let timeInfoHtml = '';
-            if (item.created_at) {
-                const createdDate = new Date(item.created_at);
-                const timeCreatedStr = createdDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                const dateStr = createdDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    function buildHistoryItemNode(item) {
+        const div = document.createElement('div');
+        div.className = 'history-item';
 
-                if (item.status === 'Validé' && item.updated_at) {
-                    const updatedDate = new Date(item.updated_at);
-                    const timeUpdatedStr = updatedDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                    
-                    const diffSec = Math.max(0, Math.floor((updatedDate - createdDate) / 1000));
-                    let durationText = `${diffSec} seconde${diffSec > 1 ? 's' : ''}`;
-                    if (diffSec >= 60) {
-                        const mins = Math.floor(diffSec / 60);
-                        const secs = diffSec % 60;
-                        durationText = `${mins} min ${secs}s`;
-                    }
+        let statusClass = item.status === 'Validé' ? 'status-success' : 'status-pending';
+        let displayStatus = item.status;
+        if (item.status === 'PENDING_PAYMENT' || item.status === 'En attente') {
+            displayStatus = '⏳ En attente de paiement';
+        } else if (item.status === 'PAID_PROCESSING') {
+            displayStatus = '💳 Paiement reçu — traitement en cours';
+        }
 
-                    timeInfoHtml = `<small style="color:var(--text-muted);">${dateStr} | ⏳ ${timeCreatedStr} ➔ Succès ${timeUpdatedStr} (Traitement : ${durationText})</small>`;
-                } else {
-                    timeInfoHtml = `<small style="color:var(--accent);">Créée à : ${dateStr} à ${timeCreatedStr}</small>`;
+        let adminActionHtml = '';
+        if (isAdmin && item.status !== 'Validé') {
+            const identifier = item.id || '';
+            adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${identifier}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
+        }
+
+        let timeInfoHtml = '';
+        if (item.created_at) {
+            const createdDate = new Date(item.created_at);
+            const timeCreatedStr = createdDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateStr = createdDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+
+            if (item.status === 'Validé' && item.updated_at) {
+                const updatedDate = new Date(item.updated_at);
+                const timeUpdatedStr = updatedDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                const diffSec = Math.max(0, Math.floor((updatedDate - createdDate) / 1000));
+                let durationText = `${diffSec} seconde${diffSec > 1 ? 's' : ''}`;
+                if (diffSec >= 60) {
+                    const mins = Math.floor(diffSec / 60);
+                    const secs = diffSec % 60;
+                    durationText = `${mins} min ${secs}s`;
                 }
-            }
 
-            div.innerHTML = `
-                <div>
-                    <strong>${item.service}</strong><br>
-                    <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
-                    <small style="color:var(--text-muted);">${item.package_name || ''}</small><br>
-                    ${timeInfoHtml}
-                </div>
-                <div style="text-align:right;">
-                    <span class="${statusClass}">${item.status}</span>
-                    ${adminActionHtml}
-                </div>
-            `;
-            container.appendChild(div);
-        });
+                timeInfoHtml = `<small style="color:var(--text-muted);">${dateStr} | ⏳ ${timeCreatedStr} ➔ Succès ${timeUpdatedStr} (Traitement : ${durationText})</small>`;
+            } else {
+                timeInfoHtml = `<small style="color:var(--accent);">Créée à : ${dateStr} à ${timeCreatedStr}</small>`;
+            }
+        }
+
+        div.innerHTML = `
+            <div>
+                <strong>${item.service}</strong><br>
+                <small>Bénéf.: ${item.dest_phone} | Montant: ${item.total}F</small><br>
+                <small style="color:var(--text-muted);">${item.package_name || ''}</small><br>
+                ${timeInfoHtml}
+            </div>
+            <div style="text-align:right;">
+                <span class="${statusClass}">${displayStatus}</span>
+                ${adminActionHtml}
+            </div>
+        `;
+        return div;
     }
 
     async function adminValidate(id, phone, packageName, total) {
