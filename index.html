@@ -8,80 +8,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cabine Express</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #f97316;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
+            --bg-color: #0A1420;
+            --card-bg: #101E2E;
+            --surface: #0B1622;
+            --accent: #E8A33D;
+            --accent-dim: rgba(232, 163, 61, 0.14);
+            --success: #2FBF8F;
+            --success-dim: rgba(47, 191, 143, 0.14);
+            --danger: #E5484D;
+            --danger-dim: rgba(229, 72, 77, 0.12);
+            --text-main: #F3EFE7;
+            --text-muted: #8FA2B3;
+            --border: #21344A;
+            --font-display: 'Sora', 'Segoe UI', sans-serif;
+            --font-body: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .app-container { width: 100%; max-width: 420px; background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); position: relative; min-height: 90vh; box-sizing: border-box; }
+        body { font-family: var(--font-body); background: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 420px; background: var(--card-bg); border-radius: 22px; padding: 20px; box-shadow: 0 20px 45px rgba(0,0,0,0.45), 0 2px 0 rgba(232,163,61,0.08) inset; position: relative; min-height: 90vh; box-sizing: border-box; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header h2 { color: var(--accent); margin: 0; font-size: 22px; }
-        .user-badge { background: #334155; padding: 8px 12px; border-radius: 50px; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .header h2 { font-family: var(--font-display); color: var(--accent); margin: 0; font-size: 23px; letter-spacing: -0.3px; }
+        .user-badge { background: var(--surface); border: 1px solid var(--border); padding: 8px 12px; border-radius: 50px; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
 
-        .active-account { background: #0f172a; border: 1px solid var(--border); padding: 12px 15px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .active-account { background: var(--surface); border: 1px solid var(--border); padding: 12px 15px; border-radius: 14px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
         .active-account span { color: var(--accent); font-weight: bold; }
 
         .grid-services { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .service-card { background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 14px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .service-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 16px; text-align: center; cursor: pointer; transition: 0.2s; }
         .service-card:hover { border-color: var(--accent); transform: translateY(-2px); }
         .service-card div:first-child { font-size: 24px; margin-bottom: 8px; }
         .service-card span { font-size: 13px; font-weight: 600; color: var(--text-main); }
 
-        .form-section { background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 14px; margin-bottom: 20px; }
+        .form-section { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 16px; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
         .input-row { display: flex; gap: 6px; align-items: center; }
-        input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 14px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 14px; box-sizing: border-box; font-family: var(--font-body); }
         
         .packages-grid { display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
-        .package-card { background: var(--card-bg); border: 1px solid var(--border); padding: 12px 15px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: space-between; align-items: center; }
+        .package-card { background: var(--card-bg); border: 1px solid var(--border); padding: 12px 15px; border-radius: 12px; cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: space-between; align-items: center; }
         .package-card:hover { border-color: var(--accent); transform: translateY(-1px); }
-        .package-card.selected { border-color: var(--accent); background: rgba(249, 115, 22, 0.1); }
+        .package-card.selected { border-color: var(--accent); background: var(--accent-dim); }
         .package-info { display: flex; flex-direction: column; gap: 3px; padding-right: 10px; }
-        .package-code { font-size: 10px; font-family: monospace; background: #334155; color: var(--accent); padding: 2px 6px; border-radius: 4px; width: fit-content; margin-bottom: 2px; }
+        .package-code { font-size: 10px; font-family: 'SF Mono', ui-monospace, monospace; background: var(--border); color: var(--accent); padding: 2px 6px; border-radius: 4px; width: fit-content; margin-bottom: 2px; }
         .package-name { font-size: 13px; font-weight: 600; color: var(--text-main); line-height: 1.3; }
         .package-duration { font-size: 11px; color: var(--text-muted); }
-        .package-price { font-size: 15px; font-weight: 700; color: var(--accent); white-space: nowrap; background: rgba(249, 115, 22, 0.15); padding: 6px 10px; border-radius: 8px; }
+        .package-price { font-size: 15px; font-weight: 700; color: var(--accent); white-space: nowrap; background: var(--accent-dim); padding: 6px 10px; border-radius: 8px; }
 
-        .btn-action { background: #334155; border: none; color: var(--accent); padding: 10px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
-        .btn-action:hover { background: #475569; }
+        .btn-action { background: var(--border); border: none; color: var(--accent); padding: 10px 10px; border-radius: 10px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-action:hover { background: #2B4260; }
 
-        .btn-main { width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; }
-        .btn-wave { width: 100%; background: #1DC8E9; color: #fff; border: none; padding: 13px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 8px rgba(29,200,233,0.35); }
+        .btn-main { width: 100%; background: var(--accent); color: #17110A; border: none; padding: 13px; border-radius: 12px; font-weight: 700; font-family: var(--font-display); font-size: 15px; cursor: pointer; }
+        .btn-wave { width: 100%; background: #1DC8E9; color: #fff; border: none; padding: 13px; border-radius: 12px; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 8px rgba(29,200,233,0.35); }
         .btn-wave:hover { opacity: 0.92; }
         .btn-wave:disabled { opacity: 0.6; cursor: default; }
 
         .history-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
-        .history-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-        .status-success { color: #4ade80; font-weight: bold; }
-        .status-pending { color: #fbbf24; font-weight: bold; }
+        .history-item { background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .status-success { color: var(--success); font-weight: bold; }
+        .status-pending { color: var(--accent); font-weight: bold; }
         
-        .btn-validate { background: #22c55e; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; font-weight: bold; margin-top: 5px; }
-        .btn-validate:hover { background: #16a34a; }
+        .btn-validate { background: var(--success); color: #06231A; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .btn-validate:hover { filter: brightness(1.1); }
 
         .support-bubble { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-decoration: none; z-index: 100; }
         .hidden { display: none; }
         .back-link { color: var(--text-muted); font-size: 13px; cursor: pointer; margin-bottom: 10px; display: inline-block; }
-        .tabs { display: flex; margin-bottom: 15px; background: #0f172a; border-radius: 8px; padding: 4px; border: 1px solid var(--border); }
-        .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; cursor: pointer; border-radius: 6px; color: var(--text-muted); font-weight: 600; }
-        .tab.active { background: var(--accent); color: white; }
+        .tabs { display: flex; margin-bottom: 15px; background: var(--surface); border-radius: 10px; padding: 4px; border: 1px solid var(--border); }
+        .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; cursor: pointer; border-radius: 8px; color: var(--text-muted); font-weight: 600; }
+        .tab.active { background: var(--accent); color: #17110A; }
         
-        .operator-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-top: 5px; }
+        .operator-badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-top: 5px; }
         .badge-moov { background: #0284c7; color: white; }
         .badge-mtn { background: #eab308; color: black; }
         .badge-orange { background: #f97316; color: white; }
         
-        .payment-info-box { background: #0f172a; border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; font-size: 14px; color: var(--text-main); font-weight: 600; display: flex; align-items: center; gap: 10px; }
-        .auth-guide-box { background: #0f172a; border: 1px solid var(--border); padding: 12px 15px; border-radius: 12px; font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: 15px; }
+        .payment-info-box { background: var(--surface); border: 1px solid var(--border); padding: 10px 12px; border-radius: 12px; font-size: 14px; color: var(--text-main); font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .auth-guide-box { background: var(--surface); border: 1px solid var(--border); padding: 12px 15px; border-radius: 14px; font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: 15px; }
         .auth-guide-box strong { color: var(--text-main); }
-        .success-card { text-align: center; background: #0f172a; border: 1px solid #22c55e; padding: 25px 15px; border-radius: 16px; margin-top: 10px; }
+        .success-card { text-align: center; background: var(--surface); border: 1px solid var(--border); padding: 25px 15px; border-radius: 18px; margin-top: 10px; }
         .success-icon { font-size: 48px; margin-bottom: 10px; }
+        h3 { font-family: var(--font-display); }
     </style>
 </head>
 <body>
@@ -201,7 +213,7 @@
                 <p id="track-message" style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
                     Finalisez votre paiement sur Wave. Cette page se met à jour automatiquement, en direct, dès que le paiement est confirmé — inutile de revenir ici manuellement.
                 </p>
-                <p id="track-warning" class="hidden" style="font-size: 12px; color: #ef4444; background: rgba(239,68,68,0.1); border: 1px solid #ef4444; border-radius: 8px; padding: 10px; line-height: 1.5;"></p>
+                <p id="track-warning" class="hidden" style="font-size: 12px; color: var(--danger); background: var(--danger-dim); border: 1px solid var(--danger); border-radius: 8px; padding: 10px; line-height: 1.5;"></p>
                 <button class="btn-main" style="margin-top: 15px;" onclick="reopenWaveLink()">↗ Rouvrir Wave</button>
                 <button class="btn-main" style="margin-top: 10px; background: transparent; border: 1px solid var(--accent); color: var(--accent);" onclick="toggleView('history')">Voir mes commandes</button>
             </div>
@@ -790,17 +802,17 @@
         if (status === 'PAID_PROCESSING') {
             icon.textContent = '💳';
             title.textContent = 'Paiement reçu !';
-            title.style.color = '#22c55e';
+            title.style.color = 'var(--success)';
             message.textContent = 'Traitement automatique en cours (délai : ~1 à 2 minutes). Cette page se met à jour toute seule, inutile de revenir manuellement.';
         } else if (status === 'Validé') {
             icon.textContent = '✅';
             title.textContent = 'Recharge réussie !';
-            title.style.color = '#22c55e';
+            title.style.color = 'var(--success)';
             message.textContent = 'Votre commande a bien été exécutée.';
         } else if (status === 'Échec') {
             icon.textContent = '❌';
             title.textContent = 'Problème détecté';
-            title.style.color = '#ef4444';
+            title.style.color = 'var(--danger)';
             message.textContent = "Le traitement automatique a rencontré un problème. Si le montant a bien été débité, contactez le support.";
         } else {
             icon.textContent = '⏳';
