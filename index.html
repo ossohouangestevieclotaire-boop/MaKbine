@@ -201,6 +201,7 @@
                 <p id="track-message" style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
                     Finalisez votre paiement sur Wave. Cette page se met à jour automatiquement, en direct, dès que le paiement est confirmé — inutile de revenir ici manuellement.
                 </p>
+                <p id="track-warning" class="hidden" style="font-size: 12px; color: #ef4444; background: rgba(239,68,68,0.1); border: 1px solid #ef4444; border-radius: 8px; padding: 10px; line-height: 1.5;"></p>
                 <button class="btn-main" style="margin-top: 15px;" onclick="reopenWaveLink()">↗ Rouvrir Wave</button>
                 <button class="btn-main" style="margin-top: 10px; background: transparent; border: 1px solid var(--accent); color: var(--accent);" onclick="toggleView('history')">Voir mes commandes</button>
             </div>
@@ -210,6 +211,7 @@
         <div id="history-view" class="hidden">
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
             <h3 id="history-title" style="color: var(--accent); margin-top: 0;">Gestion des commandes</h3>
+            <button id="test-telegram-btn" class="hidden btn-main" style="margin-bottom: 10px; background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); font-size: 12px; padding: 8px;" onclick="testTelegramNotification()">🔧 Tester la notification Telegram</button>
             <div class="history-list" id="history-container"></div>
         </div>
     </div>
@@ -727,22 +729,47 @@
     }
 
     async function sendTelegramNotification(phone, baseAmount, total, packageName) {
+        const telegramUrl = `https://api.telegram.org/bot${MAKBINE_CONFIG.token}/sendMessage`;
+        const reseau = getOperator(phone) || 'Inconnu';
+        const message = `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📶 Réseau : ${reseau}\n📦 Forfait : ${packageName}\n💵 Montant Forfait : ${baseAmount} FCFA\n💰 Total Payé par Client : ${total} FCFA`;
+
+        const response = await fetch(telegramUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: MAKBINE_CONFIG.chatId,
+                text: message,
+                parse_mode: 'Markdown'
+            })
+        });
+
+        if (!response.ok) {
+            const errBody = await response.text().catch(() => '');
+            throw new Error(`Telegram a refusé le message (HTTP ${response.status}) : ${errBody}`);
+        }
+    }
+
+    // Bouton de diagnostic (admin) : envoie un message de test et affiche
+    // clairement si Telegram a accepté ou refusé, avec le détail de l'erreur.
+    async function testTelegramNotification() {
         try {
             const telegramUrl = `https://api.telegram.org/bot${MAKBINE_CONFIG.token}/sendMessage`;
-            const reseau = getOperator(phone) || 'Inconnu';
-            const message = `🚨 *Nouvelle Commande Cabine Express*\n\n📱 Bénéficiaire : ${phone}\n📶 Réseau : ${reseau}\n📦 Forfait : ${packageName}\n💵 Montant Forfait : ${baseAmount} FCFA\n💰 Total Payé par Client : ${total} FCFA`;
-            
-            await fetch(telegramUrl, {
+            const response = await fetch(telegramUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     chat_id: MAKBINE_CONFIG.chatId,
-                    text: message,
-                    parse_mode: 'Markdown'
+                    text: `✅ Test de connexion Cabine Express — ${new Date().toLocaleTimeString('fr-FR')}`
                 })
             });
-        } catch (error) {
-            console.error("Erreur Telegram Réseau:", error);
+            const body = await response.text();
+            if (response.ok) {
+                alert("✅ Telegram a accepté le message de test. Vérifie sur le téléphone A que la notification est bien arrivée dans le bon chat.");
+            } else {
+                alert(`❌ Telegram a REFUSÉ le message (HTTP ${response.status}).\n\nDétail :\n${body}\n\nVérifie MAKBINE_CONFIG.token et chatId dans le code.`);
+            }
+        } catch (err) {
+            alert("❌ Impossible de contacter Telegram (problème réseau) : " + err.message);
         }
     }
 
@@ -803,6 +830,16 @@
         document.getElementById('succ-phone').textContent = tx.destPhone;
         document.getElementById('track-amount').textContent = tx.total;
         setTrackingStatus('PENDING_PAYMENT');
+
+        const warning = document.getElementById('track-warning');
+        if (tx.creationError) {
+            const refText = tx.dbId ? ` Référence : ${tx.dbId}` : (tx.total ? ` Référence : montant ${tx.total}F, ${new Date().toLocaleTimeString('fr-FR')}` : '');
+            warning.textContent = "⚠️ " + tx.creationError + refText;
+            warning.classList.remove('hidden');
+        } else {
+            warning.classList.add('hidden');
+        }
+
         toggleView('success');
         subscribeToOrderStatus(tx.dbId);
     }
@@ -855,9 +892,15 @@
         localStorage.setItem('cabine_transactions', JSON.stringify(localTransactions));
 
         let dbId = null;
+        let creationError = null;
         try {
             await sendTelegramNotification(tx.destPhone, tx.baseAmount, tx.total, tx.packageName);
+        } catch (err) {
+            console.error("Erreur Telegram:", err);
+            creationError = "La notification n'a pas pu être envoyée (" + err.message + "). Le traitement automatique ne pourra pas démarrer — contacte le support avec la référence ci-dessous.";
+        }
 
+        try {
             const { data: inserted, error } = await _supabase
                 .from('transactions')
                 .insert([
@@ -875,17 +918,21 @@
                 ])
                 .select();
 
-            if (!error && inserted && inserted[0]) {
+            if (error) {
+                creationError = creationError || ("Erreur d'enregistrement (" + error.message + "). Contacte le support avec la référence ci-dessous.");
+            } else if (inserted && inserted[0]) {
                 dbId = inserted[0].id;
             }
         } catch (err) {
             console.error("Erreur réseau / Supabase:", err);
+            creationError = creationError || ("Erreur réseau lors de l'enregistrement (" + err.message + "). Contacte le support avec la référence ci-dessous.");
         }
 
         // On verrouille définitivement cette commande : un reclic ultérieur sur
         // "Payer avec Wave" ne créera plus jamais de doublon pour cette même commande.
         tx.submitted = true;
         tx.dbId = dbId;
+        tx.creationError = creationError;
 
         payBtnLabel.textContent = "Payer avec Wave";
         payBtn.disabled = false;
@@ -916,6 +963,9 @@
     async function loadHistory() {
         const container = document.getElementById('history-container');
         container.innerHTML = "Chargement...";
+
+        const testBtn = document.getElementById('test-telegram-btn');
+        if (testBtn) testBtn.classList.toggle('hidden', !isAdmin);
 
         let allTransactions = [];
 
