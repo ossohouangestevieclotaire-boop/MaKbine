@@ -166,6 +166,9 @@
                 
                 <div class="form-group" id="container-amount-select">
                     <label>Choisir le forfait adapté</label>
+                    <div id="mtn-delay-notice" class="hidden" style="background: var(--accent-dim); border: 1px solid var(--accent); border-radius: 10px; padding: 10px 12px; font-size: 12px; color: var(--text-main); margin-bottom: 10px; line-height: 1.5;">
+                        ⏳ <strong>Forfait MTN :</strong> ce type de forfait est activé manuellement par notre équipe (hors transfert direct). Le délai de traitement peut être un peu plus long que pour les autres opérateurs.
+                    </div>
                     <div id="packages-cards-container" class="packages-grid"></div>
                 </div>
 
@@ -208,8 +211,11 @@
                 <p id="sum-package-container"><strong>Forfait :</strong> <span id="sum-package" style="color:var(--accent);"></span></p>
                 <p><strong>Montant de base :</strong> <span id="sum-amount"></span> FCFA</p>
                 <p><strong>Frais de service :</strong> <span id="sum-fees"></span> FCFA</p>
-                <p><strong>Total à payer :</strong> <span id="sum-total" style="color:#f97316; font-size:16px;"></span> FCFA</p>
+                <p><strong>Total à payer :</strong> <span id="sum-total" style="color:var(--accent); font-size:16px;"></span> FCFA</p>
             </div>
+            <p id="sum-mtn-notice" class="hidden" style="font-size: 12px; color: var(--text-main); background: var(--accent-dim); border: 1px solid var(--accent); border-radius: 10px; padding: 10px 12px; line-height: 1.5; margin-top: -8px;">
+                ⏳ Ce forfait MTN est traité manuellement par notre équipe : le délai peut être un peu plus long que d'habitude.
+            </p>
             <button id="pay-btn" class="btn-wave" onclick="lancerPaiementEtRedirection()">
                 <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%; flex-shrink:0;">
                     <circle cx="50" cy="50" r="50" fill="#FFFFFF"/>
@@ -457,9 +463,11 @@
         const inputContainer = document.getElementById('container-amount-input');
         const cardsContainer = document.getElementById('packages-cards-container');
         const operatorContainer = document.getElementById('operator-container');
-        
+        const mtnDelayNotice = document.getElementById('mtn-delay-notice');
+
         cardsContainer.innerHTML = '';
         operatorContainer.innerHTML = '';
+        mtnDelayNotice.classList.add('hidden');
         selectedPackageData = null;
 
         if (currentService === 'Transfert d\'unités') {
@@ -484,6 +492,10 @@
         if (operator) {
             let badgeClass = operator === 'MOOV' ? 'badge-moov' : (operator === 'MTN' ? 'badge-mtn' : 'badge-orange');
             operatorContainer.innerHTML = `<span class="operator-badge ${badgeClass}">${operator} détecté</span>`;
+
+            if (operator === 'MTN') {
+                mtnDelayNotice.classList.remove('hidden');
+            }
 
             let subCategory = '';
             if (currentService === 'Souscription Internet') subCategory = 'internet';
@@ -670,6 +682,8 @@
 
         let baseAmount = 0;
         let packageName = "";
+        const destOperator = getOperator(destPhone);
+        const isDelayedMTN = (currentService !== 'Transfert d\'unités') && destOperator === 'MTN';
 
         if (currentService === 'Transfert d\'unités') {
             baseAmount = parseInt(document.getElementById('amount-input').value);
@@ -708,13 +722,15 @@
         document.getElementById('sum-amount').textContent = baseAmount;
         document.getElementById('sum-fees').textContent = fees;
         document.getElementById('sum-total').textContent = total;
+        document.getElementById('sum-mtn-notice').classList.toggle('hidden', !isDelayedMTN);
 
         window.currentTransactionDetails = {
             baseAmount,
             fees,
             total,
             packageName,
-            destPhone
+            destPhone,
+            isDelayedMTN
         };
 
         toggleView('summary');
@@ -779,6 +795,7 @@
     }
 
     let trackingChannel = null;
+    let currentTrackingIsDelayedMTN = false;
 
     function reopenWaveLink() {
         const tx = window.currentTransactionDetails;
@@ -796,7 +813,11 @@
             icon.textContent = '💳';
             title.textContent = 'Paiement reçu !';
             title.style.color = 'var(--success)';
-            message.innerHTML = 'Traitement automatique en cours (délai : ~1 à 2 minutes). Si le statut ne change pas ici, vous pouvez vérifier dans la rubrique <strong>📜 Commandes</strong>.';
+            if (currentTrackingIsDelayedMTN) {
+                message.innerHTML = '⏳ Ce forfait MTN est traité manuellement par notre équipe : comptez un peu plus de temps que pour les autres opérateurs. Vous pouvez aussi vérifier dans la rubrique <strong>📜 Commandes</strong>.';
+            } else {
+                message.innerHTML = 'Traitement automatique en cours (délai : ~1 à 2 minutes). Si le statut ne change pas ici, vous pouvez vérifier dans la rubrique <strong>📜 Commandes</strong>.';
+            }
         } else if (status === 'Validé') {
             icon.textContent = '✅';
             title.textContent = 'Recharge réussie !';
@@ -832,6 +853,7 @@
     }
 
     function showTrackingView(tx) {
+        currentTrackingIsDelayedMTN = !!tx.isDelayedMTN;
         document.getElementById('succ-phone').textContent = tx.destPhone;
         document.getElementById('track-amount').textContent = tx.total;
         setTrackingStatus('PENDING_PAYMENT');
@@ -1022,6 +1044,9 @@
             displayStatus = '❌ Échoué';
         }
 
+        const isDelayedMTNItem = item.operator === 'MTN' && item.service !== "Transfert d'unités" && item.status !== 'Validé' && item.status !== 'Échec';
+        const delayNoteHtml = isDelayedMTNItem ? `<br><small style="color:var(--accent);">⏳ Traitement manuel MTN, un peu plus long</small>` : '';
+
         let adminActionHtml = '';
         if (isAdmin && item.status !== 'Validé') {
             const identifier = item.id || '';
@@ -1056,7 +1081,7 @@
             <div>
                 <strong>${item.service}</strong><br>
                 <small>Bénéf.: ${item.dest_phone} | Total: ${item.total} FCFA</small><br>
-                <small style="color:var(--text-muted);">${item.package_name || ''}</small><br>
+                <small style="color:var(--text-muted);">${item.package_name || ''}</small>${delayNoteHtml}<br>
                 ${timeInfoHtml}
             </div>
             <div style="text-align:right;">
