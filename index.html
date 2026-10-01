@@ -260,7 +260,18 @@
         <div id="history-view" class="hidden">
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
             <h3 id="history-title" style="color: var(--accent); margin-top: 0;">Gestion des commandes</h3>
+            <button id="maintenance-toggle-btn" class="hidden btn-main" style="margin-bottom: 12px; background: var(--danger-dim); border: 1px solid var(--danger); color: var(--danger); font-size: 12px; padding: 9px;" onclick="toggleMaintenanceMode()">🛠️ Mode maintenance : …</button>
             <div class="history-list" id="history-container"></div>
+        </div>
+
+        <!-- MODE MAINTENANCE -->
+        <div id="maintenance-view" class="hidden" style="text-align:center; padding-top: 40px;">
+            <div style="font-size: 56px; margin-bottom: 15px;">🛠️</div>
+            <h3 style="color: var(--accent); margin: 0 0 12px;">Service momentanément indisponible</h3>
+            <p id="maintenance-message" style="font-size: 14px; color: var(--text-muted); line-height: 1.6; padding: 0 10px;">
+                Le service est temporairement indisponible. Merci de réessayer dans quelques instants.
+            </p>
+            <button class="btn-main" style="margin-top: 20px; max-width: 220px;" onclick="location.reload()">🔄 Réessayer</button>
         </div>
     </div>
 </div>
@@ -287,6 +298,37 @@
     let isAdmin = false;
     let registeredUsers = JSON.parse(localStorage.getItem('cabine_users')) || {};
     let selectedPackageData = null;
+    let currentMaintenanceState = false;
+
+    // Vérifie l'interrupteur de maintenance dans Supabase avant d'afficher quoi que ce soit.
+    // En cas d'erreur réseau (ex: Supabase injoignable), on affiche l'app normalement
+    // plutôt que de bloquer tout le monde par précaution (fail-open).
+    async function checkMaintenanceMode() {
+        try {
+            const { data, error } = await _supabase
+                .from('app_settings')
+                .select('maintenance_mode, maintenance_message')
+                .eq('id', 1)
+                .maybeSingle();
+
+            if (error || !data) return;
+
+            currentMaintenanceState = !!data.maintenance_mode;
+
+            if (currentMaintenanceState) {
+                if (data.maintenance_message) {
+                    document.getElementById('maintenance-message').textContent = data.maintenance_message;
+                }
+                document.getElementById('auth-view').classList.add('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+                document.getElementById('maintenance-view').classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error("Vérification maintenance impossible, affichage normal:", err);
+        }
+    }
+
+    checkMaintenanceMode();
 
     let orderSubmissionLock = false;
 
@@ -982,6 +1024,22 @@
         const container = document.getElementById('history-container');
         container.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Chargement de l'historique...</p>";
 
+        const maintenanceBtn = document.getElementById('maintenance-toggle-btn');
+        if (maintenanceBtn) {
+            if (isAdmin) {
+                maintenanceBtn.classList.remove('hidden');
+                try {
+                    const { data } = await _supabase.from('app_settings').select('maintenance_mode').eq('id', 1).maybeSingle();
+                    currentMaintenanceState = !!(data && data.maintenance_mode);
+                    maintenanceBtn.textContent = currentMaintenanceState ? '🛠️ Mode maintenance : ACTIVÉ (toucher pour désactiver)' : '🛠️ Mode maintenance : désactivé (toucher pour activer)';
+                } catch (err) {
+                    maintenanceBtn.textContent = '🛠️ Mode maintenance (état inconnu)';
+                }
+            } else {
+                maintenanceBtn.classList.add('hidden');
+            }
+        }
+
         let allTransactions = [];
 
         try {
@@ -1129,6 +1187,31 @@
 
         alert("Commande validée avec succès !");
         loadHistory();
+    }
+
+    async function toggleMaintenanceMode() {
+        const newState = !currentMaintenanceState;
+        const confirmMsg = newState
+            ? "⚠️ Activer le mode maintenance ?\n\nPlus aucun client ne pourra utiliser le site tant que tu ne le désactives pas."
+            : "Désactiver le mode maintenance et rouvrir le site aux clients ?";
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const { error } = await _supabase
+                .from('app_settings')
+                .update({ maintenance_mode: newState })
+                .eq('id', 1);
+
+            if (error) {
+                alert("Erreur : impossible de changer le mode maintenance (" + error.message + ")");
+                return;
+            }
+            currentMaintenanceState = newState;
+            alert(newState ? "✅ Mode maintenance ACTIVÉ." : "✅ Mode maintenance DÉSACTIVÉ, le site est de nouveau accessible.");
+            loadHistory();
+        } catch (err) {
+            alert("Erreur réseau : " + err.message);
+        }
     }
 
     function forgotPassword() {
