@@ -32,7 +32,7 @@
         .app-container { width: 100%; max-width: 420px; background: var(--card-bg); border-radius: 22px; padding: 20px; box-shadow: 0 20px 45px rgba(0,0,0,0.45), 0 2px 0 rgba(232,163,61,0.08) inset; position: relative; min-height: 90vh; box-sizing: border-box; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header h2 { font-family: var(--font-display); color: var(--accent); margin: 0; font-size: 23px; letter-spacing: -0.3px; }
+        .header h2 { font-family: var(--font-display); color: var(--accent); margin: 0; font-size: 23px; letter-spacing: -0.3px; cursor: pointer; }
         .user-badge { background: var(--surface); border: 1px solid var(--border); padding: 8px 12px; border-radius: 50px; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
 
         .active-account { background: var(--surface); border: 1px solid var(--border); padding: 12px 15px; border-radius: 14px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
@@ -74,7 +74,7 @@
         .status-pending { color: var(--accent); font-weight: bold; }
         .status-danger { color: var(--danger); font-weight: bold; }
         
-        .btn-validate { background: var(--success); color: #06231A; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .btn-validate { background: var(--success); color: #06231A; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold; margin-top: 5px; }
         .btn-validate:hover { filter: brightness(1.1); }
 
         .support-bubble { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-decoration: none; z-index: 100; }
@@ -95,6 +95,14 @@
         .success-card { text-align: center; background: var(--surface); border: 1px solid var(--border); padding: 25px 15px; border-radius: 18px; margin-top: 10px; }
         .success-icon { font-size: 48px; margin-bottom: 10px; }
         h3 { font-family: var(--font-display); }
+
+        /* Modal Sécurité Administrateur */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-box { background: var(--card-bg); border: 1px solid var(--accent); border-radius: 18px; padding: 22px; width: 90%; max-width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); text-align: center; }
+        .modal-title { font-family: var(--font-display); color: var(--accent); font-size: 18px; margin-top: 0; margin-bottom: 10px; }
+        .modal-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 15px; line-height: 1.4; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); padding: 10px; border-radius: 10px; flex: 1; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -132,12 +140,12 @@
     <!-- APPLICATION CLIENT -->
     <div id="main-app" class="hidden">
         <div class="header">
-            <h2 id="app-header-title">Cabine Express</h2>
+            <h2 id="app-header-title" onclick="triggerAdminModalPrompt()">Cabine Express</h2>
             <div class="user-badge" onclick="toggleView('history')">📜 Commandes</div>
         </div>
         <div class="active-account">
             Compte : <span id="display-my-phone"></span>
-            <span onclick="logout()" style="font-size:11px; color:#f87171; cursor:pointer;">Quitter</span>
+            <span onclick="confirmLogout()" style="font-size:11px; color:#f87171; cursor:pointer; font-weight:bold;">Quitter</span>
         </div>
 
         <div id="home-view">
@@ -260,21 +268,31 @@
         <div id="history-view" class="hidden">
             <span class="back-link" onclick="toggleView('home')">← Retour</span>
             <h3 id="history-title" style="color: var(--accent); margin-top: 0;">Gestion des commandes</h3>
-            <button id="maintenance-toggle-btn" class="hidden btn-main" style="margin-bottom: 12px; background: var(--danger-dim); border: 1px solid var(--danger); color: var(--danger); font-size: 12px; padding: 9px;" onclick="toggleMaintenanceMode()">🛠️ Mode maintenance : …</button>
+            <button id="maintenance-toggle-btn" class="hidden btn-main" style="margin-bottom: 12px; background: var(--danger-dim); border: 1px solid var(--danger); color: var(--danger); font-size: 12px; padding: 9px;" onclick="promptMaintenanceToggle()">🛠️ Mode maintenance : …</button>
             <div class="history-list" id="history-container"></div>
         </div>
-    </div>
 
-    <!-- MODE MAINTENANCE (Désormais indépendant de main-app) -->
-    <div id="maintenance-view" class="hidden" style="text-align:center; padding-top: 40px;">
-        <div style="font-size: 56px; margin-bottom: 15px;">🛠️</div>
-        <h3 style="color: var(--accent); margin: 0 0 12px;">Service momentanément indisponible</h3>
-        <p id="maintenance-message" style="font-size: 14px; color: var(--text-muted); line-height: 1.6; padding: 0 10px;">
-            Le service est temporairement indisponible. Merci de réessayer dans quelques instants.
-        </p>
-        <button class="btn-main" style="margin-top: 20px; max-width: 220px;" onclick="location.reload()">🔄 Réessayer</button>
-        <div style="margin-top: 35px;">
-            <span onclick="openAdminAccessFromMaintenance()" style="color: var(--text-muted); font-size: 12px; cursor: pointer; text-decoration: underline;">🔑 Accès Espace Admin</span>
+        <!-- MODE MAINTENANCE -->
+        <div id="maintenance-view" class="hidden" style="text-align:center; padding-top: 40px;">
+            <div style="font-size: 56px; margin-bottom: 15px;">🛠️</div>
+            <h3 style="color: var(--accent); margin: 0 0 12px;">Service momentanément indisponible</h3>
+            <p id="maintenance-message" style="font-size: 14px; color: var(--text-muted); line-height: 1.6; padding: 0 10px;">
+                Le service est temporairement indisponible. Merci de réessayer dans quelques instants.
+            </p>
+            <button class="btn-main" style="margin-top: 20px; max-width: 220px;" onclick="location.reload()">🔄 Réessayer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL SÉCURITÉ ADMIN -->
+<div id="admin-pin-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h4 class="modal-title">🔐 Accès Administrateur</h4>
+        <p class="modal-desc" id="admin-modal-desc">Veuillez saisir votre mot de passe administrateur pour valider cette action.</p>
+        <input type="password" id="admin-pin-input" placeholder="Mot de passe Admin" style="text-align:center; letter-spacing: 2px;">
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeAdminModal()">Annuler</button>
+            <button class="btn-main" style="padding:10px;" onclick="submitAdminModal()">Confirmer</button>
         </div>
     </div>
 </div>
@@ -302,7 +320,9 @@
     let registeredUsers = JSON.parse(localStorage.getItem('cabine_users')) || {};
     let selectedPackageData = null;
     let currentMaintenanceState = false;
+    let pendingAdminCallback = null;
 
+    // Vérifie l'interrupteur de maintenance dans Supabase
     async function checkMaintenanceMode() {
         try {
             const { data, error } = await _supabase
@@ -326,11 +346,6 @@
         } catch (err) {
             console.error("Vérification maintenance impossible, affichage normal:", err);
         }
-    }
-
-    function openAdminAccessFromMaintenance() {
-        document.getElementById('maintenance-view').classList.add('hidden');
-        document.getElementById('auth-view').classList.remove('hidden');
     }
 
     checkMaintenanceMode();
@@ -451,6 +466,44 @@
         if (phone.startsWith('05')) return 'MTN';
         if (phone.startsWith('01')) return 'MOOV';
         return null;
+    }
+
+    // Modal de sécurité Administrateur
+    function openAdminModal(description, callback) {
+        document.getElementById('admin-modal-desc').textContent = description;
+        document.getElementById('admin-pin-input').value = '';
+        pendingAdminCallback = callback;
+        document.getElementById('admin-pin-modal').classList.remove('hidden');
+        document.getElementById('admin-pin-input').focus();
+    }
+
+    function closeAdminModal() {
+        document.getElementById('admin-pin-modal').classList.add('hidden');
+        pendingAdminCallback = null;
+    }
+
+    function submitAdminModal() {
+        const pin = document.getElementById('admin-pin-input').value.trim();
+        if (pin === ADMIN_PASSWORD) {
+            document.getElementById('admin-pin-modal').classList.add('hidden');
+            if (pendingAdminCallback) {
+                const cb = pendingAdminCallback;
+                pendingAdminCallback = null;
+                cb();
+            }
+        } else {
+            alert("Mot de passe Administrateur incorrect.");
+        }
+    }
+
+    function triggerAdminModalPrompt() {
+        if (!isAdmin) {
+            openAdminModal("Activer le mode Administrateur ?", () => {
+                isAdmin = true;
+                userPhone = ADMIN_PHONE;
+                startApp();
+            });
+        }
     }
 
     async function pickContact() {
@@ -665,11 +718,16 @@
 
     function startApp() {
         document.getElementById('auth-view').classList.add('hidden');
-        document.getElementById('maintenance-view').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
         document.getElementById('display-my-phone').textContent = userPhone;
         toggleView('home');
         setupRealtimeListener();
+    }
+
+    function confirmLogout() {
+        if (confirm("Voulez-vous vraiment vous déconnecter ?")) {
+            logout();
+        }
     }
 
     function logout() {
@@ -679,7 +737,6 @@
         document.getElementById('auth-view').classList.remove('hidden');
         document.getElementById('auth-phone').value = '';
         document.getElementById('auth-password').value = '';
-        checkMaintenanceMode();
     }
 
     function toggleView(viewName) {
@@ -693,7 +750,6 @@
         document.getElementById('summary-view').classList.add('hidden');
         document.getElementById('history-view').classList.add('hidden');
         document.getElementById('success-view').classList.add('hidden');
-        document.getElementById('maintenance-view').classList.add('hidden');
 
         if (viewName === 'home') {
             document.getElementById('home-view').classList.remove('hidden');
@@ -1039,7 +1095,7 @@
                 try {
                     const { data } = await _supabase.from('app_settings').select('maintenance_mode').eq('id', 1).maybeSingle();
                     currentMaintenanceState = !!(data && data.maintenance_mode);
-                    maintenanceBtn.textContent = currentMaintenanceState ? '🛠️️ Mode maintenance : ACTIVÉ (toucher pour désactiver)' : '🛠️ Mode maintenance : désactivé (toucher pour activer)';
+                    maintenanceBtn.textContent = currentMaintenanceState ? '🛠️ Mode maintenance : ACTIVÉ (toucher pour désactiver)' : '🛠️ Mode maintenance : désactivé (toucher pour activer)';
                 } catch (err) {
                     maintenanceBtn.textContent = '🛠️ Mode maintenance (état inconnu)';
                 }
@@ -1116,7 +1172,7 @@
         let adminActionHtml = '';
         if (isAdmin && item.status !== 'Validé') {
             const identifier = item.id || '';
-            adminActionHtml = `<br><button class="btn-validate" onclick="adminValidate('${identifier}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
+            adminActionHtml = `<br><button class="btn-validate" onclick="promptAdminValidate('${identifier}', '${item.dest_phone}', '${item.package_name}', ${item.total})">Valider</button>`;
         }
 
         let timeInfoHtml = '';
@@ -1158,9 +1214,13 @@
         return div;
     }
 
-    async function adminValidate(id, phone, packageName, total) {
-        if (!confirm(`Valider la commande pour ${phone} (${packageName}) ?`)) return;
+    function promptAdminValidate(id, phone, packageName, total) {
+        openAdminModal(`Confirmer la validation manuelle de la commande de ${total} FCFA pour ${phone} ?`, () => {
+            adminValidate(id, phone, packageName, total);
+        });
+    }
 
+    async function adminValidate(id, phone, packageName, total) {
         const nowIso = new Date().toISOString();
 
         if (String(id).startsWith('local_')) {
@@ -1197,13 +1257,18 @@
         loadHistory();
     }
 
+    function promptMaintenanceToggle() {
+        const newState = !currentMaintenanceState;
+        const desc = newState
+            ? "Activer le mode maintenance ? Le site sera fermé à tous les utilisateurs."
+            : "Désactiver le mode maintenance et réouvrir l'accès aux clients ?";
+        openAdminModal(desc, () => {
+            toggleMaintenanceMode();
+        });
+    }
+
     async function toggleMaintenanceMode() {
         const newState = !currentMaintenanceState;
-        const confirmMsg = newState
-            ? "⚠️ Activer le mode maintenance ?\n\nPlus aucun client ne pourra utiliser le site tant que tu ne le désactives pas."
-            : "Désactiver le mode maintenance et rouvrir le site aux clients ?";
-        if (!confirm(confirmMsg)) return;
-
         try {
             const { error } = await _supabase
                 .from('app_settings')
