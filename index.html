@@ -78,7 +78,7 @@
         .btn-validate:hover { filter: brightness(1.1); }
 
         .support-bubble { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-decoration: none; z-index: 100; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         .back-link { color: var(--text-muted); font-size: 13px; cursor: pointer; margin-bottom: 10px; display: inline-block; }
         .tabs { display: flex; margin-bottom: 15px; background: var(--surface); border-radius: 10px; padding: 4px; border: 1px solid var(--border); }
         .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; cursor: pointer; border-radius: 8px; color: var(--text-muted); font-weight: 600; }
@@ -263,15 +263,18 @@
             <button id="maintenance-toggle-btn" class="hidden btn-main" style="margin-bottom: 12px; background: var(--danger-dim); border: 1px solid var(--danger); color: var(--danger); font-size: 12px; padding: 9px;" onclick="toggleMaintenanceMode()">🛠️ Mode maintenance : …</button>
             <div class="history-list" id="history-container"></div>
         </div>
+    </div>
 
-        <!-- MODE MAINTENANCE -->
-        <div id="maintenance-view" class="hidden" style="text-align:center; padding-top: 40px;">
-            <div style="font-size: 56px; margin-bottom: 15px;">🛠️</div>
-            <h3 style="color: var(--accent); margin: 0 0 12px;">Service momentanément indisponible</h3>
-            <p id="maintenance-message" style="font-size: 14px; color: var(--text-muted); line-height: 1.6; padding: 0 10px;">
-                Le service est temporairement indisponible. Merci de réessayer dans quelques instants.
-            </p>
-            <button class="btn-main" style="margin-top: 20px; max-width: 220px;" onclick="location.reload()">🔄 Réessayer</button>
+    <!-- MODE MAINTENANCE (Désormais indépendant de main-app) -->
+    <div id="maintenance-view" class="hidden" style="text-align:center; padding-top: 40px;">
+        <div style="font-size: 56px; margin-bottom: 15px;">🛠️</div>
+        <h3 style="color: var(--accent); margin: 0 0 12px;">Service momentanément indisponible</h3>
+        <p id="maintenance-message" style="font-size: 14px; color: var(--text-muted); line-height: 1.6; padding: 0 10px;">
+            Le service est temporairement indisponible. Merci de réessayer dans quelques instants.
+        </p>
+        <button class="btn-main" style="margin-top: 20px; max-width: 220px;" onclick="location.reload()">🔄 Réessayer</button>
+        <div style="margin-top: 35px;">
+            <span onclick="openAdminAccessFromMaintenance()" style="color: var(--text-muted); font-size: 12px; cursor: pointer; text-decoration: underline;">🔑 Accès Espace Admin</span>
         </div>
     </div>
 </div>
@@ -300,9 +303,6 @@
     let selectedPackageData = null;
     let currentMaintenanceState = false;
 
-    // Vérifie l'interrupteur de maintenance dans Supabase avant d'afficher quoi que ce soit.
-    // En cas d'erreur réseau (ex: Supabase injoignable), on affiche l'app normalement
-    // plutôt que de bloquer tout le monde par précaution (fail-open).
     async function checkMaintenanceMode() {
         try {
             const { data, error } = await _supabase
@@ -315,7 +315,7 @@
 
             currentMaintenanceState = !!data.maintenance_mode;
 
-            if (currentMaintenanceState) {
+            if (currentMaintenanceState && !isAdmin) {
                 if (data.maintenance_message) {
                     document.getElementById('maintenance-message').textContent = data.maintenance_message;
                 }
@@ -326,6 +326,11 @@
         } catch (err) {
             console.error("Vérification maintenance impossible, affichage normal:", err);
         }
+    }
+
+    function openAdminAccessFromMaintenance() {
+        document.getElementById('maintenance-view').classList.add('hidden');
+        document.getElementById('auth-view').classList.remove('hidden');
     }
 
     checkMaintenanceMode();
@@ -660,6 +665,7 @@
 
     function startApp() {
         document.getElementById('auth-view').classList.add('hidden');
+        document.getElementById('maintenance-view').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
         document.getElementById('display-my-phone').textContent = userPhone;
         toggleView('home');
@@ -673,6 +679,7 @@
         document.getElementById('auth-view').classList.remove('hidden');
         document.getElementById('auth-phone').value = '';
         document.getElementById('auth-password').value = '';
+        checkMaintenanceMode();
     }
 
     function toggleView(viewName) {
@@ -686,6 +693,7 @@
         document.getElementById('summary-view').classList.add('hidden');
         document.getElementById('history-view').classList.add('hidden');
         document.getElementById('success-view').classList.add('hidden');
+        document.getElementById('maintenance-view').classList.add('hidden');
 
         if (viewName === 'home') {
             document.getElementById('home-view').classList.remove('hidden');
@@ -1031,7 +1039,7 @@
                 try {
                     const { data } = await _supabase.from('app_settings').select('maintenance_mode').eq('id', 1).maybeSingle();
                     currentMaintenanceState = !!(data && data.maintenance_mode);
-                    maintenanceBtn.textContent = currentMaintenanceState ? '🛠️ Mode maintenance : ACTIVÉ (toucher pour désactiver)' : '🛠️ Mode maintenance : désactivé (toucher pour activer)';
+                    maintenanceBtn.textContent = currentMaintenanceState ? '🛠️️ Mode maintenance : ACTIVÉ (toucher pour désactiver)' : '🛠️ Mode maintenance : désactivé (toucher pour activer)';
                 } catch (err) {
                     maintenanceBtn.textContent = '🛠️ Mode maintenance (état inconnu)';
                 }
